@@ -1,0 +1,9 @@
+[project]
+name = "exploration"
+version = "0.1.0"
+description = "Exploration of BlueSky small sample dataset"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "polars>=1.37.1",
+]
