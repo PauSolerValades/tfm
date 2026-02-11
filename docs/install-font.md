@@ -18,7 +18,7 @@ El document contidrà arxius `.tff` (_True Type Font_ el _legacy format_) o `.ot
 
 La utilitat `fontconfig` té un fitxer XML on té definits tots els camins que ha de mirar. Aquest fitxer es troba a `/etc/fonts/fonts.conf`. Allà s'hi especifiquen tots els camins a nivell de sistema (`/usr/share/fonts/` i `/usr/local/share/fonts/`) i els de nivell d'usuari (`$XGD_DATA_PATH/fonts`) que la utilitat cercarà noves fonts.
 
-Un cop descomprimit el fitxer amb la tipografia, la movem a qualsevol dels directoris dits, sempre millor els de nivell d'usuari que els de sistema.
+Un cop descomprimit el fitxer amb la tipografia, la movem a qualsevol dels directoris dits, sempre millor els de nivell d'usuari que els de sistema. Concretament, ho he fet diverses vegades a `~/.local/share/fonts`
 
 ## 3. Reload.
 
