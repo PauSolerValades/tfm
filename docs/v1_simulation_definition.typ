@@ -6,27 +6,48 @@ This document contains the reorganized notes with Esteve's meeting at 10-02-26.
 
 We are going to define the bare-bones simulation. The objective of this is to build an engine which does not take into account _real data_ but only all the concepts that are going to interact and test if the theoretical idea makes sense.
 
+== Scope of v1
+
+This first version of the engine simulation should be used to verify and stablish a solid implementation basis which are verifiable - that is to be as certain as possible of bug's absence. The document _specification_bluesky_ specifies what features compose the features Bluesky social network has, which we'll describe (hollisticaly) a subset in the following paragraph.
+
+The main objective of the simulation is to analyze how do posts behave: how far they travel, how many distinct users interact with that post within the timeline and no custom recommender in action. For that, we need to implement *Posts* and the relations with themselves (a post can be a reply of a post). Posts are shown to *users* according to the post creation time and which set of users is the user *following* at a given time. A user can interact with a post in several ways, so we must define *actions* that a user can perform over a post. In the bluesky case those are to like, reply, repost and quote another post. Replying, reposting and quoting will influence user's timeline as well as timelines of all other users, but not linking a post, which will be added to the liked tab.
+
+
 == Notation
 
 To not lose hours and sanity, I will specify the notation to be used in all the document here. If it's in anyway unorthodox, it's because I asked to an LLM to give me an idea.
 - User from the set of users: $u in U$, and $|U| = N$.
-- Post (item) from the set of posts (item): $i in I$, and $|I| = M$.
+- Post (item) from the set of posts (items): $i in I$, and $|I| = M$.
 
-A user has several actions to perform in the simulation. We denote the set of actions as $cal(A) = { emptyset, "like", "comment", "repost", "quote" } = { emptyset, l, c, r, q}$, and we connect the user and the item with the following notation:
+A user has several actions to perform in the simulation. We denote the set of possible actions as 
 
-$ a_(u,i)^((t)) in cal(A) $
+$ cal(A) = { emptyset, "like/"l, "reply/"c, "repost/"r, "quote/"q } $
+
+And we denote user $u$ doing action $t$ over item $i$ as:
+
+$ a_(u,i)^((k)) in cal(A) $
 
 As a user can perform more than one option over a post, we must denote the action as a vector:
 
-$ bold(y)_(u,i) in {0,1}^(|cal(A)| - 1) $
+$ bold(a)_(u,i) in {0,1}^(|cal(A)| - 1) $
 
-where each index corresponds to an action type with the order Like, Comment Repost and Quote. E.g, $y = [1,0,1,0]$ would be a like and a repost.
+where each index corresponds to an action type with the order Like, Reply, Repost and Quote. E.g, $y = [1,0,1,0]$ would be a like and a repost.
 
-How, we have to distinguish between several traces, one for what the user has seen, another for what the user has done, and the last one for what has happened to the post.
+Each user follows other users. We call the set of users a given user follows as $Gamma"out"(u)$, which are the sources of its timeline. $Gamma$ has been chosen due to this being the neighbours of user $u$. For the sake of completion, we call the set of users that follow our user $Gamma"in" (u)$.
 
-- Impression history of a user: $H^"imp"_u (t) = epsilon_u (t) = (i_1, i_2, ..., i_k) $ where the item $i_k$ is the last item smaller than 
-- User historic activity: $H^"act"_u (t) = cal(H)_u (t)= {(i,a, tau) : a != emptyset, tau < t } $
-- Item trajectory: $T_i (t) = {(u, "repost", tau) | tau < t } $. That is a list with all the users who have reposted at given time time $tau$.
+Every user creates (or has created) posts. We denote the list of posts created by user $v$ as $P_v = { i in I : "author"(i) = u }$. We define $A_u$ as the activity stream, which is all the posts that will end up in the timeline by user $u$.
+
+$ A_u (t) = P_u (t) union { i in I | exists tau < t : a_(u, i)^((tau)) in {c, r, q} } $
+
+The timeline of a user $u$ is all the posts created, replied, reposted and quoted by all the users the user $u$ follows.
+
+$ cal(T)_u (t) = union.big_(v in Gamma_"out" (u)) A_v (t) $
+
+Regarding evaluation metrics, we have to distinguish between several traces of the simulation, one for what the user has seen, another for what the user has done, and the last one for what has happened to the post.
+
+- Impression history of a user: $H^"imp"_u (t) = epsilon_u (t) = (i_1, i_2, ..., i_k) $. It is essentially a subset of $cal(T)_u$, but allows us to review in order what has the used seen. will be needed to count how many users have seen each post.
+- User historic activity: $H^"act"_u (t) = cal(H)_u (t)= {(i,a, tau) : a != emptyset, tau < t } $. What exactly did the user do, at which time.
+- Item trajectory: $T_i (t) = {(u, {c,r,q}, tau)  | tau < t } $. That is a list with all the users who have reposted at given time time $tau$.
 
 
 == Axioms
@@ -45,10 +66,25 @@ $ PP (a_(u,i)^t | cal(H)_u ) = PP (a_(u,i)^t ) $
 4. Stable Post Population: no new posts are going to be created during the simulation duration.
 5. Algorithm: chronologically followers recommendation.
 
-== Algorithm _Pseudo_ implementation
+== Pseudo Algorithm
+
+We can simulate the networks with a Discrete Event Simulation with the Event Scheduling Algorithm. The steps are
+
+1. Create the simulation graph. That is
+- Users and followers.
+- Posts and ownership of those posts with given timesteps.
+- probability vector of a user doing an action.
+2. Set up iter-time distributions: every how often should a user "awake" and do something
+2. Add first event: user actuates over a post.
+3. while (t < horizon)
+4. if user awakes, generate another action
+5. if action is reply, repost or quote, for every user who is following that user, update their timelines. else nothing
+6. Update traces.
 
 
-There must be a list with all the posts, and then each user has a mean-heap with a index (or a pointer) to the post the user has to see (the oldest one). 
+== Implementation details
+
+There must be a list with all the posts, and then each user has a min-heap with a index (or a pointer) to the post the user has to see (the oldest one). 
 
 Each user must have both which posts has he written, which posts has he interacted and what action did the user performed (well, that's the trace)
 

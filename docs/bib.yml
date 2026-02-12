@@ -1,0 +1,53 @@
+bluesky-at-uri-scheme:
+  type: entry
+  title: "AT URI Scheme (at://)"
+  author: "Bluesky"
+  url: "https://bluesky-jp.github.io/specs/at-uri-scheme"
+  date-accessed: 2026-02-12
+  parent:
+    title: "AT Protocol Specifications"
+    type: web
+
+bluesky-docs:
+  type: web
+  title: "Bluesky Documentation"
+  author: "Bluesky"
+
+bluesky-resolving-identities:
+  type: entry
+  title: "Resolving Identities"
+  parent: bluesky-docs
+  url: "https://docs.bsky.app/docs/advanced-guides/resolving-identities"
+  date-accessed: 2026-02-12
+
+bluesky-creating-post:
+  type: entry
+  title: Creating a Post
+  parent: bluesky-docs
+  url: "https://docs.bsky.app/docs/tutorials/creating-a-post"
+  date-accessed: 2026-02-12
+
+bluesky-viewing-feeds:
+  type: entry
+  title: "Viewing Feeds"
+  parent: bluesky-docs
+  url: "https://docs.bsky.app/docs/tutorials/viewing-feeds#viewing-a-users-timeline"
+  date-accessed: 2026-02-12
+
+bluesky-like-repost:
+  type: entry
+  title: "Liking and Reposting"
+  parent: bluesky-docs
+  url: "https://docs.bsky.app/docs/tutorials/like-repost"
+  date-accessed: 2026-02-12
+
+wikipedia-at-protocol:
+  type: entry
+  title: "AT Protocol"
+  author: "Wikipedia contributors"
+  date: 2026-01-26
+  url: "https://en.wikipedia.org/wiki/AT_Protocol"
+  date-accessed: 2026-02-12
+  parent:
+    title: "Wikipedia"
+    type: web
