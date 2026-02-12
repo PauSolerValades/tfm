@@ -46,8 +46,8 @@ $ cal(T)_u (t) = union.big_(v in Gamma_"out" (u)) A_v (t) $
 Regarding evaluation metrics, we have to distinguish between several traces of the simulation, one for what the user has seen, another for what the user has done, and the last one for what has happened to the post.
 
 - Impression history of a user: $H^"imp"_u (t) = epsilon_u (t) = (i_1, i_2, ..., i_k) $. It is essentially a subset of $cal(T)_u$, but allows us to review in order what has the used seen. will be needed to count how many users have seen each post.
-- User historic activity: $H^"act"_u (t) = cal(H)_u (t)= {(i,a, tau) : a != emptyset, tau < t } $. What exactly did the user do, at which time.
-- Item trajectory: $T_i (t) = {(u, {c,r,q}, tau)  | tau < t } $. That is a list with all the users who have reposted at given time time $tau$.
+- User historic activity: $H^"act"_u (t) = cal(H)_u (k)= {(i,a, tau) : a != emptyset, tau < t } $. What exactly did the user do, at which time.
+- Item trajectory: $T_i (t) = {(u, a, tau)  | tau < t } "where" a in {c, r, q}  $. That is a list with all the users who have reposted at given time time $tau$.
 
 
 == Axioms
@@ -102,7 +102,7 @@ $ PP (s_j | s_1,...,s_(j-1), s_j) = PP (s_j | s_(j-1)) $
 
 This does not behave at all as a social network nor is not the statement of the first axiom. The tricky fact is that we can characterize the user history of impressions $cal(H)_u$ and the item states $cal(C)_i$ as a Markov chain with the memoryless property by defining the state as $S$:
 
-$ cal(S)_t = {cal(H)^t_(u_1), ..., cal(H)^t_(u_N)} union {cal(C)^t_(i_1),...,cal(C)^t_(i_M)} $
+$ cal(S)_t = {cal(H)^t_(u_1), ..., cal(H)^t_(u_N)} union {T^t_(i_1),...,T^t_(i_M)} $
 
 Given $n$ the number of posts seen until now, we can consider all the posts until that point, so we can express the memoryless like this:
 
