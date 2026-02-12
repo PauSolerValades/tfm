@@ -1,0 +1,20 @@
+{
+  "iterations": 1,
+  "seed": 56,
+  "sim_config": {
+    "horizon": 1000000.0,
+    "system_capacity": 0,
+    "passenger_interarrival": { 
+        "exponential": 0.90
+    },
+    "bus_interarrival": { 
+        "hypo": [ 0.333333, 0.142857 ]
+    },
+    "bus_capacity": { 
+        "exp_trunc": { "k": 30.0 } 
+    },
+    "boarding_time": { 
+        "uniform": {"min": 2.0, "max": 8.0}
+    }
+  }
+}

@@ -1,2 +1,11 @@
 /data
 /.ipynb-checkpoint
+/*.pdf
+
+.zig-cache/
+zig-out/
+/release/
+/debug/
+/build/
+/build-*/
+/docgen_tmp/
