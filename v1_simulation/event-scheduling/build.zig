@@ -16,8 +16,17 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
+    
+    // Install it as the module
     run_cmd.step.dependOn(b.getInstallStep());
+    const eazy_args_dep = b.dependency("eazy_args", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
+    const eazy_args_mod = eazy_args_dep.module("eazy_args");
+
+    exe.root_module.addImport("eazy_args", eazy_args_mod);
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }

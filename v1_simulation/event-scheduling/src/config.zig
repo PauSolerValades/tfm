@@ -102,7 +102,7 @@ pub const SimConfig = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("| SIMULATION CONFIGURATION |\n", .{});
         try writer.writeAll("+--------------------------+\n");
-        try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
+        try writer.print("{s: <24}:  {any}\n", .{ "User policy", self.user_policy});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between user actions", self.user_inter_action});
         try writer.writeAll("---------\n");
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
