@@ -1,0 +1,8 @@
+{
+  "user_policy": [0.2, 0.2, 0.2, 0.2, 0.2],
+  "user_inter_action": {
+    "exponential": 0.3
+  },
+  "horizon": 1000,
+  "seed": 1234
+}

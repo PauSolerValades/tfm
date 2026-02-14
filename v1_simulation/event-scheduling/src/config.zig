@@ -90,6 +90,7 @@ pub const Distribution = union(enum) {
 };
 
 pub const SimConfig = struct {
+    seed: ?u64,
     user_policy: [5]f32,
     user_inter_action: Distribution,
     horizon: f64,
@@ -102,8 +103,13 @@ pub const SimConfig = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("| SIMULATION CONFIGURATION |\n", .{});
         try writer.writeAll("+--------------------------+\n");
-        try writer.print("{s: <24}:  {any}\n", .{ "User policy", self.user_policy});
-        try writer.print("{s: <24}:  {f}\n", .{ "Time between user actions", self.user_inter_action});
+        try writer.writeAll("User policy:\n");
+        try writer.print("{s: <24}:  {d}\n", .{ "- Non-Engage", self.user_policy[0]});
+        try writer.print("{s: <24}:  {d}\n", .{ "- Like", self.user_policy[1]});
+        try writer.print("{s: <24}:  {d}\n", .{ "- Reply", self.user_policy[2]});
+        try writer.print("{s: <24}:  {d}\n", .{ "- Repost", self.user_policy[3]});
+        try writer.print("{s: <24}:  {d}\n", .{ "- Quote", self.user_policy[4]});
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
         try writer.writeAll("---------\n");
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
     }

@@ -20,23 +20,27 @@ pub const Event = struct {
     id: u64,            // who does the action
 };
 
-const User = struct {
-    following: ArrayList(*User),  //neighbors
-    follower: ArrayList(*User),
-    timeline: heap.Heap(*Post),
-    posts: ArrayList(*Post),
-    historic: ArrayList(*Post) = .empty,
+pub const User = struct {
+    id: u64,
+    following: ArrayList(User),  //neighbors
+    follower: ArrayList(User),
+    timeline: heap.Heap(Post),
+    posts: ArrayList(Post),
+    historic: ArrayList(Post) = .empty,
     policy: [5]f32,                        // as many as the number of actions
 };
 
-const Post = struct {
+pub const Post = struct {
     id: u64,
     time: f64,
+    author: u46,
+    content: []const u8, // right now this will be empty or the same
 };
 
 pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, trace: ?*Io.Writer) void {
     _ = rng;
     _ = trace; 
+    
     var hp = heap.Heap(Event).init();
     defer hp.deinit(gpa);
 

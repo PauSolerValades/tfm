@@ -19,28 +19,20 @@ const SimResults = structs.SimResults;
 const SimConfig = structs.SimConfig;
 const User = simulation.User;
 
-pub const AppConfig = struct {
-    iterations: usize,
-    sim_config: SimConfig,
-    seed: ?u64,
-};
-
-pub fn loadConfig(allocator: Allocator, io: Io, path: []const u8) !json.Parsed(AppConfig) {
+pub fn loadConfig(allocator: Allocator, io: Io, path: []const u8) !json.Parsed(SimConfig) {
     const content = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
-    defer allocator.free(content);
 
     // We use .ignore_unknown_fields = true so comments or extra metadata in JSON don't crash it
     const options = std.json.ParseOptions{ .ignore_unknown_fields = true };
     
     // parsed_result holds the data AND the arena allocator used for strings/slices in the JSON
-    const parsed_result = try std.json.parseFromSlice(AppConfig, allocator, content, options);
+    const parsed_result = try std.json.parseFromSlice(SimConfig, allocator, content, options);
     
     return parsed_result;
 }
 
-// pub fn loadData(allocator: Allocator, io: Io, path: []const u8) !ArrayList(json.Parsed(User)) {
-//     const content = try std.fs.cwd().readFileAlloc(allocator, path, .unlimited);
-//     defer allocator.free(content);
+// pub fn loadData(allocator: Allocator, io: Io, path: []const u8) !ArrayList(json.Parsed([]User)) {
+//     const content = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
 //
 //     const options = std.json.ParseOptions{ .ignore_unknown_fields = true };
 //
@@ -53,6 +45,8 @@ const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
 
 const def = .{
+    .name = "v1",
+    .description = "BSKY sim v1",
     .required = .{
         Arg([]const u8, "config", "Configuration file for the simulation"),
         Arg([]const u8, "data", "Data file containing the network definition"),
@@ -82,24 +76,24 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };   
     
-    const loaded_config = loadConfig(arena, init.io, args.config) catch |err| {
+    const parsed_config = loadConfig(arena, init.io, args.config) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
     };
-    defer loaded_config.deinit();
-
-    const app_config = loaded_config.value;
-    const config = app_config.sim_config;
+    defer parsed_config.deinit();
+    
+    const config = parsed_config.value;
 
     // const loaded_data = loadData(arena, init.io, args.data) catch |err| {
     //     try stderr.print("Error parsing data JSON: {any}", .{err});
     //     try stderr.flush();
     //     std.process.exit(0);
     // };
-    // _ = loaded_data;
+    // std.debug.print("{any}\n", .{loaded_data});
+    // defer loaded_data.deinit();
 
-    const seed = if (app_config.seed) |s| s else blk: {
+    const seed = if (config.seed) |s| s else blk: {
         var os_seed: u64 = undefined;
         init.io.random(std.mem.asBytes(&os_seed));
         break :blk os_seed;

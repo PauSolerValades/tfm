@@ -13,7 +13,7 @@ pub fn Heap(
     comptime T: type,
 ) type {
     const type_info = @typeInfo(T);
-    if (type_info != .@"struct") @compileError("Just integers and floats allowed.\n");
+    if (type_info != .@"struct") @compileError("This implementation assumes a struct.\n");
 
     if (!@hasField(T, "time")) @compileError("No comparison key 'time' found\n");
 

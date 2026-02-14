@@ -22,10 +22,10 @@
     // original project's identity. Thus it is recommended to leave the comment
     // on the following line intact, so that it shows up in code reviews that
     // modify the field.
-    .fingerprint = 0xa57dc2da605c7ae0, // Changing this has security and trust implications.
+    .fingerprint = 0xa57dc2dadfcf84e8, // Changing this has security and trust implications.
     // Tracks the earliest Zig version that the package considers to be a
     // supported use case.
-    .minimum_zig_version = "0.15.2",
+    .minimum_zig_version = "0.16.0-dev.2535+b5bd49460",
     // This field is optional.
     // Each dependency must either provide a `url` and `hash`, or a `path`.
     // `zig build --fetch` can be used to fetch all dependencies of a package, recursively.
@@ -33,8 +33,8 @@
     // internet connectivity.
     .dependencies = .{
         .eazy_args = .{
-            .url = "git+https://www.github.com/PauSolerValades/eazy-args#db40c3ae947a2d6096beaa9778b1bbdbc3e3df67",
-            .hash = "eazy_args-0.0.0-c374-GlLAQA3GCuvQl8AsZU5Dtad_86fxZQREu4xGb6e",
+            .url = "git+https://github.com/PauSolerValades/eazy-args#2dec3dee160ea3d45741642afaa44fcd842ac24e",
+            .hash = "eazy_args-0.0.1-c374-AvkAQCviueeSE5eQVQC95r27iTEAxZYp3Kg_7wc",
         },
     },
     .paths = .{
