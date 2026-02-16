@@ -7,16 +7,23 @@ const main = @import("main.zig");
 const Event = main.Event;
 const sampling = @import("rng.zig");
 
+// TODO: en un futur fer el següent per donar precisió arbitraira:
+// pub fn Distribution(comptime T: type) type {
+// if (@typeInfo(T).type != .float) @compileError("Foat is just allowed");
+// return union(enum) ... tot el que hi ha en continu
+// }
+
 /// Okay, aquí estaria la màgia...
 /// En essència la unió només conté una de les tres quan s'inicialitza
 pub const Distribution = union(enum) {
     constant: f64,
     exponential: f64,
     uniform: struct { min: f64, max: f64 },
-    hypo: []f64, // directament les esperances
+    hypo: []const f64, // directament les esperances
     hyper: struct { probs: []const f64, rates: []f64 }, // probabilitats del branching i els ratis de cada exponencial
     erlang: struct { k: usize, lambda: f64 }, // shape, scale
     exp_trunc: struct { k: f64 },
+    weighted: []const f64,
 
     pub fn sample(self: Distribution, rng: Random) !f64 {
         switch (self) {
@@ -27,6 +34,7 @@ pub const Distribution = union(enum) {
             .hyper => |p| return sampling.rhyper(f64, p.probs, p.rates, rng),
             .erlang => |p| return sampling.rerlang(f64, p.k, p.lambda, rng),
             .exp_trunc => |p| return sampling.rtexp(f64, p.k, rng),
+            .weighted => |p| return sampling.rweighted(f64, p, rng),
         }
     }
 
@@ -85,13 +93,20 @@ pub const Distribution = union(enum) {
             },
             .erlang => |k_rate| try writer.print("Erl(k={d}, λ={d:.1})", .{ k_rate.k, k_rate.lambda }),
             .exp_trunc => |rate_max| try writer.print("ExpTrunc(λ=2/{d:.1})", .{ rate_max.k }),
+            .weighted => |pvec| {
+                try writer.writeAll("Weighted(");
+                for (0..pvec.len - 2) |i| {
+                    try writer.print("{d:.2} ", .{pvec[i]});
+                }
+                try writer.print("{d:.2})", .{pvec[pvec.len-1]});
+            }
         }
     }
 };
 
 pub const SimConfig = struct {
     seed: ?u64,
-    user_policy: [5]f32,
+    user_policy: Distribution,
     user_inter_action: Distribution,
     horizon: f64,
 
@@ -103,12 +118,7 @@ pub const SimConfig = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("| SIMULATION CONFIGURATION |\n", .{});
         try writer.writeAll("+--------------------------+\n");
-        try writer.writeAll("User policy:\n");
-        try writer.print("{s: <24}:  {d}\n", .{ "- Non-Engage", self.user_policy[0]});
-        try writer.print("{s: <24}:  {d}\n", .{ "- Like", self.user_policy[1]});
-        try writer.print("{s: <24}:  {d}\n", .{ "- Reply", self.user_policy[2]});
-        try writer.print("{s: <24}:  {d}\n", .{ "- Repost", self.user_policy[3]});
-        try writer.print("{s: <24}:  {d}\n", .{ "- Quote", self.user_policy[4]});
+        try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
         try writer.writeAll("---------\n");
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
@@ -117,30 +127,35 @@ pub const SimConfig = struct {
 
 pub const SimResults = struct {
     duration: f64,
-    average_clients: f64,
-    variance: f64,
-    lost_passengers: u64,
-    lost_buses: u64,
     processed_events: u64,
-    average_queue_clients: f64,
-    average_queue_time: f64,
-    average_service_time: f64,
-    average_total_time: f64,
 
-    pub fn format(self: SimResults, writer: *Io.Writer) !void {
-        try writer.writeAll("+-------------------+\n");
-        try writer.print("| SIMULATION RESULT |\n", .{});
-        try writer.writeAll("+-------------------+\n");
-        try writer.print("{s: <24}: {d:.4} \n", .{ "Duration", self.duration });
-        try writer.print("{s: <24}: {d} \n", .{ "Events processed", self.processed_events });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Avg Clients (L)", self.average_clients });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Avg Clients Queue (L_q)", self.average_queue_clients });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Avg Queue Time (W_q)", self.average_queue_clients });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Avg Service Time (W_s)", self.average_service_time });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Avg Total Time (W)", self.average_total_time });
-        try writer.print("{s: <24}: {d:.4}\n", .{ "Variance (Var)", self.variance });
-        try writer.print("{s: <24}: {d}\n", .{ "Lost passengers", self.lost_passengers });
-        try writer.print("{s: <24}: {d}\n", .{ "Lost buses", self.lost_buses });
+    total_impressions: u64,      // Every time a post is popped from a timeline
+    total_interactions: u64,     // Sum of likes, replies, reposts, quotes
+    total_ignored: u64,          // Events where action was .nothing
+
+    // avg_impressions_per_user: f64,
+    // engagement_rate: f64,        // interactions / impressions
+    // avg_timeline_backlog: f64,   // How many unread posts remain in heaps at horizon
+    
+    pub fn format(
+        self: SimResults,
+        writer: *std.Io.Writer,
+    ) !void {
+        
+        try writer.writeAll("\n+---------------------------------+\n");
+        try writer.print("| SOCIAL NETWORK SIMULATION STATS |\n", .{});
+        try writer.writeAll("+---------------------------------+\n");
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Simulation Duration (T)", self.duration });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Processed", self.processed_events });
+        try writer.writeAll("------- Global Post Metrics -------\n");
+        try writer.print("{s: <28}: {d}\n", .{ "Total Impressions (Views)", self.total_impressions });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Interactions", self.total_interactions });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Ignored (.nothing)", self.total_ignored });
+        // try writer.writeAll("------------- Averages -------------\n");
+        // try writer.print("{s: <28}: {d:.4}\n", .{ "Avg Impressions / User", self.avg_impressions_per_user });
+        // try writer.print("{s: <28}: {d:.2}%\n", .{ "Global Engagement Rate", self.engagement_rate * 100.0 });
+        // try writer.print("{s: <28}: {d:.2}\n", .{ "Avg Unread Backlog / User", self.avg_timeline_backlog });
+        try writer.writeAll("+---------------------------------+\n");
     }
 };
 

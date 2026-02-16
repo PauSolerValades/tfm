@@ -74,6 +74,22 @@ pub fn rhyper(comptime T: type, probs: []const T, rates: []const T, rng: Random)
     return rexp(T, rates[rates.len - 1], rng);
 }
 
+/// rweighted: choses an index of the array given it'ss whights
+/// weights: probabilities, this must add to one beforehand
+pub fn rweighted(comptime T: type, weights: []const T, rng: Random) f64 {
+    const r = runif(T, 0, 1, rng) catch unreachable;
+    var index: f64 = 0;
+    var acc: T = 0;
+    
+    for (weights) |p| {
+        acc += p;
+
+        if (r <= acc) break; 
+        index += 1;
+    }
+
+    return index;
+}
 
 const Distribution = @import("config.zig").Distribution;
 

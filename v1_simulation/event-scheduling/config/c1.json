@@ -1,8 +1,10 @@
 {
-  "user_policy": [0.2, 0.2, 0.2, 0.2, 0.2],
-  "user_inter_action": {
-    "exponential": 0.3
+  "user_policy": {
+    "weighted": [0.2, 0.2, 0.2, 0.2, 0.2]
   },
-  "horizon": 1000,
-  "seed": 1234
+  "user_inter_action": {
+    "exponential": 3 
+  },
+  "horizon": 100,
+  "seed": null 
 }

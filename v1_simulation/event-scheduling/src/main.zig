@@ -11,35 +11,17 @@ const Io = std.Io;
 const heap = @import("structheap.zig");
 const structs = @import("config.zig");
 const simulation = @import("simulation.zig");
+const data = @import("data_loading.zig");
 
 const v1 = simulation.v1;
 
 const Distribution = structs.Distribution;
-const SimResults = structs.SimResults;
 const SimConfig = structs.SimConfig;
 const User = simulation.User;
+const Post = simulation.Post;
+const TimelineEvent = simulation.TimelineEvent;
 
-pub fn loadConfig(allocator: Allocator, io: Io, path: []const u8) !json.Parsed(SimConfig) {
-    const content = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
-
-    // We use .ignore_unknown_fields = true so comments or extra metadata in JSON don't crash it
-    const options = std.json.ParseOptions{ .ignore_unknown_fields = true };
-    
-    // parsed_result holds the data AND the arena allocator used for strings/slices in the JSON
-    const parsed_result = try std.json.parseFromSlice(SimConfig, allocator, content, options);
-    
-    return parsed_result;
-}
-
-// pub fn loadData(allocator: Allocator, io: Io, path: []const u8) !ArrayList(json.Parsed([]User)) {
-//     const content = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
-//
-//     const options = std.json.ParseOptions{ .ignore_unknown_fields = true };
-//
-//     const parsed_result = try std.json.parseFromSlice([]User, allocator, content, options);
-//
-//     return parsed_result;
-// }
+const SimData = data.SimData;
 
 const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
@@ -76,7 +58,7 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };   
     
-    const parsed_config = loadConfig(arena, init.io, args.config) catch |err| {
+    const parsed_config = data.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
@@ -85,14 +67,19 @@ pub fn main(init: std.process.Init) !void {
     
     const config = parsed_config.value;
 
-    // const loaded_data = loadData(arena, init.io, args.data) catch |err| {
-    //     try stderr.print("Error parsing data JSON: {any}", .{err});
-    //     try stderr.flush();
-    //     std.process.exit(0);
-    // };
-    // std.debug.print("{any}\n", .{loaded_data});
-    // defer loaded_data.deinit();
+    const loaded_data = data.loadJson(arena, init.io, args.data, SimData) catch |err| {
+        try stderr.print("Error parsing data JSON: {any}", .{err});
+        try stderr.flush();
+        std.process.exit(0);
+    };
+    defer loaded_data.deinit(); // this will free the json object and data
 
+    const result = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
+    const users = result.users;
+    // const posts = result.posts;
+        
+    // as we use an arena, there is no need to specifically free both users and posts.
+    
     const seed = if (config.seed) |s| s else blk: {
         var os_seed: u64 = undefined;
         init.io.random(std.mem.asBytes(&os_seed));
@@ -109,35 +96,33 @@ pub fn main(init: std.process.Init) !void {
     try stdout.writeAll("Running the simulation once\n");
     try stdout.flush();
         
-    // // create the results folder
+    // create the results folder
     // cwd.access(init.io, "results", .{}) catch |err| switch (err) {
     //     error.FileNotFound => try cwd.createDir(init.io, "results", .{ .mode = Oo755} ),
     //     else => return err,
     // };
    
-    // this is basically witchcraft, found here:
-    // https://codeberg.org/ehrktia/zig-epoch/src/branch/main/src/root.zig
-    const real_clock = Io.Clock.real;
-    const timestamp = Io.Clock.now(real_clock, init.io);
-    
+    // const timestamp = Io.Clock.real.now(init.io);
     // buffers to hold the formatted file paths to avoid dynamic memory
-    var traca_path_buffer: [256]u8 = undefined;
-
-    const traca_path = try std.fmt.bufPrint(&traca_path_buffer, "traca_{d}.txt", .{timestamp});
+    // var trace_path_buffer: [256]u8 = undefined;
+    // const traca_path = try std.fmt.bufPrint(&traca_path_buffer, "traca_{d}.txt", .{timestamp});
     
-    var traca_buffer: [64 * 1024]u8 = undefined;
-    const traca_file = try cwd.createFile(init.io, traca_path, .{ .read = false });
-    var traca_writer = traca_file.writer(init.io, &traca_buffer);
-    const twriter = &traca_writer.interface;
+    const trace_path = "results/trace.txt"; 
+    var trace_buffer: [64 * 1024]u8 = undefined;
+    const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
+    var trace_writer = trace_file.writer(init.io, &trace_buffer);
+    const twriter = &trace_writer.interface;
 
-    // add the system config in the traca file
-    try twriter.print("{f}\n", .{config}); 
+    const startTime = Io.Timestamp.now(init.io, .real);
+    const results = try simulation.v1(arena, rng, config, users, twriter);
+    const elapsedTime = startTime.untilNow(init.io, .real);
+   
+    try stdout.print("{f}\n", .{results});
+    try stdout.print("Time Elapsed: {d} ms\n", .{ elapsedTime.toMilliseconds()});
+    try stdout.print("Total interactions / total impressions: {d:.4}\n", .{ 
+        @as(f64, @floatFromInt(results.total_interactions)) / @as(f64, @floatFromInt(results.total_impressions)) 
+    });
+    try stdout.flush();
 
 
-    _ = simulation.v1(arena, rng,  config, twriter);
-
-
-    // try stdout.print("{f}\n", .{results});
-    // try stdout.print("Time Elapsed: {d:.4} seconds\n", .{1});
-    // try stdout.flush();
 }

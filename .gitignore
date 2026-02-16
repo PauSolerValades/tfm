@@ -1,6 +1,7 @@
 /data
 /.ipynb-checkpoint
 /*.pdf
+/results
 
 .zig-cache/
 zig-out/

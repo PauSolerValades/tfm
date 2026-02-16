@@ -16,55 +16,154 @@ const Action = enum { nothing, like, reply, repost, quote };
 
 pub const Event = struct {
     time: f64,          // when will the action be due
-    type: Action,    // what will the user do
-    id: u64,            // who does the action
+    type: Action,       // what will the user do
+    user_ptr: *User,    // user id
+    id: u64,            // which action is it
 };
+
+pub const TracePost = struct {
+    time: f64,
+    type: Action,
+    event_id: u64,
+    user_id: u64,
+    post_id: u64,
+};
+
+pub const TimelineEvent = struct {
+    time: f64,
+    post: *Post,
+};
+
 
 pub const User = struct {
     id: u64,
-    following: ArrayList(User),  //neighbors
-    follower: ArrayList(User),
-    timeline: heap.Heap(Post),
-    posts: ArrayList(Post),
-    historic: ArrayList(Post) = .empty,
-    policy: [5]f32,                        // as many as the number of actions
+    following: []*User,
+    followers: []*User,
+    timeline: heap.Heap(TimelineEvent),
+    posts: []*Post,
+    historic: ArrayList(*Post) = .empty,
+    policy: Distribution,
 };
+
 
 pub const Post = struct {
     id: u64,
     time: f64,
-    author: u46,
-    content: []const u8, // right now this will be empty or the same
+    author: u64,
+    content: []const u8 = "",
 };
 
-pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, trace: ?*Io.Writer) void {
-    _ = rng;
-    _ = trace; 
-    
+
+fn choseActionFromIndex(index: usize) Action {
+    if (index == 0) { return Action.nothing; }
+    else if (index == 1) { return Action.like; }
+    else if (index == 2) { return Action.reply; }
+    else if (index == 3) { return Action.repost; }
+    else { return Action.quote; } 
+}
+
+pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: ?*Io.Writer) !SimResults {
+     
     var hp = heap.Heap(Event).init();
     defer hp.deinit(gpa);
 
     var processed_events: u64 = 0;
     var t_clock: f64 = 0.0;
+    
+    var impressions: u64 = 0;
+    var interactions: u64 = 0;
+    var ignored: u64 = 0;
 
     // add a first event per every user
-    // create minheap (timeline) per user containing which is the next post the user has to see.
-    // and append the first element of the event scheduling algorithm
-    
-    while (t_clock <= config.horizon and hp.len() > 0) : (processed_events += 1) {
-        const next_event = hp.pop().?; // we use ? because we are absolutely sure there will be an element
-        t_clock = next_event.time;
-
-        switch (next_event.type) {
-            Action.nothing => std.debug.print("Hothing!\n", .{}),
-            Action.like => std.debug.print("Hothing!\n", .{}),
-            Action.reply => std.debug.print("Update all the followers timelines!\n", .{}),
-            Action.repost => std.debug.print("Update all the followers timelines!\n", .{}),
-            Action.quote => std.debug.print("Update all the followers timelines!\n", .{}),
-        } 
+    for (users) |*user| {
+        const float_index: f64 = try config.user_policy.sample(rng);
+        const index: usize = @as(usize, @intFromFloat(float_index));
+        const action: Action = @enumFromInt(index);
+        const event_time = try config.user_inter_action.sample(rng);
+        const event = Event{ .time = event_time, .type = action, .user_ptr = user, .id = processed_events};
+        
+        try hp.push(gpa, event);
+        processed_events += 1;
     }
 
-    return;
+    if (trace) |writer| {
+        try writer.writeAll("[\n");
+    }
+    
+    while (t_clock <= config.horizon and hp.len() > 0) : (processed_events += 1) {
+        const current_event = hp.pop().?; // we use ? because we are absolutely sure there will be an element
+        t_clock = current_event.time;
+        
+        const current_user_ptr = current_event.user_ptr;
+        
+        // generate another event
+        const float_index: f64 = try config.user_policy.sample(rng);
+        const index: usize = @as(usize, @intFromFloat(float_index));
+        const action: Action = @enumFromInt(index);
+        const event_time = try config.user_inter_action.sample(rng);
+        const event = Event{ .time = t_clock + event_time, .type = action, .user_ptr = current_user_ptr, .id = processed_events };
+         
+        try hp.push(gpa, event);
+        
+        // pop seen post from the user associated with the event
+        const poped_post: ?TimelineEvent = current_user_ptr.*.timeline.pop();
+        // if a user has no remaing posts in the timeline (eg simulation is very long it could run out of posts)
+        // we CANT stop generating actions, due to potential reply, repor or quotes that could fill the timeline again
+        if (poped_post) |current_post| {
+            // add the post reference to the historic of the current user
+            try current_user_ptr.*.historic.append(gpa, current_post.post);
+            impressions += 1;
+            
+            if (trace) |writer| {
+                const trace_event = TracePost{
+                    .time = t_clock,
+                    .type = current_event.type,
+                    .event_id = processed_events,
+                    .user_id = current_user_ptr.id,
+                    .post_id = current_post.post.*.id,
+                };
+                // this might be very slow, it could be better to use the lower json api
+                try std.json.Stringify.value(trace_event, .{}, writer);
+                try writer.writeAll("\n");
+            }
+        } 
+
+        
+        switch (current_event.type) {
+            .reply, .repost, .quote => {
+                // if the user had no posts to see, there is nothing to update
+                if (poped_post) |current_post| { 
+                    const propagated_event = TimelineEvent{
+                        .time = t_clock, 
+                        .post = current_post.post,
+                    };
+                    
+                    for (current_user_ptr.*.followers) |follower_ptr| {
+                        try follower_ptr.*.timeline.push(gpa, propagated_event);
+                    }
+
+                    interactions += 1;
+                }
+            },
+            .like => interactions += 1,
+            .nothing => ignored += 1,
+        } 
+    }
+    
+    if (trace) |writer| {
+        try writer.writeAll("]");
+        try writer.flush();
+    }
+    
+    const result = SimResults {
+        .processed_events = processed_events,
+        .duration = t_clock,
+        .total_impressions = impressions,
+        .total_ignored = ignored,
+        .total_interactions = interactions,
+    };
+
+    return result;
 }
 
 
