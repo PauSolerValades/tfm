@@ -95,7 +95,7 @@ pub const Distribution = union(enum) {
             .exp_trunc => |rate_max| try writer.print("ExpTrunc(λ=2/{d:.1})", .{ rate_max.k }),
             .weighted => |pvec| {
                 try writer.writeAll("Weighted(");
-                for (0..pvec.len - 2) |i| {
+                for (0..pvec.len - 1) |i| {
                     try writer.print("{d:.2} ", .{pvec[i]});
                 }
                 try writer.print("{d:.2})", .{pvec[pvec.len-1]});
@@ -151,7 +151,7 @@ pub const SimResults = struct {
         try writer.print("{s: <28}: {d}\n", .{ "Total Impressions (Views)", self.total_impressions });
         try writer.print("{s: <28}: {d}\n", .{ "Total Interactions", self.total_interactions });
         try writer.print("{s: <28}: {d}\n", .{ "Total Ignored (.nothing)", self.total_ignored });
-        try writer.writeAll("------------- Averages -------------\n");
+        try writer.writeAll("------------- Averages ------------\n");
         try writer.print("{s: <28}: {d:.4}\n", .{ "Avg Impressions / User", self.avg_impressions_per_user });
         try writer.print("{s: <28}: {d:.2}%\n", .{ "Global Engagement Rate", self.engagement_rate * 100.0 });
         try writer.print("{s: <28}: {d:.2}\n", .{ "Avg Unread Backlog / User", self.avg_timeline_backlog });

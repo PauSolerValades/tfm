@@ -53,13 +53,14 @@ pub const Post = struct {
     content: []const u8 = "",
 };
 
-
-fn choseActionFromIndex(index: usize) Action {
-    if (index == 0) { return Action.nothing; }
-    else if (index == 1) { return Action.like; }
-    else if (index == 2) { return Action.reply; }
-    else if (index == 3) { return Action.repost; }
-    else { return Action.quote; } 
+fn CreateRandomEvent(user: *User, event_id: u64, t_clock: f64, config: SimConfig, rng: Random) !Event {
+    const float_index: f64 = try config.user_policy.sample(rng);
+    const index: usize = @as(usize, @intFromFloat(float_index));
+    const action: Action = @enumFromInt(index);
+    const event_time = try config.user_inter_action.sample(rng);
+    const event = Event{ .time = t_clock + event_time, .type = action, .user_ptr = user, .id = event_id };
+    
+    return event;
 }
 
 pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: ?*Io.Writer) !SimResults {
@@ -76,12 +77,7 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
 
     // add a first event per every user
     for (users) |*user| {
-        const float_index: f64 = try config.user_policy.sample(rng);
-        const index: usize = @as(usize, @intFromFloat(float_index));
-        const action: Action = @enumFromInt(index);
-        const event_time = try config.user_inter_action.sample(rng);
-        const event = Event{ .time = event_time, .type = action, .user_ptr = user, .id = processed_events};
-        
+        const event = try CreateRandomEvent(user, processed_events, 0, config, rng);
         try hp.push(gpa, event);
         processed_events += 1;
     }
@@ -95,14 +91,10 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
         t_clock = current_event.time;
         
         const current_user_ptr = current_event.user_ptr;
-        
+       
         // generate another event
-        const float_index: f64 = try config.user_policy.sample(rng);
-        const index: usize = @as(usize, @intFromFloat(float_index));
-        const action: Action = @enumFromInt(index);
-        const event_time = try config.user_inter_action.sample(rng);
-        const event = Event{ .time = t_clock + event_time, .type = action, .user_ptr = current_user_ptr, .id = processed_events };
-         
+        const event = try CreateRandomEvent(current_user_ptr, processed_events, t_clock, config, rng);
+
         try hp.push(gpa, event);
         
         // pop seen post from the user associated with the event
