@@ -2,6 +2,7 @@
 /.ipynb-checkpoint
 /*.pdf
 /results
+/img
 
 .zig-cache/
 zig-out/
