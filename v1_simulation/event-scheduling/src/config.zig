@@ -133,9 +133,9 @@ pub const SimResults = struct {
     total_interactions: u64,     // Sum of likes, replies, reposts, quotes
     total_ignored: u64,          // Events where action was .nothing
 
-    // avg_impressions_per_user: f64,
-    // engagement_rate: f64,        // interactions / impressions
-    // avg_timeline_backlog: f64,   // How many unread posts remain in heaps at horizon
+    avg_impressions_per_user: f64,
+    engagement_rate: f64,        // interactions / impressions
+    avg_timeline_backlog: f64,   // How many unread posts remain in heaps at horizon
     
     pub fn format(
         self: SimResults,
@@ -151,10 +151,10 @@ pub const SimResults = struct {
         try writer.print("{s: <28}: {d}\n", .{ "Total Impressions (Views)", self.total_impressions });
         try writer.print("{s: <28}: {d}\n", .{ "Total Interactions", self.total_interactions });
         try writer.print("{s: <28}: {d}\n", .{ "Total Ignored (.nothing)", self.total_ignored });
-        // try writer.writeAll("------------- Averages -------------\n");
-        // try writer.print("{s: <28}: {d:.4}\n", .{ "Avg Impressions / User", self.avg_impressions_per_user });
-        // try writer.print("{s: <28}: {d:.2}%\n", .{ "Global Engagement Rate", self.engagement_rate * 100.0 });
-        // try writer.print("{s: <28}: {d:.2}\n", .{ "Avg Unread Backlog / User", self.avg_timeline_backlog });
+        try writer.writeAll("------------- Averages -------------\n");
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Avg Impressions / User", self.avg_impressions_per_user });
+        try writer.print("{s: <28}: {d:.2}%\n", .{ "Global Engagement Rate", self.engagement_rate * 100.0 });
+        try writer.print("{s: <28}: {d:.2}\n", .{ "Avg Unread Backlog / User", self.avg_timeline_backlog });
         try writer.writeAll("+---------------------------------+\n");
     }
 };

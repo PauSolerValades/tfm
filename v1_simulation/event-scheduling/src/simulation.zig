@@ -155,12 +155,20 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
         try writer.flush();
     }
     
+    var timeline_backlog: usize = 0;
+    for (users) |*user| {
+        timeline_backlog += user.*.timeline.len();
+    }
+
     const result = SimResults {
         .processed_events = processed_events,
         .duration = t_clock,
         .total_impressions = impressions,
         .total_ignored = ignored,
         .total_interactions = interactions,
+        .avg_impressions_per_user = @as(f64, @floatFromInt(impressions)) / @as(f64, @floatFromInt(users.len)),
+        .engagement_rate = @as(f64, @floatFromInt(interactions)) / @as(f64, @floatFromInt(impressions)),
+        .avg_timeline_backlog = @as(f64, @floatFromInt(timeline_backlog)) / @as(f64, @floatFromInt(users.len)),
     };
 
     return result;

@@ -17,6 +17,7 @@ const v1 = simulation.v1;
 
 const Distribution = structs.Distribution;
 const SimConfig = structs.SimConfig;
+
 const User = simulation.User;
 const Post = simulation.Post;
 const TimelineEvent = simulation.TimelineEvent;
