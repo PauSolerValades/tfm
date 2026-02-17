@@ -10,7 +10,7 @@ const RNGError = error{InvalidRange};
 /// Generate a random number of a uniform distribution
 /// in the interval [a,b].
 pub fn runif(comptime T: type, a: T, b: T, rng: Random) !T {
-    if (@typeInfo(T) != .float) @compileError("T must be a float (eg f32 or f64)\n");
+    if (@typeInfo(T) != .float) @compileError("T must be a floating point type\n");
     if (b < a) return RNGError.InvalidRange;
 
     return a + (b - a) * rng.float(T);
@@ -40,7 +40,7 @@ pub fn rtexp(comptime T: type, k: T, rng: Random) T {
 //    return -@log(safe_p) / lambda;
 //}
 pub fn rerlang(comptime T: type, k: usize, lambda: T, rng: Random) T {
-    var sum: f64 = 0.0;
+    var sum: T = 0.0;
     for (0..k) |_| {
         sum += rexp(T, lambda, rng);
     }
@@ -61,7 +61,7 @@ pub fn rhypo(comptime T: type, rates: []const T, rng: Random) T {
 /// probs: probability of choosing branch i
 /// rates: rate of exponential for branch i
 pub fn rhyper(comptime T: type, probs: []const T, rates: []const T, rng: Random) T {
-    const p = rng.float(T); // Roll a dice 0.0 to 1.0
+    const p: T = runif(T, 0, 1, rng) catch unreachable; // Roll a dice 0.0 to 1.0
     var cumulative: T = 0.0;
 
     for (probs, 0..) |prob, i| {
@@ -76,9 +76,9 @@ pub fn rhyper(comptime T: type, probs: []const T, rates: []const T, rng: Random)
 
 /// rweighted: choses an index of the array given it'ss whights
 /// weights: probabilities, this must add to one beforehand
-pub fn rweighted(comptime T: type, weights: []const T, rng: Random) f64 {
+pub fn rweighted(comptime T: type, weights: []const T, rng: Random) T {
     const r = runif(T, 0, 1, rng) catch unreachable;
-    var index: f64 = 0;
+    var index: T = 0;
     var acc: T = 0;
     
     for (weights) |p| {

@@ -9,6 +9,8 @@ const heap = @import("structheap.zig");
 
 
 const Distribution = structs.Distribution;
+const Precision = structs.Precision;
+
 const User = simulation.User;
 const Post = simulation.Post;
 const TimelineEvent = simulation.TimelineEvent;
@@ -24,7 +26,7 @@ const ParsedUser = struct {
     following: []u64,
     followers: []u64,
     authored_post_ids: []u64,
-    policy: [5]f64,
+    policy: [5]Precision,
 };
 
 const ParsedPost = struct {
@@ -73,7 +75,7 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
     for (parsed_data.users, 0..) |parsed_user, i| {
         global_users[i] = User{
             .id = parsed_user.id,
-            .policy = Distribution{ .weighted = &parsed_user.policy },
+            .policy = Distribution(Precision){ .weighted = &parsed_user.policy },
             // .policy = parsed_user.policy,
             .following = try allocator.alloc(*User, parsed_user.following.len), // this just reserves the slice
             .followers = try allocator.alloc(*User, parsed_user.followers.len),

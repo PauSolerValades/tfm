@@ -12,6 +12,8 @@ const Distribution = structs.Distribution;
 const SimResults = structs.SimResults;
 const SimConfig = structs.SimConfig;
 
+const Precision = structs.Precision;
+
 const Action = enum { nothing, like, reply, repost, quote };
 
 pub const Event = struct {
@@ -42,7 +44,7 @@ pub const User = struct {
     timeline: heap.Heap(TimelineEvent),
     posts: []*Post,
     historic: ArrayList(*Post) = .empty,
-    policy: Distribution,
+    policy: Distribution(Precision),
 };
 
 
@@ -54,7 +56,7 @@ pub const Post = struct {
 };
 
 fn CreateRandomEvent(user: *User, event_id: u64, t_clock: f64, config: SimConfig, rng: Random) !Event {
-    const float_index: f64 = try config.user_policy.sample(rng);
+    const float_index: Precision = try config.user_policy.sample(rng);
     const index: usize = @as(usize, @intFromFloat(float_index));
     const action: Action = @enumFromInt(index);
     const event_time = try config.user_inter_action.sample(rng);
@@ -82,9 +84,9 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
         processed_events += 1;
     }
 
-    if (trace) |writer| {
-        try writer.writeAll("[\n");
-    }
+    // if (trace) |writer| {
+    //     try writer.writeAll("[\n");
+    // }
     
     while (t_clock <= config.horizon and hp.len() > 0) : (processed_events += 1) {
         const current_event = hp.pop().?; // we use ? because we are absolutely sure there will be an element
@@ -143,7 +145,7 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
     }
     
     if (trace) |writer| {
-        try writer.writeAll("]");
+        // try writer.writeAll("]");
         try writer.flush();
     }
     

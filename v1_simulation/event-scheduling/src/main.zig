@@ -120,10 +120,6 @@ pub fn main(init: std.process.Init) !void {
    
     try stdout.print("{f}\n", .{results});
     try stdout.print("Time Elapsed: {d} ms\n", .{ elapsedTime.toMilliseconds()});
-    try stdout.print("Total interactions / total impressions: {d:.4}\n", .{ 
-        @as(f64, @floatFromInt(results.total_interactions)) / @as(f64, @floatFromInt(results.total_impressions)) 
-    });
     try stdout.flush();
-
 
 }

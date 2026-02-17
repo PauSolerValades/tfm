@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const exe = b.addExecutable(.{
-        .name = "busstop_event_scheduling_simulation",
+        .name = "bskysim",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
@@ -37,21 +37,22 @@ pub fn build(b: *std.Build) !void {
     const release_step = b.step("release", "Build for Windows (x64), Linux (x64) and Mac (ARM64)");
 
     const targets: []const std.Target.Query = &.{
-        .{ .cpu_arch = .x86_64, .os_tag = .windows },
+        //.{ .cpu_arch = .x86_64, .os_tag = .windows },
         .{ .cpu_arch = .x86_64, .os_tag = .linux, .abi = .gnu },
         .{ .cpu_arch = .aarch64, .os_tag = .macos },
     };
 
     for (targets) |t| {
         const release_exe = b.addExecutable(.{
-            .name = "busstop_simulation",
+            .name = "bskysim",
             .root_module = b.createModule(.{
                 .root_source_file = b.path("src/main.zig"),
                 .target = b.resolveTargetQuery(t),
-                .optimize = .ReleaseFast, // Force optimized builds for release
+                .optimize = .ReleaseSafe, // Force optimized builds for release
             }),
         });
 
+        release_exe.root_module.addImport("eazy_args", eazy_args_mod);
         // This installs the artifact into a subfolder named after the target
         // e.g., zig-out/x86_64-windows/busstop_simulation.exe
         const target_output = b.addInstallArtifact(release_exe, .{
@@ -63,5 +64,6 @@ pub fn build(b: *std.Build) !void {
         });
 
         release_step.dependOn(&target_output.step);
+
     }
 }

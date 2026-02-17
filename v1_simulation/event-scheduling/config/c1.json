@@ -5,6 +5,6 @@
   "user_inter_action": {
     "exponential": 3 
   },
-  "horizon": 100,
+  "horizon": 10000,
   "seed": null 
 }
