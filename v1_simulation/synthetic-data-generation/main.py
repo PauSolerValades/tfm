@@ -9,7 +9,7 @@ import random
 NUM_USERS = 100
 MIN_POSTS = 10
 MAX_POSTS = 50
-SIMULATION_DURATION = 1000  # Time units (e.g., minutes)
+SIMULATION_DURATION = 10000  # Time units (e.g., minutes)
 AVG_FOLLOWING = 10  # On average, a user follows 10 people
 
 

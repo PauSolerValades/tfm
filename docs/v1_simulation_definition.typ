@@ -1,5 +1,7 @@
 #set text(font: "Liberation Sans")
 
+#set par(justify: true)
+
 This document contains the reorganized notes with Esteve's meeting at 10-02-26.
 
 = Definition of the Bare-bones Simulation.
@@ -62,29 +64,33 @@ $ forall u_i, u_j in U : pi_(u_i) = pi_(u_j) = pi $
 
 $ PP (a_(u,i)^t | cal(H)_u ) = PP (a_(u,i)^t ) $
 
-3. Stable User Population: no new users are added in the simulation duration.
-4. Stable Post Population: no new posts are going to be created during the simulation duration.
-5. Algorithm: chronologically followers recommendation.
+3. Structure Stability: the underliying structure of the Graph is not going to change during the simulation.
+- User Population: no new users are added in the simulation duration.
+- Post Population: no new posts are going to be created during the simulation duration.
+- User Relationships: no new following/followers are going to be added.
+
+4. Algorithm: shows followers posts with a chronological (oldest to newest) order.
 
 == Pseudo Algorithm
 
 We can simulate the networks with a Discrete Event Simulation with the Event Scheduling Algorithm. The steps are
 
 1. Create the simulation graph. That is
-- Users and followers.
-- Posts and ownership of those posts with given timesteps.
-- probability vector of a user doing an action.
-2. Set up iter-time distributions: every how often should a user "awake" and do something
-2. Add first event: user actuates over a post.
-3. while (t < horizon)
-4. if user awakes, generate another action
-5. if action is reply, repost or quote, for every user who is following that user, update their timelines. else nothing
-6. Update traces.
+- Users: How many, which followers and following.
+- Posts: Every user will have authored posts.
+- Fill timelines: every user has to see the posts of users that already follow him.
 
+2. Generate $a^k_(u,(i))$ where $(i) in cal(T)_u (0)$ (the first event on the user timeline) $forall u in U$
+
+3. Start the loop (event scheduling algorithm)
+
+4. If the action is a repost, quote or reply append this to the other users timeline.
+
+5. Append every action into the trace. 
 
 == Implementation details
 
-There must be a list with all the posts, and then each user has a min-heap with a index (or a pointer) to the post the user has to see (the oldest one). 
+There must be a list with all the posts, and then each user has a min-heap (?) with a index (or a pointer) to the post the user has to see (the oldest one). 
 
 Each user must have both which posts has he written, which posts has he interacted and what action did the user performed (well, that's the trace)
 
@@ -121,3 +127,18 @@ Let's invoke the other axioms to guarantee that this is a markov chain. Axiom 2 
 As a final note, the User Homogeneity axiom is _not needed_ for the system to be modelized as a Markov chain, but it's needed to find an analytical expression to test the code against.
 
 As a final final note, axiom 5 _i think_ could be rephrased. That is, imagine that user i sees posts ${1,2,3}$, a simple markov chain. Now, assume user $j$ reposts post $3$, and that's why user $i$ is seeing that. Despite this not seeming markovian, i think it still is? State of user $i$ depends on user $j$, that means that the path (current state $cal(S)_t$) depends on the state of the user $j$, so it is still a markov chain with a bigger state which encompasses all users of the social network.
+
+== Correctness & Limitations
+
+The Axioms massively simplify what is a social network in order to provide a verifiable implementation. I want to address two facts which may steer away the simplification too far from being an actual representation.
+
+1. Chronologically sorted or reverse-sorted: most of social network feeds are not given from oldest to newest, but from newest to oldest. Assuming a not reverse chronological order helps not to ask unconfortable questions regarding new timeline added posts (when a newer post should appear in the timeline if you are showing it from newest to oldest) which would clutter a rather simple testing implementation. Additionally, non-reverse order for sure mantains a Markov structure, which I am not sure with reverse chronological order.
+2. Timeline definition: the definition of a timeline uses a _union_ $union$, which implies _non repeated items_ appears in the timeline. A normal implementation would just repeat the items (using a union of lists, not sets) which is not also how a social network feed behaves. There should be a system in place that refloats newer posts if they get popular again with some criteria. This will almost certainily break the Markov assumption for sure unless treated with care.
+
+
+Current known limitations then are:
+1. Reverse chronological order instead of non-reversed.
+2. Timeline showing similar users popular posts a correct good enough times.
+3. Post relation with each other: a reply should show original and replied, as well as a quote, as a single item (so both reply and quote should _create_ a post).
+
+At some point, some quirurgical look into the bluesky algorithm will be needed to properly implement its behaviour.

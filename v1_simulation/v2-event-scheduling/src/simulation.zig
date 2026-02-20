@@ -8,6 +8,9 @@ const Io = std.Io;
 const heap = @import("structheap.zig");
 const structs = @import("config.zig");
 
+const Heap = heap.Heap;
+const Compare = heap.Compare;
+
 const Distribution = structs.Distribution;
 const SimResults = structs.SimResults;
 const SimConfig = structs.SimConfig;
@@ -41,7 +44,7 @@ pub const User = struct {
     id: u64,
     following: []*User,
     followers: []*User,
-    timeline: heap.Heap(TimelineEvent),
+    timeline: Heap(TimelineEvent, Compare.max),
     posts: []*Post,
     historic: ArrayList(*Post) = .empty,
     policy: Distribution(Precision),
@@ -67,7 +70,7 @@ fn CreateRandomEvent(user: *User, event_id: u64, t_clock: f64, config: SimConfig
 
 pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: ?*Io.Writer) !SimResults {
      
-    var hp = heap.Heap(Event).init();
+    var hp = Heap(Event, Compare.min).init();
     defer hp.deinit(gpa);
 
     var processed_events: u64 = 0;
@@ -76,9 +79,6 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
     var impressions: u64 = 0;
     var interactions: u64 = 0;
     var ignored: u64 = 0;
-    
-
-    
 
     // add a first event per every user
     for (users) |*user| {
@@ -87,10 +87,6 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
         processed_events += 1;
     }
 
-    // if (trace) |writer| {
-    //     try writer.writeAll("[\n");
-    // }
-    
     while (t_clock <= config.horizon and hp.len() > 0) : (processed_events += 1) {
         const current_event = hp.pop().?; // we use ? because we are absolutely sure there will be an element
         t_clock = current_event.time;

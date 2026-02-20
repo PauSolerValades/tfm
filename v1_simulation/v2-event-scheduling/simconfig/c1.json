@@ -1,0 +1,13 @@
+{
+  "user_policy": {
+    "weighted": [0.2, 0.2, 0.2, 0.2, 0.2]
+  },
+  "user_inter_action": {
+    "exponential": 3 
+  },
+  "user_inter_session": {
+    "exponential": 60,
+  },
+  "horizon": 10000,
+  "seed": null 
+}
