@@ -1,6 +1,6 @@
 {
   "user_policy": {
-    "weighted": [0.2, 0.2, 0.2, 0.2, 0.2]
+    "weighted": [0.33, 0.33, 0.34]
   },
   "user_inter_action": {
     "exponential": 3 

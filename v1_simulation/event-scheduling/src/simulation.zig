@@ -13,8 +13,9 @@ const SimResults = structs.SimResults;
 const SimConfig = structs.SimConfig;
 
 const Precision = structs.Precision;
-
-const Action = enum { nothing, like, reply, repost, quote };
+ 
+//const Action = enum { nothing, like, repost, reply, quote };
+const Action = enum { nothing, like, repost };
 
 pub const Event = struct {
     time: f64,          // when will the action be due
@@ -78,8 +79,6 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
     var ignored: u64 = 0;
     
 
-    
-
     // add a first event per every user
     for (users) |*user| {
         const event = try CreateRandomEvent(user, processed_events, 0, config, rng);
@@ -127,7 +126,7 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
 
         
         switch (current_event.type) {
-            .reply, .repost, .quote => {
+            .repost => {
                 // if the user had no posts to see, there is nothing to update
                 if (poped_post) |current_post| { 
                     const propagated_event = TimelineEvent{
@@ -142,6 +141,7 @@ pub fn v1(gpa: Allocator, rng: Random, config: SimConfig, users: []User, trace: 
                     interactions += 1;
                 }
             },
+//            .reply, .quote => {}, // do nothing. It never enters here due to never being generated
             .like => interactions += 1,
             .nothing => ignored += 1,
         } 

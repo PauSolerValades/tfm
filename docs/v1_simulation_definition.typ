@@ -2,17 +2,23 @@
 
 #set par(justify: true)
 
-This document contains the reorganized notes with Esteve's meeting at 10-02-26.
+#set heading(numbering: "1.")
 
-= Definition of the Bare-bones Simulation.
+= Introduction
 
-We are going to define the bare-bones simulation. The objective of this is to build an engine which does not take into account _real data_ but only all the concepts that are going to interact and test if the theoretical idea makes sense.
+This document defines the simulations an their necessary mathematical background.
 
-== Scope of v1
+= Context and Problem Definition 
 
-This first version of the engine simulation should be used to verify and stablish a solid implementation basis which are verifiable - that is to be as certain as possible of bug's absence. The document _specification_bluesky_ specifies what features compose the features Bluesky social network has, which we'll describe (hollisticaly) a subset in the following paragraph.
+In this section we define all the features of the network
 
-The main objective of the simulation is to analyze how do posts behave: how far they travel, how many distinct users interact with that post within the timeline and no custom recommender in action. For that, we need to implement *Posts* and the relations with themselves (a post can be a reply of a post). Posts are shown to *users* according to the post creation time and which set of users is the user *following* at a given time. A user can interact with a post in several ways, so we must define *actions* that a user can perform over a post. In the bluesky case those are to like, reply, repost and quote another post. Replying, reposting and quoting will influence user's timeline as well as timelines of all other users, but not linking a post, which will be added to the liked tab.
+The main objective of the simulation is to analyze how do posts behave: how far they travel, how many distinct users interact with that post within the timeline and no custom recommender in action. 
+
+For that, we need to implement *Posts* and the relations with themselves, which are (1) a post can be a reply of another post (2) a post can be reposted (3) a post can quote another post. Actions (1) and (2) needs of (4) a post can be created by a user.
+
+Posts are shown to *users* according to the post creation time in a *timeline* and which set of users is the user *following* at a given time. The order of the post is *reverse-chronological*, so the user will see the posts from newest to oldest.
+
+A user can interact with a post in several ways, so we must define *actions* that a user can perform over a post. In the bluesky case those are to like, reply, repost and quote another post. Replying, reposting and quoting will influence the followers of the user's timeline as well as timelines of all other users.
 
 
 == Notation
@@ -23,9 +29,9 @@ To not lose hours and sanity, I will specify the notation to be used in all the 
 
 A user has several actions to perform in the simulation. We denote the set of possible actions as 
 
-$ cal(A) = { emptyset, "like/"l, "reply/"c, "repost/"r, "quote/"q } $
+$ cal(A) = { emptyset, "like/"l, "reply/"c, "repost/"r, "quote/"q, "create/"n} $
 
-And we denote user $u$ doing action $t$ over item $i$ as:
+And we denote user $u$ doing action $k$ over item $i$ as:
 
 $ a_(u,i)^((k)) in cal(A) $
 
@@ -52,7 +58,17 @@ Regarding evaluation metrics, we have to distinguish between several traces of t
 - Item trajectory: $T_i (t) = {(u, a, tau)  | tau < t } "where" a in {c, r, q}  $. That is a list with all the users who have reposted at given time time $tau$.
 
 
-== Axioms
+
+= Version 1: Bare-bones 
+
+We are going to define the bare-bones simulation. The objective of this is to build an engine which does not take into account _real data_ but only all the concepts that are going to interact and test if the theoretical idea makes sense.
+
+== Scope
+
+This first version of the engine simulation should be used to verify and stablish a solid implementation basis which are verifiable - that is to be as certain as possible of bug's absence. The document _specification_bluesky_ specifies what features compose the features Bluesky social network has, which we'll describe (hollisticaly) a subset in the following paragraph.
+
+
+== Axioms/Assumptions
 
 This lists what the simulations assumes (several simplifications) in order to simplify the implementations. This are not immutable, some of them will be torn down in more advanced versions of the simulation.
 
@@ -69,7 +85,11 @@ $ PP (a_(u,i)^t | cal(H)_u ) = PP (a_(u,i)^t ) $
 - Post Population: no new posts are going to be created during the simulation duration.
 - User Relationships: no new following/followers are going to be added.
 
-4. Algorithm: shows followers posts with a chronological (oldest to newest) order.
+4. Action Subset: The v1 will restric to ignore a post, like it or repost it (no creation).
+
+$ cal(A) = {emptyset, l, r } $
+
+5. Algorithm: shows followers posts with a chronological (oldest to newest) order.
 
 == Pseudo Algorithm
 
@@ -118,7 +138,7 @@ Considering this fact gives us all the nice Markov chain properties, such as, gi
 
 A user $i$ has it's policy defined by $pi_u$, which is essentially a probability distribution which has to add up to 1.
 
-$ pi_u = (pi_emptyset, p_l, p_r, p_q, p_c); sum pi_j = 1 $
+$ pi_u = (pi_emptyset, p_l, p_r); sum pi_j = 1 $
 
 We can do that by axiom 1, which tells us that every user has the same policy.
 
@@ -141,4 +161,63 @@ Current known limitations then are:
 2. Timeline showing similar users popular posts a correct good enough times.
 3. Post relation with each other: a reply should show original and replied, as well as a quote, as a single item (so both reply and quote should _create_ a post).
 
-At some point, some quirurgical look into the bluesky algorithm will be needed to properly implement its behaviour.
+= Version 2: Sessions
+
+The main objective of v2 is to implement a Reverse Chronological Order algorithm (instead of a Chronological Order) with the introduction of user sessions.
+
+A user now can be in two states:
+- active: will see its feed and interact according to a policy $pi_u$.
+- inactive: its offline touching grass :)
+
+A user will switch between those two states periodically or because it has received a notification.
+
+A notification can bring a user back to active with a given probability.
+
+TODO: Introduce posts relationships and behaviours as bluesky does, described in [timeline_bluesky.typ] or move to v3
+
+== Axioms
+
+1. User/Agent Homogeneity: every user is indistinguishable from the other users, they behave absolutely the same, that is, they have the exact same decision policy $pi$.
+
+$ forall u, v in U : pi_(u) = pi_(v) = pi $
+
+2. Action Independence: The agent (user) is memoryless regarding past actions:
+
+$ PP (a_(u,i)^t | cal(H)_u ) = PP (a_(u,i)^t ) $
+
+3. Structure Stability: the underliying structure of the Graph is not going to change during the simulation.
+- User Population: no new users are added in the simulation duration.
+- Post Population: no new posts are going to be created during the simulation duration. *(?)* (if quote and reply is creating a post, then...)
+- User Relationships: no new following/followers are going to be added.
+
+4. Action Subset: The v1 will restric to ignore a post, like it or repost it (no creation).
+
+$ cal(A) = {emptyset, l, r } $
+
+
+5. Sessions: user won't be active during all the simulation. When a user is active, will be able to perform any $a_(u,i) in cal(A)$. The user will be active or inactive periodically.
+
+6. Notifications: when a user interacts with a post of another user, the latter can receive a notification. If its inactive, will come back to active with a given probability. If its active, nothing happens. 
+
+
+7. Algorithm: User $u$ sees its followers posts $Gamma_("out")(u)$ in a reverse-chronological order.
+
+== Implementation details
+
+*Regarding User Heap*
+Now the Heap associated to every user must output in reverse-chronological order, that is, return the element with the largest timestamp instead of the gloabal Heap, which has to do the opposite.
+
+This makes us consider mainly when we have to "empty" the heap of a user, because if a user timeline keeps getting bigger but its not online a lot, could lead to unbound memory growth of `TimelineEvents` structs.
+
+*Regarding Sessions*
+Main problem of the sessions is to make sure an action $a_(u,i)^k$ is performed when the user is inactive. Two ways of taking care of this: 
+- DoD: store another array called mask with 0 or 1 depeding of when the user is online or not and prevent generation of actions if that is set
+- Check everytime with a parameter "change_state", and if the action would be schedulded before that just don't append it.
+
+I think mask would be better because also solves the init problem: generate all the users, generate with the mask who is and isn't active and start the simulation. Options two seems more convoluted.
+
+*Regarding Notificaitons*
+
+Oof.
+
+
