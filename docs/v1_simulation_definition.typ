@@ -37,7 +37,8 @@ $ a_(u,i)^((k)) in cal(A) $
 
 As a user can perform more than one option over a post, we must denote the action as a vector:
 
-$ bold(a)_(u,i) in {0,1}^(|cal(A)| - 1) $
+
+$ bold(a)_(u,i) = (a_(u,i)^emptyset, a_(u,i)^l, a_(u,i)^c, a_(u,i)^r, a_(u,i)^q) in {0,1}^(|cal(A)| - 1) $
 
 where each index corresponds to an action type with the order Like, Reply, Repost and Quote. E.g, $y = [1,0,1,0]$ would be a like and a repost.
 
