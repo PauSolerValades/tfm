@@ -38,14 +38,14 @@ const ParsedPost = struct {
 };
 
 
-pub fn loadJson(allocator: Allocator, io: Io, path: []const u8, comptime T: type) !json.Parsed(T) {
-    const content = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
-
+pub fn loadJson(gpa: Allocator, io: Io, path: []const u8, comptime T: type) !json.Parsed(T) {
+    const content = try std.Io.Dir.cwd().readFileAlloc(io, path, gpa, .unlimited);
+    defer gpa.free(content);
     // We use .ignore_unknown_fields = true so comments or extra metadata in JSON don't crash it
     const options = std.json.ParseOptions{ .ignore_unknown_fields = true };
     
     // parsed_result holds the data AND the arena allocator used for strings/slices in the JSON
-    const parsed_result = try std.json.parseFromSlice(T, allocator, content, options);
+    const parsed_result = try std.json.parseFromSlice(T, gpa, content, options);
     
     return parsed_result;
 }

@@ -60,6 +60,8 @@ pub fn build(b: *std.Build) !void {
         });
 
         release_exe.root_module.addImport("eazy_args", eazy_args_mod);
+        release_exe.root_module.addImport("heap", heap_mod);
+        
         // This installs the artifact into a subfolder named after the target
         // e.g., zig-out/x86_64-windows/busstop_simulation.exe
         const target_output = b.addInstallArtifact(release_exe, .{

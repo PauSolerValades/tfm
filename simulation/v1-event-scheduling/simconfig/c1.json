@@ -5,6 +5,13 @@
   "user_inter_action": {
     "exponential": 3 
   },
+  "propagation_delay": {
+    "constant" : 1
+  },
+  "interaction_delay": { 
+    "constant": 1
+  },
+  "trace_to_file": true,
   "horizon": 10000,
   "seed": null 
 }

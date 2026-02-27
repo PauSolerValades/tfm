@@ -110,6 +110,9 @@ pub const SimConfig = struct {
     seed: ?u64,
     user_policy: Distribution(Precision),
     user_inter_action: Distribution(Precision),
+    propagation_delay: Distribution(f64), // same as below comment
+    interaction_delay: Distribution(f64), // this needs to be with the same precision as time, f64 in the simulation.
+    trace_to_file: bool,                    // should the trace be written to a file?
     horizon: f64,
 
     pub fn format(
@@ -122,6 +125,8 @@ pub const SimConfig = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
+        try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay});
+        try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
         try writer.writeAll("---------\n");
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
     }

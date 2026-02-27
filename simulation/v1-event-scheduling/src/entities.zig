@@ -1,4 +1,5 @@
 const std = @import("std");
+
 const Heap = @import("heap").Heap;
 const Order = std.math.Order;
 const ArrayList = std.ArrayList;
@@ -15,6 +16,7 @@ pub const User = struct {
     timeline: Heap(TimelineEvent, void, compareTimelineEvent),
     posts: []*Post,
     historic: ArrayList(*Post) = .empty,
+    seen_posts_ids: ArrayList(u64) = .empty,
     policy: Distribution(Precision),
 };
 

@@ -8,7 +8,6 @@ const Random = std.Random;
 const eql = std.mem.eql;
 const Io = std.Io;
 
-const heap = @import("structheap.zig");
 const structs = @import("config.zig");
 const simulation = @import("simulation.zig");
 const data = @import("data_loading.zig");
@@ -47,7 +46,7 @@ pub fn main(init: std.process.Init) !void {
     var stderr_writer = Io.File.stderr().writer(init.io, &bufferr);
     const stderr = &stderr_writer.interface;
 
-    const arena = init.arena.allocator();
+    const arena = init.gpa;
     const cwd = Io.Dir.cwd();
 
     var iter = init.minimal.args.iterate(); 
@@ -76,9 +75,20 @@ pub fn main(init: std.process.Init) !void {
     defer loaded_data.deinit(); // this will free the json object and data
 
     const result = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
+    defer {
+        
+        for (result.users) |*user| {
+            user.seen_posts_ids.deinit(arena);
+            user.timeline.deinit(arena);
+            arena.free(user.following);
+            arena.free(user.followers);
+            arena.free(user.posts);
+        }
+        arena.free(result.users);
+        arena.free(result.posts);
+    }
     const users = result.users;
     // const posts = result.posts;
-        
     // as we use an arena, there is no need to specifically free both users and posts.
     
     const seed = if (config.seed) |s| s else blk: {
@@ -107,15 +117,22 @@ pub fn main(init: std.process.Init) !void {
     // buffers to hold the formatted file paths to avoid dynamic memory
     // var trace_path_buffer: [256]u8 = undefined;
     // const traca_path = try std.fmt.bufPrint(&traca_path_buffer, "traca_{d}.txt", .{timestamp});
-    
-    const trace_path = "results/trace.txt"; 
-    var trace_buffer: [64 * 1024]u8 = undefined;
-    const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
-    var trace_writer = trace_file.writer(init.io, &trace_buffer);
-    const twriter = &trace_writer.interface;
+
+    const trace_writer = blk: { 
+        if (config.trace_to_file) {
+            const trace_path = "results/trace.txt"; 
+            var trace_buffer: [64 * 1024]u8 = undefined;
+            const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
+            var trace_file_writer = trace_file.writer(init.io, &trace_buffer);
+            break :blk &trace_file_writer.interface;
+        } else {
+            var discard_writer = std.Io.Writer.Discarding.init(&.{});
+            break :blk &discard_writer.writer;
+        }
+    };
 
     const startTime = Io.Timestamp.now(init.io, .real);
-    const results = try simulation.v1(arena, rng, config, users, twriter);
+    const results = try simulation.v1(arena, rng, config, users, trace_writer);
     const elapsedTime = startTime.untilNow(init.io, .real);
    
     try stdout.print("{f}\n", .{results});
