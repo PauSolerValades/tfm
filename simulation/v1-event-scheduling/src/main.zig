@@ -80,26 +80,23 @@ pub fn main(init: std.process.Init) !void {
     try stdout.flush();
 
     const startTimeWireData = Io.Timestamp.now(init.io, .real);
-    const result = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
+    const simdata = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
     defer {
         
-        for (result.users) |*user| {
+        for (simdata.users) |*user| {
             user.seen_posts_ids.deinit(arena);
             user.timeline.deinit(arena);
             arena.free(user.following);
             arena.free(user.followers);
             arena.free(user.posts);
         }
-        arena.free(result.users);
-        arena.free(result.posts);
+        arena.free(simdata.users);
+        arena.free(simdata.posts);
     }
     const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
+    
     try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});
     try stdout.flush();
-
-    const users = result.users;
-    // const posts = result.posts;
-    // as we use an arena, there is no need to specifically free both users and posts.
     
     const seed = if (config.seed) |s| s else blk: {
         var os_seed: u64 = undefined;
@@ -142,7 +139,7 @@ pub fn main(init: std.process.Init) !void {
     };
 
     const startTime = Io.Timestamp.now(init.io, .real);
-    const results = try simulation.v1(arena, rng, config, users, trace_writer);
+    const results = try simulation.v1(arena, rng, config, simdata, trace_writer);
     const elapsedTime = startTime.untilNow(init.io, .real);
    
     try stdout.print("{f}\n", .{results});

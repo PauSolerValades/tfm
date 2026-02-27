@@ -8,9 +8,9 @@ import sys
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-def propagation_actions_barplot(df: pl.DataFrame) -> None:
+def propagation_actions_barplot(df: pl.DataFrame, n: int) -> None:
 
-    top_posts = df.head(20)
+    top_posts = df.head(n)
 
     plt.figure(figsize=(12, 6))
 
@@ -113,8 +113,9 @@ def main(filename: str) -> None:
 
     print(hist_data)
     
-    propagation_actions_barplot(hist_data)
+    propagation_actions_barplot(hist_data, 20)
     print("Num of impressions genrated")
+    propagation_actions_barplot(hist_data, hist_data.len())
     histogram_power_law(hist_data)
     print("Power law generated")
     top_n_posts_growthrate(4, df, hist_data)

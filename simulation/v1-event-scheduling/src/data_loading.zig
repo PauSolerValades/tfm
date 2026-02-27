@@ -25,15 +25,15 @@ pub const SimData = struct {
 
 // this two structs are exatly what the JSON contains
 const ParsedUser = struct {
-    id: u64,
-    following: []u64,
-    followers: []u64,
-    authored_post_ids: []u64,
+    id: entities.Index,
+    following: []entities.Index,
+    followers: []entities.Index,
+    authored_post_ids: []entities.Index,
     policy: [5]Precision,
 };
 
 const ParsedPost = struct {
-    id: u64,
+    id: entities.Index,
     time: f64,
 };
 
@@ -69,7 +69,7 @@ pub fn loadJson(gpa: Allocator, io: Io, path: []const u8, comptime T: type) !jso
 /// ```
 ///
 /// The following funciton parses this into an slice of users to be used by the simulation
-pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users: []User, posts: []Post }{
+pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !entities.Graph {
     const global_users = try allocator.alloc(User, parsed_data.users.len);
     const global_posts = try allocator.alloc(Post, parsed_data.posts.len);
 
@@ -80,9 +80,9 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
             .id = parsed_user.id,
             .policy = Distribution(Precision){ .weighted = &parsed_user.policy },
             // .policy = parsed_user.policy,
-            .following = try allocator.alloc(*User, parsed_user.following.len), // this just reserves the slice
-            .followers = try allocator.alloc(*User, parsed_user.followers.len),
-            .posts = try allocator.alloc(*Post, parsed_user.authored_post_ids.len),
+            .following = try allocator.alloc(entities.Index, parsed_user.following.len), // this just reserves the slice
+            .followers = try allocator.alloc(entities.Index, parsed_user.followers.len),
+            .posts = try allocator.alloc(entities.Index, parsed_user.authored_post_ids.len),
             .timeline = timeline,
         };
     }
@@ -110,17 +110,17 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
 
         // following
         for (parsed_user.following, 0..) |target_id, j| {
-            current_user.following[j] = &global_users[target_id];
+            current_user.following[j] = target_id;
         }
         
         // followers
         for (parsed_user.followers, 0..) |target_id, j| {
-            current_user.followers[j] = &global_users[target_id];
+            current_user.followers[j] = target_id;
         }
     
         // authored posts
         for (parsed_user.authored_post_ids, 0..) |post_id, j| {
-            current_user.posts[j] = &global_posts[post_id];
+            current_user.posts[j] = post_id;
         }
 
         // For every user we follow, grab their posts and push them to our heap.
@@ -128,16 +128,14 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
             const followed_user_parsed = parsed_data.users[target_id];
             
             for (followed_user_parsed.authored_post_ids) |post_id| {
-                const post_ptr = &global_posts[post_id];
-                
                 try current_user.timeline.add(allocator, TimelineEvent{
-                    .time = post_ptr.time,
-                    .post = post_ptr,
+                    .time = global_posts[post_id].time,
+                    .post_id = post_id,
                 });
             }
         }
     }
 
     // We return the slice of fully wired simulation users!
-    return .{ .users = global_users, .posts = global_posts };
+    return entities.Graph{ .users = global_users, .posts = global_posts };
 }

@@ -8,23 +8,24 @@ const config = @import("config.zig");
 const Distribution = config.Distribution;
 const Precision = config.Precision;
 
+pub const Index: type = u32;
 /// User of the simulation
 pub const User = struct {
-    id: u64,
-    following: []*User,
-    followers: []*User,
+    id: Index,
+    following: []Index,
+    followers: []Index,
     timeline: Heap(TimelineEvent, void, compareTimelineEvent),
-    posts: []*Post,
+    posts: []Index,
     historic: ArrayList(*Post) = .empty,
-    seen_posts_ids: ArrayList(u64) = .empty,
+    seen_posts_ids: ArrayList(Index) = .empty,
     policy: Distribution(Precision),
 };
 
 // Post of the simulation
 pub const Post = struct {
-    id: u64,
+    id: Index,
     time: f64,
-    author: u64,
+    author: Index,
     content: []const u8 = "",
 };
 
@@ -37,7 +38,7 @@ pub const Action = enum { nothing, like, repost };
 pub const Event = struct {
     time: f64,          // when will the action be due
     type: Action,       // what will the user do
-    user_ptr: *User,    // user id
+    user_id: Index,    // user id
     id: u64,            // which action is it
 };
 
@@ -59,9 +60,8 @@ pub const TracePost = struct {
 /// Auxiliar object to contain into the timeline Heap
 /// for easy access to the data.
 pub const TimelineEvent = struct {
-    heap_index: usize = 0,
     time: f64,
-    post: *Post,
+    post_id: Index,
 };
 
 
@@ -70,4 +70,8 @@ pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) O
     return std.math.order(a.time, b.time);
 }
 
+pub const Graph = struct {
+    users: []User,
+    posts: []Post,
+};
 
