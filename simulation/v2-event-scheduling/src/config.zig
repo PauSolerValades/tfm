@@ -110,6 +110,8 @@ pub const SimConfig = struct {
     seed: ?u64,
     user_policy: Distribution(Precision),
     user_inter_action: Distribution(Precision),
+    user_inter_session: Distribution(Precision),
+    init_vacation_ratio: f64, // which proportion of the users start on vacation
     horizon: f64,
 
     pub fn format(

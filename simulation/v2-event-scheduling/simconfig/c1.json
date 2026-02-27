@@ -6,8 +6,9 @@
     "exponential": 3 
   },
   "user_inter_session": {
-    "exponential": 60,
+    "exponential": 60
   },
+  "init_vacation_ratio": 0.5,
   "horizon": 10000,
   "seed": null 
 }

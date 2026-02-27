@@ -1,20 +1,22 @@
 const std = @import("std");
+
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const json = std.json;
 
-const simulation = @import("simulation.zig");
-const structs = @import("config.zig");
-const heap = @import("structheap.zig");
+const Heap = @import("heap").Heap;
 
-const Heap = heap.Heap;
+const structs = @import("config.zig");
+const entities = @import("entities.zig");
 
 const Distribution = structs.Distribution;
 const Precision = structs.Precision;
 
-const User = simulation.User;
-const Post = simulation.Post;
-const TimelineEvent = simulation.TimelineEvent;
+const User = entities.User;
+const Post = entities.Post;
+const TimelineEvent = entities.TimelineEvent;
+
+const compareTimelineEvent = entities.compareTimelineEvent;
 
 pub const SimData = struct {
     posts: []ParsedPost,
@@ -73,6 +75,7 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
 
     // load users into the array
     for (parsed_data.users, 0..) |parsed_user, i| {
+        const timeline: Heap(TimelineEvent, void, compareTimelineEvent) = .empty;
         global_users[i] = User{
             .id = parsed_user.id,
             .policy = Distribution(Precision){ .weighted = &parsed_user.policy },
@@ -80,7 +83,7 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
             .following = try allocator.alloc(*User, parsed_user.following.len), // this just reserves the slice
             .followers = try allocator.alloc(*User, parsed_user.followers.len),
             .posts = try allocator.alloc(*Post, parsed_user.authored_post_ids.len),
-            .timeline = Heap(TimelineEvent, .max).init(),  // init empty heap
+            .timeline = timeline,
         };
     }
     
@@ -127,7 +130,7 @@ pub fn wireSimulation(allocator: Allocator, parsed_data: SimData) !struct{ users
             for (followed_user_parsed.authored_post_ids) |post_id| {
                 const post_ptr = &global_posts[post_id];
                 
-                try current_user.timeline.push(allocator, TimelineEvent{
+                try current_user.timeline.add(allocator, TimelineEvent{
                     .time = post_ptr.time,
                     .post = post_ptr,
                 });

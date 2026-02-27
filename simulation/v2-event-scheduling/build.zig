@@ -25,8 +25,16 @@ pub fn build(b: *std.Build) !void {
     });
 
     const eazy_args_mod = eazy_args_dep.module("eazy_args");
+    
+    const heap_dep = b.dependency("heap", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const heap_mod = heap_dep.module("heap");
 
     exe.root_module.addImport("eazy_args", eazy_args_mod);
+    exe.root_module.addImport("heap", heap_mod);
+    
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }

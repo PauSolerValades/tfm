@@ -6,18 +6,18 @@ import json
 import random
 
 # --- CONFIGURATION ---
-NUM_USERS = 100
-MIN_POSTS = 10
-MAX_POSTS = 50
+NUM_USERS = 100000
+MIN_POSTS = 100
+MAX_POSTS = 500
 SIMULATION_DURATION = 10000  # Time units (e.g., minutes)
-AVG_FOLLOWING = 10  # On average, a user follows 10 people
+AVG_FOLLOWING = 1000  # On average, a user follows 10 people
 
 
 """
 {
   "posts": [
-    { "id": "0_0", "time": 6.56 },
-    { "id": "0_1", "time": 12.86 }
+    { "id": 0, "time": 6.56 },
+    { "id": 1, "time": 12.86 }
   ],
   "users": [
     {
@@ -38,7 +38,7 @@ AVG_FOLLOWING = 10  # On average, a user follows 10 people
 }
 """
 
-def generate_simulation_data(filename="sim_data.json"):
+def generate_simulation_data(filename="data/sim_data_big.json"):
     # The two normalized "tables"
     global_posts = []
     global_users = []

@@ -46,7 +46,7 @@ pub fn main(init: std.process.Init) !void {
     var stderr_writer = Io.File.stderr().writer(init.io, &bufferr);
     const stderr = &stderr_writer.interface;
 
-    const arena = init.gpa;
+    const arena = init.arena.allocator();
     const cwd = Io.Dir.cwd();
 
     var iter = init.minimal.args.iterate(); 
@@ -57,7 +57,7 @@ pub fn main(init: std.process.Init) !void {
         }
         std.process.exit(0);
     };   
-    
+         
     const parsed_config = data.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
@@ -67,13 +67,19 @@ pub fn main(init: std.process.Init) !void {
     
     const config = parsed_config.value;
 
+    const startTimeLoadData = Io.Timestamp.now(init.io, .real);
     const loaded_data = data.loadJson(arena, init.io, args.data, SimData) catch |err| {
         try stderr.print("Error parsing data JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
     };
     defer loaded_data.deinit(); // this will free the json object and data
+    const elapsedTimeLoadData = startTimeLoadData.untilNow(init.io, .real);
+    
+    try stdout.print("Time Elapsed Loading Data: {d} ms\n", .{ elapsedTimeLoadData.toMilliseconds()});
+    try stdout.flush();
 
+    const startTimeWireData = Io.Timestamp.now(init.io, .real);
     const result = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
     defer {
         
@@ -87,6 +93,10 @@ pub fn main(init: std.process.Init) !void {
         arena.free(result.users);
         arena.free(result.posts);
     }
+    const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
+    try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});
+    try stdout.flush();
+
     const users = result.users;
     // const posts = result.posts;
     // as we use an arena, there is no need to specifically free both users and posts.

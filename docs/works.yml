@@ -1,0 +1,26 @@
+
+andriamampianina-2022-graph:
+  type: article
+  title: "Graph data temporal evolutions: From conceptual modelling to implementation"
+  author: ["Andriamampianina, Landy", "Ravat, Franck", "Song, Jiefu", "Vallès-Parlangeau, Nathalie"]
+  date: 2022
+  journal: "Data & Knowledge Engineering"
+  volume: 139
+  pages: 102017
+  doi: "10.1016/j.datak.2022.102017"
+  url: "https://www.sciencedirect.com/science/article/pii/S0169023X22000271"
+  date-accessed: 2026-02-24
+  keywords: ["Data models", "Temporal graphs", "Query", "Neo4j"]
+
+andriamampianina-2025-selective:
+  type: chapter
+  title: "Selective Evolving Centrality in Temporal Heterogeneous Graphs"
+  author: ["Andriamampianina, Landy", "Ravat, Franck", "Song, Jiefu", "Vallès-Parlangeau, Nathalie", "Wang, Yanpei"]
+  date: 2025
+  pages: 596–608
+  doi: "10.48786/edbt.2025.50"
+  date-accessed: 2026-02-24
+  parent:
+    type: proceedings
+    title: "Proceedings of the 28th International Conference on Extending Database Technology (EDBT)"
+    location: "Barcelona, Spain"

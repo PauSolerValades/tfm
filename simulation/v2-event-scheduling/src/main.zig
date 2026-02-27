@@ -8,7 +8,6 @@ const Random = std.Random;
 const eql = std.mem.eql;
 const Io = std.Io;
 
-const heap = @import("structheap.zig");
 const structs = @import("config.zig");
 const simulation = @import("simulation.zig");
 const data = @import("data_loading.zig");
@@ -28,8 +27,8 @@ const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
 
 const def = .{
-    .name = "v2",
-    .description = "BSKY sim",
+    .name = "v1",
+    .description = "BSKY sim v1",
     .required = .{
         Arg([]const u8, "config", "Configuration file for the simulation"),
         Arg([]const u8, "data", "Data file containing the network definition"),

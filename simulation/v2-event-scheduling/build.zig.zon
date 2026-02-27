@@ -36,6 +36,10 @@
             .url = "git+https://github.com/PauSolerValades/eazy-args#2dec3dee160ea3d45741642afaa44fcd842ac24e",
             .hash = "eazy_args-0.0.1-c374-AvkAQCviueeSE5eQVQC95r27iTEAxZYp3Kg_7wc",
         },
+        .heap = .{
+            .url = "git+https://github.com/PauSolerValades/heap#324312b8504d90c51af10d88f7f9139d3ebddf84",
+            .hash = "heap-0.0.0-zf0BENeSAAAJ1D6aZx87dDh_Tf_pMZf3Jb2ikdERW4wE",
+        },
     },
     .paths = .{
         "build.zig",
