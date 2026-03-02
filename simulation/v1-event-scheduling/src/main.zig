@@ -46,7 +46,8 @@ pub fn main(init: std.process.Init) !void {
     var stderr_writer = Io.File.stderr().writer(init.io, &bufferr);
     const stderr = &stderr_writer.interface;
 
-    const arena = init.arena.allocator();
+    const gpa = init.gpa;
+    //const arena = init.arena.allocator();
     const cwd = Io.Dir.cwd();
 
     var iter = init.minimal.args.iterate(); 
@@ -57,7 +58,7 @@ pub fn main(init: std.process.Init) !void {
         }
         std.process.exit(0);
     };   
-         
+
     const parsed_config = data.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();

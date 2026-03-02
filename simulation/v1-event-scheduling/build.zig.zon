@@ -40,6 +40,10 @@
             .url = "git+https://github.com/PauSolerValades/heap#324312b8504d90c51af10d88f7f9139d3ebddf84",
             .hash = "heap-0.0.0-zf0BENeSAAAJ1D6aZx87dDh_Tf_pMZf3Jb2ikdERW4wE",
         },
+        .distributions = .{
+            .url = "git+https://github.com/PauSolerValades/distributions.git#420e8a9b693c002298e6cd08c2842487d6f6412f",
+            .hash = "distributions-0.1.0-oWxIHPmaAAAFVfqo_O5g71RmaxoWkPUWOL87toYTVcYi",
+        },
     },
     .paths = .{
         "build.zig",

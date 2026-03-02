@@ -28,11 +28,9 @@ const Index = entities.Index;
 const Graph = entities.Graph;
 
 fn CreateRandomEvent(user_id: Index, event_id: u64, t_clock: f64, simconf: SimConfig, rng: Random) !Event {
-    const float_index: Precision = try simconf.user_policy.sample(rng);
-    const index: usize = @as(usize, @intFromFloat(float_index));
-    const action: Action = @enumFromInt(index);
-    const event_time = try simconf.user_inter_action.sample(rng);
-    const interaction_delay = try simconf.interaction_delay.sample(rng);
+    const action: Action = simconf.user_policy.sample(rng);
+    const event_time = simconf.user_inter_action.sample(rng);
+    const interaction_delay = simconf.interaction_delay.sample(rng);
     const event = Event{ 
         .time = t_clock + event_time + interaction_delay, 
         .type = action, 
@@ -116,7 +114,7 @@ pub fn v1(gpa: Allocator, rng: Random, simconf: SimConfig, data: Graph, trace: *
                         const post_id: Index = current_post.post_id;
                         if (std.mem.indexOfScalar(@TypeOf(post_id), users[follower].seen_posts_ids.items, post_id) == null and 
                             posts[post_id].author != users[follower].id) {
-                            const propagation_delay = try simconf.propagation_delay.sample(rng);
+                            const propagation_delay = simconf.propagation_delay.sample(rng);
                             const propagated_event = TimelineEvent{
                                 .time = t_clock + propagation_delay, 
                                 .post_id = current_post.post_id, //this is an ID now

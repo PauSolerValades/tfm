@@ -1,11 +1,15 @@
 const std = @import("std");
 
 const Heap = @import("heap").Heap;
-const Order = std.math.Order;
-const ArrayList = std.ArrayList;
+const dist = @import("distributions");
+
+const Categorical = dist.Categorical;
+
 const config = @import("config.zig");
 
-const Distribution = config.Distribution;
+const Order = std.math.Order;
+const ArrayList = std.ArrayList;
+
 const Precision = config.Precision;
 
 pub const Index: type = u32;
@@ -18,7 +22,7 @@ pub const User = struct {
     posts: []Index,
     historic: ArrayList(*Post) = .empty,
     seen_posts_ids: ArrayList(Index) = .empty,
-    policy: Distribution(Precision),
+    policy: Categorical(Precision, Action),
 };
 
 // Post of the simulation

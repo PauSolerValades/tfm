@@ -31,8 +31,16 @@ pub fn build(b: *std.Build) !void {
     });
     const heap_mod = heap_dep.module("heap");
 
+    const distributions_dep = b.dependency("distributions", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const distributions_mod = distributions_dep.module("distributions");
+
+
     exe.root_module.addImport("eazy_args", eazy_args_mod);
     exe.root_module.addImport("heap", heap_mod);
+    exe.root_module.addImport("distributions", distributions_mod);
 
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -61,6 +69,7 @@ pub fn build(b: *std.Build) !void {
 
         release_exe.root_module.addImport("eazy_args", eazy_args_mod);
         release_exe.root_module.addImport("heap", heap_mod);
+        release_exe.root_module.addImport("distributions", distributions_mod);
         
         // This installs the artifact into a subfolder named after the target
         // e.g., zig-out/x86_64-windows/busstop_simulation.exe
