@@ -6,11 +6,11 @@ import json
 import random
 
 # --- CONFIGURATION ---
-NUM_USERS = 100000
+NUM_USERS = 1000
 MIN_POSTS = 100
 MAX_POSTS = 500
 SIMULATION_DURATION = 10000  # Time units (e.g., minutes)
-AVG_FOLLOWING = 1000  # On average, a user follows 10 people
+AVG_FOLLOWING = 50  # On average, a user follows 10 people
 
 
 """
@@ -38,7 +38,7 @@ AVG_FOLLOWING = 1000  # On average, a user follows 10 people
 }
 """
 
-def generate_simulation_data(filename="data/sim_data_big.json"):
+def generate_simulation_data(filename="data/sim_data_mid.json"):
     # The two normalized "tables"
     global_posts = []
     global_users = []
@@ -50,7 +50,7 @@ def generate_simulation_data(filename="data/sim_data_big.json"):
     for user_id in range(NUM_USERS):
         global_users.append({
             "id": user_id,
-            "policy": [0.2, 0.2, 0.2, 0.2, 0.2],
+            "policy": [0.33, 0.33, 0.34],
             "following": [],
             "followers": [], 
             "authored_post_ids": [] # Will store integers now

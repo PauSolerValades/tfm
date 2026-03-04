@@ -46,6 +46,7 @@ pub fn main(init: std.process.Init) !void {
     var stderr_writer = Io.File.stderr().writer(init.io, &bufferr);
     const stderr = &stderr_writer.interface;
 
+    // const gpa = init.gpa;
     const arena = init.arena.allocator();
     const cwd = Io.Dir.cwd();
 
@@ -57,7 +58,7 @@ pub fn main(init: std.process.Init) !void {
         }
         std.process.exit(0);
     };   
-    
+
     const parsed_config = data.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
@@ -67,18 +68,36 @@ pub fn main(init: std.process.Init) !void {
     
     const config = parsed_config.value;
 
+    const startTimeLoadData = Io.Timestamp.now(init.io, .real);
     const loaded_data = data.loadJson(arena, init.io, args.data, SimData) catch |err| {
         try stderr.print("Error parsing data JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
     };
     defer loaded_data.deinit(); // this will free the json object and data
+    const elapsedTimeLoadData = startTimeLoadData.untilNow(init.io, .real);
+    
+    try stdout.print("Time Elapsed Loading Data: {d} ms\n", .{ elapsedTimeLoadData.toMilliseconds()});
+    try stdout.flush();
 
-    const result = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
-    const users = result.users;
-    // const posts = result.posts;
+    const startTimeWireData = Io.Timestamp.now(init.io, .real);
+    const simdata = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
+    defer {
         
-    // as we use an arena, there is no need to specifically free both users and posts.
+        for (simdata.users) |*user| {
+            user.seen_posts_ids.deinit(arena);
+            user.timeline.deinit(arena);
+            arena.free(user.following);
+            arena.free(user.followers);
+            arena.free(user.posts);
+        }
+        arena.free(simdata.users);
+        arena.free(simdata.posts);
+    }
+    const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
+    
+    try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});
+    try stdout.flush();
     
     const seed = if (config.seed) |s| s else blk: {
         var os_seed: u64 = undefined;
@@ -106,15 +125,22 @@ pub fn main(init: std.process.Init) !void {
     // buffers to hold the formatted file paths to avoid dynamic memory
     // var trace_path_buffer: [256]u8 = undefined;
     // const traca_path = try std.fmt.bufPrint(&traca_path_buffer, "traca_{d}.txt", .{timestamp});
-    
-    const trace_path = "results/trace.txt"; 
-    var trace_buffer: [64 * 1024]u8 = undefined;
-    const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
-    var trace_writer = trace_file.writer(init.io, &trace_buffer);
-    const twriter = &trace_writer.interface;
+
+    const trace_writer = blk: { 
+        if (config.trace_to_file) {
+            const trace_path = "results/trace.txt"; 
+            var trace_buffer: [64 * 1024]u8 = undefined;
+            const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
+            var trace_file_writer = trace_file.writer(init.io, &trace_buffer);
+            break :blk &trace_file_writer.interface;
+        } else {
+            var discard_writer = std.Io.Writer.Discarding.init(&.{});
+            break :blk &discard_writer.writer;
+        }
+    };
 
     const startTime = Io.Timestamp.now(init.io, .real);
-    const results = try simulation.v1(arena, rng, config, users, twriter);
+    const results = try simulation.v1(arena, rng, config, simdata, trace_writer);
     const elapsedTime = startTime.untilNow(init.io, .real);
    
     try stdout.print("{f}\n", .{results});

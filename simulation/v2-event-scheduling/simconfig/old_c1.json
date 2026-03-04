@@ -1,0 +1,14 @@
+{
+  "user_policy": {
+    "weighted": [0.33, 0.33, 0.34]
+  },
+  "user_inter_action": {
+    "exponential": 3 
+  },
+  "user_inter_session": {
+    "exponential": 60
+  },
+  "init_vacation_ratio": 0.5,
+  "horizon": 10000,
+  "seed": null 
+}

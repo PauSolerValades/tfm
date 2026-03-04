@@ -37,8 +37,12 @@
             .hash = "eazy_args-0.0.1-c374-AvkAQCviueeSE5eQVQC95r27iTEAxZYp3Kg_7wc",
         },
         .heap = .{
-            .url = "git+https://github.com/PauSolerValades/heap#324312b8504d90c51af10d88f7f9139d3ebddf84",
+            .url = "git+https://github.com/PauSolerValades/heap.git#324312b8504d90c51af10d88f7f9139d3ebddf84",
             .hash = "heap-0.0.0-zf0BENeSAAAJ1D6aZx87dDh_Tf_pMZf3Jb2ikdERW4wE",
+        },
+        .distributions = .{
+            .url = "git+https://github.com/PauSolerValades/distributions.git#58edc3bbb6a957caa1019f157440a63bf551ad1e",
+            .hash = "distributions-0.1.0-oWxIHM-bAADNXfD-K1cCghzJMHXIWXL4mhp7YvD7Fu3e",
         },
     },
     .paths = .{

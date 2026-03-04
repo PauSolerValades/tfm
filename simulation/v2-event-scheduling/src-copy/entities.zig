@@ -1,49 +1,41 @@
 const std = @import("std");
-
 const Heap = @import("heap").Heap;
-const dist = @import("distributions");
-
-const Categorical = dist.Categorical;
-
-const config = @import("config.zig");
-
 const Order = std.math.Order;
 const ArrayList = std.ArrayList;
+const config = @import("config.zig");
 
+const Distribution = config.Distribution;
 const Precision = config.Precision;
 
-pub const Index: type = u32;
 /// User of the simulation
 pub const User = struct {
-    id: Index,
-    following: []Index,
-    followers: []Index,
+    id: u64,
+    following: []*User,
+    followers: []*User,
     timeline: Heap(TimelineEvent, void, compareTimelineEvent),
-    posts: []Index,
+    posts: []*Post,
     historic: ArrayList(*Post) = .empty,
-    seen_posts_ids: ArrayList(Index) = .empty,
-    policy: Categorical(Precision, Action),
+    policy: Distribution(Precision),
 };
 
 // Post of the simulation
 pub const Post = struct {
-    id: Index,
+    id: u64,
     time: f64,
-    author: Index,
+    author: u64,
     content: []const u8 = "",
 };
 
-/// Idea: distinguish action from a user over a post form a 
-/// user to user action, or just a vacation action
-pub const Action = enum { nothing, like, repost, reply, start_session, end_session };
-// pub const Status = enum { online, offline }; 
-// pub EventAction = union { Action, Status };
-//
+
+/// all the actions performable in the simulaiton by a user
+//const Action = enum { nothing, like, repost, reply, quote };
+pub const Action = enum { nothing, like, repost, go_online, go_offline};
+
 /// Simulation Event 
 pub const Event = struct {
     time: f64,          // when will the action be due
     type: Action,       // what will the user do
-    user_id: Index,     // user id
+    user_ptr: *User,    // user id
     id: u64,            // which action is it
 };
 
@@ -65,18 +57,16 @@ pub const TracePost = struct {
 /// Auxiliar object to contain into the timeline Heap
 /// for easy access to the data.
 pub const TimelineEvent = struct {
+    heap_index: usize = 0,
     time: f64,
-    post_id: Index,
+    post: *Post,
 };
 
 
+/// This is for th timelines, it will output from bigger to smaller
 pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) Order {
     _ = context;
-    return std.math.order(a.time, b.time);
+    return std.math.order(b.time, a.time);
 }
 
-pub const Graph = struct {
-    users: []User,
-    posts: []Post,
-};
 

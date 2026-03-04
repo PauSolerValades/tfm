@@ -23,7 +23,7 @@ def propagation_actions_barplot(df: pl.DataFrame, n: int) -> None:
         label='Total Actions'
     )
 
-    plt.title("Top 20 Most Viral Posts", fontsize=16)
+    plt.title(f"Top {n} Most Viral Posts", fontsize=16)
     plt.xlabel("Post ID", fontsize=12)
     plt.ylabel("Number of Actions", fontsize=12)
 
@@ -32,7 +32,7 @@ def propagation_actions_barplot(df: pl.DataFrame, n: int) -> None:
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("img/top_posts.png", dpi=300)
+    plt.savefig(f"img/top_posts_{n}.png", dpi=300)
     plt.close()
 
 def histogram_power_law(df: pl.DataFrame) -> None:
@@ -115,7 +115,7 @@ def main(filename: str) -> None:
     
     propagation_actions_barplot(hist_data, 20)
     print("Num of impressions genrated")
-    propagation_actions_barplot(hist_data, hist_data.len())
+    propagation_actions_barplot(hist_data, 2000)
     histogram_power_law(hist_data)
     print("Power law generated")
     top_n_posts_growthrate(4, df, hist_data)
