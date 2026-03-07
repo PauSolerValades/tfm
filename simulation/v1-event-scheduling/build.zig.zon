@@ -41,8 +41,8 @@
             .hash = "heap-0.0.0-zf0BENeSAAAJ1D6aZx87dDh_Tf_pMZf3Jb2ikdERW4wE",
         },
         .distributions = .{
-            .url = "git+https://github.com/PauSolerValades/distributions.git#420e8a9b693c002298e6cd08c2842487d6f6412f",
-            .hash = "distributions-0.1.0-oWxIHPmaAAAFVfqo_O5g71RmaxoWkPUWOL87toYTVcYi",
+            .url = "git+https://github.com/PauSolerValades/distributions.git#daba534557474953de487638b4687cc521689b1f",
+            .hash = "distributions-0.1.0-oWxIHKcdAQDRBNNRl72_djpec-K1Ykzavl5QNKi01LHL",
         },
     },
     .paths = .{

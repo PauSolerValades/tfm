@@ -12,11 +12,14 @@ const entities = @import("entities.zig");
 const ContDist = stats.ContinuousDistribution;
 const DiscDist = stats.DiscreteDistribution;
 
+const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
+pub const SimConfig = if(is_v1) SimConfigV1 else SimConfigV2;
+
 // accepts just f64 and f32 due to rng implementaiton
 pub const Precision = f32;
 
 
-pub const SimConfig = struct {
+const SimConfigV1 = struct {
     seed: ?u64,
     user_policy: DiscDist(Precision, entities.Action),       // probability of available actions of the user
     user_inter_action: ContDist(Precision), // time between a user two actions
@@ -26,7 +29,7 @@ pub const SimConfig = struct {
     horizon: f64,                           // duration of the simulation
 
     pub fn format(
-        self: SimConfig,
+        self: SimConfigV1,
         writer: *std.Io.Writer,
     ) !void {
         try writer.writeAll("\n");
@@ -41,6 +44,54 @@ pub const SimConfig = struct {
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
     }
 };
+
+const SimConfigV2 = struct {
+    seed: ?u64,
+    horizon: f64,                           // duration of the simulation
+    // user related actions
+    user_policy: DiscDist(Precision, entities.Action),   // probability of available actions of the user
+    user_inter_action: ContDist(Precision),     // time between a user two actions
+    // delays on posts transmissions
+    propagation_delay: ContDist(f64),           // time between an action over a post and showing up followers timeline
+    interaction_delay: ContDist(f64),           // time between 
+    // session configuration                                        
+    init_vacation_ratio: Precision,             // which proportion of the users start on vacation
+    session_duration: ContDist(f64),           // duration of the current session
+    user_inter_session: ContDist(f64),         // time between sessions
+    // notification stuff
+    // if you receive a notification when online, go see that reply 
+    // if you receive a notification when online, which chance to go online (and see that reply): Precision             
+    // if seeing a reply to a post, chance to read the the thread from the beginning: ???? no friking clue
+    // misc config
+    trace_to_file: bool,                        // true is trace is written to a file. False not
+
+    pub fn format(
+        self: SimConfigV2,
+        writer: *std.Io.Writer,
+    ) !void {
+        try writer.writeAll("\n");
+        try writer.writeAll("+--------------------------+\n");
+        try writer.print("| SIMULATION CONFIGURATION |\n", .{});
+        try writer.writeAll("+--------------------------+\n");
+       
+        try writer.writeAll("--- User Actions Config ---\n");
+        try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
+       
+        try writer.writeAll("--- Post Propagation Delays ---\n");
+        try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay});
+        try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
+        
+        try writer.writeAll("--- User Sessions (Vacations) ---\n");
+        try writer.print("{s: <24}:  {d}\n", .{ "% of user starting on vacation", self.init_vacation_ratio});
+        try writer.print("{s: <24}:  {f}\n", .{ "Vacation Duration", self.session_duration});
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between Vacations", self.user_inter_session});
+        try writer.writeAll("---------\n");
+        try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
+    }
+};
+
+
 
 pub const SimResults = struct {
     duration: f64,

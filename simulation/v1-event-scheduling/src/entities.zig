@@ -13,15 +13,12 @@ const ArrayList = std.ArrayList;
 const Precision = config.Precision;
 
 pub const Index: type = u32;
+
 /// User of the simulation
 pub const User = struct {
     id: Index,
-    following: []Index,
-    followers: []Index,
-    timeline: Heap(TimelineEvent, void, compareTimelineEvent),
-    posts: []Index,
-    historic: ArrayList(*Post) = .empty,
-    seen_posts_ids: ArrayList(Index) = .empty,
+    follower_start: Index,
+    follower_count: Index, 
     policy: Categorical(Precision, Action),
 };
 
@@ -30,19 +27,18 @@ pub const Post = struct {
     id: Index,
     time: f64,
     author: Index,
-    content: []const u8 = "",
 };
 
 
 /// all the actions performable in the simulaiton by a user
 //const Action = enum { nothing, like, repost, reply, quote };
-pub const Action = enum { nothing, like, repost };
+pub const Action = enum { ignore, like, repost, start_session, end_session };
 
 /// Simulation Event 
 pub const Event = struct {
     time: f64,          // when will the action be due
     type: Action,       // what will the user do
-    user_id: Index,    // user id
+    user_id: Index,     // user id
     id: u64,            // which action is it
 };
 
@@ -74,8 +70,9 @@ pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) O
     return std.math.order(a.time, b.time);
 }
 
-pub const Graph = struct {
-    users: []User,
-    posts: []Post,
-};
+
+pub fn compareTimelineEventOposite(context: void, a: TimelineEvent, b: TimelineEvent) Order {
+    _ = context;
+    return std.math.order(b.time, a.time);
+}
 

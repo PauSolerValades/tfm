@@ -1,6 +1,4 @@
 const std = @import("std");
-const argz = @import("eazy_args");
-
 const json = std.json;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
@@ -8,10 +6,17 @@ const Random = std.Random;
 const eql = std.mem.eql;
 const Io = std.Io;
 
-const structs = @import("config.zig");
-const simulation = @import("simulation.zig");
-const data = @import("data_loading.zig");
 
+const argz = @import("eazy_args"); 
+const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
+
+const structs = @import("config.zig");
+
+const simulation = @import("simulation.zig");
+const simulate = if (is_v1) simulation.v1 else simulation.v2;
+
+const loader = @import("json_loading.zig");
+const gn = @import("graph_network.zig");
 const v1 = simulation.v1;
 
 const Distribution = structs.Distribution;
@@ -20,8 +25,6 @@ const SimConfig = structs.SimConfig;
 const User = simulation.User;
 const Post = simulation.Post;
 const TimelineEvent = simulation.TimelineEvent;
-
-const SimData = data.SimData;
 
 const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
@@ -59,7 +62,7 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };   
 
-    const parsed_config = data.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
+    const parsed_config = loader.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
@@ -69,7 +72,8 @@ pub fn main(init: std.process.Init) !void {
     const config = parsed_config.value;
 
     const startTimeLoadData = Io.Timestamp.now(init.io, .real);
-    const loaded_data = data.loadJson(arena, init.io, args.data, SimData) catch |err| {
+    // const loaded_data = try loader.loadJson(arena, init.io, args.data, loader.NetworkJson);
+    const loaded_data = loader.loadJson(arena, init.io, args.data, loader.NetworkJson) catch |err| {
         try stderr.print("Error parsing data JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
@@ -81,19 +85,7 @@ pub fn main(init: std.process.Init) !void {
     try stdout.flush();
 
     const startTimeWireData = Io.Timestamp.now(init.io, .real);
-    const simdata = try data.wireSimulation(arena, loaded_data.value); // this is an anonymous struct, which will make easy to free the data
-    defer {
-        
-        for (simdata.users) |*user| {
-            user.seen_posts_ids.deinit(arena);
-            user.timeline.deinit(arena);
-            arena.free(user.following);
-            arena.free(user.followers);
-            arena.free(user.posts);
-        }
-        arena.free(simdata.users);
-        arena.free(simdata.posts);
-    }
+    var graph: gn.StaticNetworkGraph = try .create(arena, loaded_data.value);
     const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
     
     try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});
@@ -140,7 +132,7 @@ pub fn main(init: std.process.Init) !void {
     };
 
     const startTime = Io.Timestamp.now(init.io, .real);
-    const results = try simulation.v1(arena, rng, config, simdata, trace_writer);
+    const results = try simulate(arena, rng, config, &graph, trace_writer);
     const elapsedTime = startTime.untilNow(init.io, .real);
    
     try stdout.print("{f}\n", .{results});
