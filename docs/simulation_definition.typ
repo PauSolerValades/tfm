@@ -39,33 +39,33 @@ This section defines a unified notation to model the problem as a Time-Evolving 
 - Time-Evolving: the topology of the graph changes with time (a user can repost a post)
 
 
-Let's define the entities at play $E = cal(U) union cal(I)$, where $cal(U)$ is the set of Users and $cal(I)$ is the set of Posts (Items). 
+Let's define the entities at play $V = cal(U) union cal(I)$, where $cal(U)$ is the set of Users and $cal(I)$ is the set of Posts (Items). 
 - The simulation contains $N in NN$ users, so $|cal(U)| = N$.
 - The simulation contains $M in NN$ posts, so $|cal(I)| = M$.
 
+*Definition* $V$ will be the nodes of the social network graph. It will be a heterogeneous graph, as there are two types of nodes, which we called entities.
+
 === Relationships Between Entities
 
-Every event that happens during the simulation is an edge of the graph, that is, there are different types of edges, according to the performed action, which in turn changes according the entities involved.
+Every event that happens during the simulation is an edge of the graph, that is, there are different types of edges, according to the performed action, which in turn changes according the entities involved. To define and edge, we first have to formalize the relationships between entities. We categorize those relationships $cal(R)$ into three distinct relationship sets:
 
-
-*Definition*: An edge is a tuple $e = (v_"src", v_"dst", a, t) in cal(E)$ representing an interaction originating from a source node $v_"source"$, targeting a destination node $v_"destination"$, of a specific type, at time $t$.
-
-We categorize the edge types ($cal(R)$) into three distinct relationship sets:
-
-*User-to-User Actions* ($cal(R)_(cal(U) cal(U))$): This actions must be performed by a user over other user. We'll call this actions $ cal(R)_(cal(U) cal(U)) = { "follow", "mute", "block", "unfollow" } $
+*User-to-User Actions* ($cal(R)_(cal(U) cal(U))$): These actions must be performed by a user over other user. We'll call this actions $ cal(R)_(cal(U) cal(U)) = { "follow", "mute", "block", "unfollow" } $
 
 All edges added by actions in $cal(R)$ are just one edge, as this one: $(u_1, u_2, a_(u,u), t) "where" a_(u,u) in cal(R)_(cal(U), cal(U))$.
 
-* User-to-Post Edges* ($cal(R)_(cal(U) cal(I))$): This actions are must be performed by a user over a post. Actions include $ cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "reply", "quote", "ignore" } $
+*User-to-Post Edges* ($cal(R)_(cal(U) cal(I))$): These actions are must be performed by a user over a post. Actions include $ cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "reply", "quote", "ignore" } $
 
 All edges added by actions in $cal(R)$ are just one edge, as this one: $(u, i, a_(u,i), t) "where" a_(u,i) in cal(R)_(cal(U), cal(I))$.
 
-*Post-to-Post Edges* ($cal(R)_(cal(I) cal(I))$): This actions must be performed by a user over a post $i$ but on the contrary as the user to posts actions, this involve the creation of the other two relationships. The actions are 
+*Post-to-Post Edges* ($cal(R)_(cal(I) cal(I))$): These actions must be performed by a user over a post $i$ but on the contrary as the user to posts actions, this involve the creation of the other two relationships. The actions are 
 
 $ cal(R)_(cal(I) cal(I)) = { "replies", "quotes" } $
 
 - Replies: If the action performed by $u in cal(U)$ over $i in cal(I)$ is a reply, the following edges must be added to the graph, at the same time $t$: ${(u, i_r, "create", t), (i_r, i, "replies", t)}$.
 - Quote: If the action performed by $u in cal(U)$ over $i in cal(I)$ is a quote, the following edges must be added to the graph: ${(u, i_r, "create", t), (i_r, i, "quotes", t)}$
+
+*Definition*: An edge is a tuple $e = (v_"src", v_"dst", a, t) in cal(E)$ representing an interaction originating from a source node $v_"source"$, targeting a destination node $v_"destination"$, of a specific relationship $a in cal(R)$, at time $t$.
+
 
 === Graph Neighborhoods
 
@@ -175,7 +175,7 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 #text(blue)[
 Under the axioms defined in @sec:axioms, we can characterize the underlying model as a Continuous-Time Markov Chain (CTMC) where interarrival times of actions follow an exponential distribution. *Move to implementation*]. However, to formally prove the correctness of the Simulation Engine's state transitions and simplify analytical verification, we evaluate its Embedded Discrete-Time Markov Chain (DTMC), commonly known as the jump chain. [This is the pdf `embbedded_markov.pdf`, ask for a better source.]
 
-For this to be a Markov chain, we must ensure the memoryless property is fulfilled, where considering an states $s_0, ..., s_t$ can be expressed as follows:
+For this to be a Markov chain, we must ensure the memoryless property is fulfilled, where considering states $s_0, ..., s_t$ can be expressed as follows:
 
 $ PP (s_j | s_1,...,s_(j-1)) = PP (s_j | s_(j-1)) $
 
@@ -203,22 +203,24 @@ As a final note, the User Homogeneity axiom is not required for the system to be
 
 To define the transition probability function that governs the step-by-step stochastic evolution from $G(n-1)$ to $G(n)$ to analytically express what we are going to approximate with the simulation.
 
-In the embedded DTMC, a discrete step occurs when any user's continuous exponential timer triggers. Under the User Homogeneity assumption (Axiom 1), the mathematical probability of any specific user $u$ being the next to act is uniformly distributed across the active population. Thus, the probability of a specific user $u$ "waking up" to act at step $n$ is $1 / |cal(U)|$. 
+In the embedded DTMC, a discrete step occurs when any user's continuous exponential timer triggers. Under the User Homogeneity assumption (Axiom 1), the mathematical probability of any specific user $u$ being the next to act is uniformly distributed across the active population. Thus, the probability of a specific user $u$ "waking up" to act at step $n$ is $frac(1, |cal(U)|)$. 
 
-When an active user $u$ acts, their specific action $a_n$ is drawn from the homogeneous probability policy $pi = (p_"ignore", p_"like", p_"repost", p_"create")$ do to the action limitation in axiom 5.
+When a user $u$ acts, their specific action $a_n$ is drawn from the probability policy $pi = (p_"ignore", p_"like", p_"repost", p_"create")$ do to the action limitation in axiom 5.
 
 Let $G'$ represent a candidate for the next state. If the user's timeline $cal(T)(u, n-1)$ is not empty, let $i_u$ be the chronologically oldest unseen post in that timeline. For a "create" action, we bypass the timeline entirely; instead, the action activates an inert, pre-scheduled node $j_"new" in cal(I)$ to satisfy the topological requirement of adding new nodes versus linking existing ones). 
 
-The conditional transition probability, assuming user $u$ is the active user at step $n$, is defined as:
+The conditional transition probability when user $u$ acts a step $n$, is defined as:
 
-$ PP(G' | G(n-1), "user" u "is active") = cases(
+$ 
+PP(G' | G(n-1), "user" u "is active") = cases(
   p_"ignore" & "if" G' = G(n-1) union { (u, i_u, "ignore", n) },
   p_"like" & "if" G' = G(n-1) union { (u, i_u, "like", n) },
   p_"repost" & "if" G' = G(n-1) union { (u, i_u, "repost", n) },
   p_"create" & "if" G' = G(n-1) union { (u, j_"new", "create", n) },
   1 & "if" cal(T)(u, n-1) = emptyset "and" G' = G(n-1),
   0 & "otherwise"
-) $
+) 
+$
 
 
 To obtain the global transition probability of moving from $G(n-1)$ to $G'$, we marginalize over all possible users in the network:
@@ -229,16 +231,20 @@ $ PP(G(n) = G' | G(n-1)) = sum_(u in cal(U)) frac(1, |cal(U)|) dot PP(G' | G(n-1
 
 Additionally, the transition function explicitly handles the scenario where a user activates but their timeline is empty ($cal(T)(u, n-1) = emptyset$). In this case, the user cannot interact with a post. The step $n$ effectively advances the clock (or jump sequence), but the graph topology remains mathematically identical to the previous step ($G' = G(n-1)$).
 
+
+#text(blue)[
+
+*Sobre això: pot ser que en tingui, o no, però no podem dir-ho sense demostrar-ho*
 === The Absorbing State Transition
-    
+
 The simulation reaches its ultimate absorbing state, denoted as $G_"final"$, when the filtered timelines $cal(T)(u, n)$ for all users $u in cal(U)$ are completely empty, and all pre-scheduled posts in $cal(I)$ have been exhausted. At this point, no topological changes can occur.
 
 By definition, an absorbing state only transitions to itself with absolute certainty:
 $ PP(G(n) = G_"final" | G(n-1) = G_"final") = 1 $
-
+]
 === Proof of State Equivalence (Global Graph vs. Local Histories)
 
-It is intuitive to view the simulation not as a monolith, but from the perspective of individual entities (users and posts). It can be proved that defining the state as the global graph $G(n)$ is mathematically isomorphic to defining it as the union of all localized entity histories.
+We can also view the state of the chain as the state of the entities (users and posts). It can be proved that defining the state as the global graph $G(n)$ is mathematically isomorphic to defining it as the union of all localized entity histories.
 
 Let $E(v, n) subset.eq E_n$ be the localized edge set (history) for any single node $v in V$ up to step $n$, defined as all edges where $v$ is either the source or destination:
 
@@ -377,30 +383,102 @@ Before detailing the algorithm, we define the following helper functions and str
   + *end*
 ]
 
-== Implementation details
+=== Implementation details
 
 There must be a list with all the scheduled events (min heap), and then each user has a min-heap (?) with a index (or a pointer) to the post the user has to see (the oldest one). 
 
 Each user must have both which posts has he written, which posts has he interacted and what action did the user performed (well, that's the trace)
 
-Regarding the time between actions of the user, we will assume a exponential distribution, such as an inter arrival time.
-
 Due to axiom 1, user will have all the same weights $pi$, but which action is performed is a weighted probability (uniform from zero to one and in which interval falls)
 
-Potential optimizations:
-- Use a time wheel instead of a heap for the heap event.
-- Investigate if it makes sense in the timeline of the user.
-- Change all ids to u32 instead of u64 and change the array of pointers to an array of users.
-- Compact the graph: remove all the following and followers from each user, and store them as chunks in a big array.
-- Investigate if `MuliArrayList` in User could be useful.
-- Shrink as many structs as possible (if there is not need to delete anything from the heap delete the heap_index from TimelineEvent)
+To guarantee maximum performance, we have designed the simulation taking into account the following data oriented design principles. 
+
+*Graph Representation* 
+
+Normally, graphs are performance killers. Choosing a wrong representation of the data will essentially kill performance, as traditional graph representations will maximize cache miss rates. A graph must contain the following information:
++ List of users (nodes)
++ List of posts (nodes)
++ Relationships between users (follows)
++ Relationships of post ownership and viewship.
+
+List of users and post are covered in the following subsections. To further continue the explanation, we shall assume they exisist and they contain the information.
+
+As per axiom of stability of the simulation, the follows are predefined and static, se we can make an adjacency list with fixed indexes instead of a matrix. This is called a Compressed Sparse Row or, with graph theory nomenclature, and static adjacency list. Normal OOP mindset would be to make every user have it's own followers array, but that implies loading small lists on to CPU cache from RAM, which is a time consuming operation. Specially, the transmission of a repost involves accessing this array per the post author, so it has to be done once per cycle in the main loop.
+
+Instead of each user storing an array of followers (pointers to a user or user ids) we centralize all the following logic in an static dynamically allocated slice `followers: []Index`. It does not need to grow dynamically, therefore an `ArrayList` is not needed. All the followers are stored sequentially on the array, concatenating one another, and then we store the starting index and it's count in separate arrays. Lets make an example to showcase it:
+
+$ cal(N)_("out") (u_1) = {u_2, u_3, u_4, u_5} \ cal(N)_("out") (u_2) = {u_3} \ cal(N)_("out") (u_3) = emptyset \ cal(N)_("out") (u_4) = { u_1, u_5} \ cal(N)_("out") = (u_5) = emtpyset $
+
+Then, this code would allow us to access the information:
+
+```zig 
+const user_index_start = [_]u32{ 0, 4, 5, 5, 7 };
+const user_count = [_]u32{ 4, 1, 0, 2, 0 };
+
+const followers = [_]u32{ 
+    2, 3, 4, 5, // u1 (start 0, count 4)
+    2,          // u2 (start 4, count 1)
+                // u3 (start 5, count 0)
+    1, 5        // u4 (start 5, count 2)
+                // u5 (start 7, count 0)
+};
+```
+
+The followers of user $u_(i+1)$ can be accessed by slicing the followers static array:
+
+```zig
+const i = 1;
+const start = user_index_start[i];  // 4 
+const amount = user_count[i];       // 1 
+
+for (followers[start..start+amount]) |f| { //4..5 -> just 4
+  // do stuff
+}
+```
+
+Additionally, this can be further simplified by eliminating the user_count array completely and use the next element of the array to know the count, making the struct smaller.
+
+To handle the relationship between users and posts, we also take advantage of the third action to make an stable representation of the users. First, we discard the conceptual difference of "seen" and "owner", and assume that onwenship implies seen the post. By keeping track of the latter suffices to make the structure work. This can be conceptually understood as a sparse matrix with dimensions $N times M$ (number of users times number of posts) with the following ones: 
+
+$
+M = cases(
+  1 "if" i in cal(P)(u, t),
+  0 "otherwise"
+)
+$
+
+To improve locality this matrix is not implemented as an array of arrays, but is flattened into a 2D array. To access user $u_j$ $i$-th post is with the formula $N*u + i$. Check data structures for actual implementation of this field.
+
+*No Pointers, just Indices*
+
+Instead of storing slices of pointer to users and posts `user: []*User` we use the index of the element in an array with a `u32` type, that is `user: []u32`. This obeys two reasons:
+1. Avoid pointer chasing: Every pointer defererences involves the CPU fetching from memory the contents of the pointer. Again, this is slow due to RAM being slow. Repeated access in a for loop over the accumulates several delays over the data.
+2. Smaller significant representation: in a 64-bit architecture CPU, a memory address is 64 bits (8 bytes). By representing the indexes as a $u32$ (32-bits, just 4 byte (32-bits, just 4 bytes) when a cache line is loaded it will contain double the amount of data than it had when loading a pointer. This implies tho that maximum users (and posts) is reduced to a maximum of $4294967296$, which is still absolutely enough. This is totally acceptable trade of for the improved speed that smaller structs in memory will result.
+
+*Data Structure Representation*
+
+In traditional object oriented paradigm, data is stored in a Array of Structs: each `User` with all its information is stored in an array. This is not intrisically wrong, but can be optimized according to the access needed to the data. In our case, as several fields need to be iterated upon and accessed not at the same time (eg, access to the id does not imply access to every other field of the struct and viceversa) we benefit of a Struct of Arrays approach: we store a struct with an array per every field of the `User` structure in a structure. In Zig this is implemented in the std as a `MultiArrayList`.
+
+The advantages are clear: when iterating over user id, we are just accessing one field of the struct, improving cache locality and allowing much more data into the CPU cache. This also allows the storage of `user_start_index` as just an element `start_index` inside the `User` struct, with the `MultiArrayList` converting it into a structure of arrays.
+
+Posts are stored with the same approach, giving the exact same benefits.
+
+Implementation of `user_seen_post` is a DynamicBitSet, which allows the check of just an item being one extremely fast, due to small type repesentation (a bit) and the CPU being absolutely efficient at making bitwise operations comparisons.
+
+Both user timelines and global timeline are implemented using a Heap structure, making every access $O(1)$, but every insertion $O(log n)$. This is the most optimal data structure without entering ring buffers implementations, which need of several assumptions to not fail.
+
+*Random Number Generation*
+
+To accurately generate random numbers, i've implemented a library called `distributions` with two types of polymorphism: a Union to be able to load any continuous or discrete distributions into memory and an intrusive interface to allow a generic `Distribution` type with a `sample()` method, which allows to write the simulation code completely unrelated to which distribution has been loaded, due to the interface guaranteeing there is a sample method implemented.
+
+Distributions implemented are `Constant`, `Uniform` with four different types of interval, `Exponential` with the Ziggurat algorithm to avoid the logarithm with the inverse method, `Normal` with the Ziggurat method, `ECDF` and `Categorical`, which assigns a weight to several actions.
 
 == Correctness & Limitations
 
 The Axioms massively simplify what is a social network in order to provide a verifiable implementation. I want to address two facts which may steer away the simplification too far from being an actual representation.
 
 1. Chronologically sorted or reverse-sorted: most of social network feeds are not given from oldest to newest, but from newest to oldest. Assuming a not reverse chronological order helps not to ask unconfortable questions regarding new timeline added posts (when a newer post should appear in the timeline if you are showing it from newest to oldest) which would clutter a rather simple testing implementation. Additionally, non-reverse order for sure mantains a Markov structure, which I am not sure with reverse chronological order.
-2. Timeline definition: the definition of a timeline uses a _union_ $union$, which implies _non repeated items_ appears in the timeline. A normal implementation would just repeat the items (using a union of lists, not sets) which is not also how a social network feed behaves. There should be a system in place that refloats newer posts if they get popular again with some criteria. This will almost certainily break the Markov assumption for sure unless treated with care.
+2. Timeline definition: Once a user has seen a post, it cannot be seen again. It could be a system in place that refloats newer posts if they get popular again with some criteria.
 
 
 Current known limitations then are:
@@ -419,9 +497,6 @@ A user now can be in two states:
 
 A user will switch between those two states periodically according to a distribution or because it has received a notification and went back online to check an interaction.
 
-A notification can bring a user back to active with a given distribution.
-
-TODO: Introduce posts relationships and behaviours as bluesky does, described in [timeline_bluesky.typ] or move to v3
 
 == Model
 
@@ -432,9 +507,6 @@ This does not need to be modeled actually, the topology of the graph does not ch
 Let's redefine the user set $cal(U) = {(1,s_1), ... (n, s_n)}$ where $(i, s)$, where $s in { "online", "offline" }$. Now, a user cannot do any action in $cal(R)$ if $s_i = "offline"$. Let's define what "online" and "offline" even mean.
 
 #text(blue)[Analogous to the other definition we can do it function based. Let define a set $S$ with cardinal $N$ number of users. The function $"status": cal(U) --> S$ says in which status is user $u$ in.]
-
-Regarding notifications, it's also an external entity which does not modify the network topology. When a user $v$ interacts with a post $i in cal(P)(u,t)$ of user $u$, this could lead them to go back offline to check the interaction of the user. Additionally, if a user is online and receives a notification, will skip the timeline and check the answer. This is analogous to say that if an edge $(i, j, r, t)$ where $i, j in cal(I), a in cal(R)_(cal(I) cal(I))$ occurs, state $s$ of the user $u$ such as $i in cal(P) (u,t)$ can be swapped.
-
 
 == Axioms/Assumptions
 <sec-axioms-v2>
@@ -470,6 +542,8 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 
 == Implementation details
 
+Essentially, as the axiom of stability remains unchanged, all the data will remain exactly the same. 
+
 *Regarding User Heap*
 Now the Heap associated to every user must output in reverse-chronological order, that is, return the element with the largest timestamp instead of the gloabal Heap, which has to do the opposite.
 
@@ -478,12 +552,6 @@ This makes us consider mainly when we have to "empty" the heap of a user, becaus
 *Regarding Sessions*
 Main problem of the sessions is to make sure an action $a_(u,i)^k$ is performed when the user is inactive. DoD: store another array called mask with 0 or 1 depeding of when the user is online or not and prevent generation of actions if that is set
 
-
-*Regarding Notificaitons*
-
-We need several parameters:
-1. Chance of user breaking vacation.
-2. Duration of notification induced session: could be different than the normal user session.
 
 
 #pagebreak()
