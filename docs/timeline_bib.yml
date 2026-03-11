@@ -1,0 +1,79 @@
+# Hayagriva Bibliography File
+
+abramov2024open:
+  type: Article
+  title: Open Social
+  author: Abramov, Dan
+  date: 2024-11-20
+  url:
+    value: https://overreacted.io/open-social/
+    date: 2026-03-09
+  parent:
+    type: Blog
+    title: Overreacted
+
+atproto-guides:
+  type: Web
+  title: Understanding AT Protocol
+  author: "Bluesky Team"
+  url:
+    value: https://atproto.com/guides/understanding-atproto
+    date: 2026-03-09
+  parent:
+    title: AT Protocol Guides
+
+wiki-atproto:
+  type: Entry
+  title: AT Protocol
+  author: "Wikipedia contributors"
+  url:
+    value: https://en.wikipedia.org/wiki/AT_Protocol
+    date: 2026-03-09
+  parent:
+    type: Reference
+    title: Wikipedia, The Free Encyclopedia
+
+wiki-bluesky:
+  type: Entry
+  title: Bluesky
+  author: "Wikipedia contributors"
+  url:
+    value: https://en.wikipedia.org/wiki/Bluesky
+    date: 2026-03-09
+  parent:
+    type: Reference
+    title: Wikipedia, The Free Encyclopedia
+
+atproto-lexicon:
+  type: Article
+  title: Lexicon
+  author: "Bluesky Team"
+  url:
+    value: https://atproto.com/guides/lexicon
+    date: 2026-03-09
+  parent:
+    type: Reference
+    title: AT Protocol Guides
+    publisher: Bluesky PBLLC
+
+bluesky-github:
+  type: Repository
+  title: Bluesky Social
+  author: "Bluesky Team"
+  url:
+    value: https://github.com/bluesky-social
+    date: 2026-03-09
+  organization: Bluesky PBLLC
+  parent:
+    title: GitHub
+
+atproto-repo:
+  type: Repository
+  title: "atproto: The AT Protocol"
+  author: "Bluesky Team"
+  url:
+    value: https://github.com/bluesky-social/atproto
+    date: 2026-03-09
+  organization: Bluesky PBLLC
+  parent:
+    title: GitHub

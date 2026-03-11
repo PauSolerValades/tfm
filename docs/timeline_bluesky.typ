@@ -2,117 +2,243 @@
 
 #set par(justify: true)
 
+#set heading(numbering: "1.")
+
+= Introduction
+
+This document aims to explain how is the Bluesky social repository structured and it's relation with the ATProtocol, what's a feed implementation and where is the "timeline" implementation.
+
+= Bluesky Architecture
+
+The AT Protocol @wiki-atproto @atproto-guides (ATP from now on) is a protocol and set of open standards for decentralized publishing and distribution of self-authenticating data within the social web. Bluesky @wiki-bluesky is a microblogging social network which serves as the reference implementation of ATP. To understand Bluesky structure, we have to take a look at how ATP is structured.
+
+== ATP
+
+ATP is a way to separate the content produced by the user on a social media platform from the infrastructure of the social media platform @abramov2024open. That means essentially defining a format for the characteristics of the data to be usable in _any_ social media app that implements the ATP protocol. This is to allow true sovereignty and ownership of the user-produced data, as if bluesky decided to start putting ads on the platform or adopting anti-consumer policies, users could grab theirs ATP compliant data and move to another platform that implements the ATP.
+
+Jumping into technical details, ATP implements Lexicons @atproto-lexicon that define that define Remote Procedure Calls (RPC) for the actions the application can perform, as well as Record Types, which dictate the structure and formatting of the stored data.. Using Bluesky as example, an RPC would be `app.bsky.feed.getPostThread` and a record type `app.bsky.feed.post`.
+
+To avoid making a language lock in, the lexicons are defined in JSON, and the actual implementation is left to the developers to do with their preferred tools. 
+
+In summary, the Lexicon serves as a blueprint of what needs to be built to establish a client-server connection following the appropiate protocols, and it's defined in JSON, making it language agnostic.
+
+ATP is also decentralized, which means the user data may not live in the same server as the web runs on, they are conceptually decoupled. User data is going to be stored in a Personal Data Server (PDS), where is stored and organizes according to the specification and then retrieved by the server (the social media application) as the AppView, implementing both its side of the protocol.
+
+== at-proto repo
+
+The bluesky implementation of the ATP can be found on Github, the `at-proto` repo @atproto-repo. As it's a very big implementation, we'll map the ATP structure described on past paragraph to the repository folders.reposts
+
+All the rellevant code that implements the timeline is under the `packages` folder. Specifically, lexicons definitions are at `packages/bsky/src/lexicon`, personal data servers are at `packages/pds`. Lastly, we'll see several more folders under `packages/bsky/src` which implement the mechanisms under the timelines get reconstructed and displayed.
+
+= Get the timeline: step by step and file by file
+
+All of the following files can be found in the `atproto` github repository @atproto-repo.
+
+== Lexicon Definition 
+
+(Reference File: packages/bsky/src/lexicon/types/app/bsky/feed/getTimeline.ts [Accessed: Feb 19, 2026])
+
+The lexicon definition for getting the timeline specifies the `id` of the petition (`app.bluesky.feed.getTimeline`) and how should the output be formatted. 
+
+== How does a Bsky Client work? 
+
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/api/src/bsky-agent.ts")[Reference File 1]
+
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/xrpc/src/xrcp-client.ts")[Reference File 2]
 
 
-Here is the complete, structured technical document summarizing everything we reverse-engineered about the Bluesky architecture and timeline algorithms.
+The lexicon gets translated to code automatically, but who actually _performs_ the petition? The answer is reliant on the the bluesky agent, which gets generated wverytime a user starts a session using the XRCP engine. Reference File 2 shows how the XRCP server is inited, and this creates a `bsky-agent`, showcased in file 2, specifically, lines 60-63
 
-Bluesky Architecture & Timeline Algorithm Summary
-1. Introduction: The AT Protocol Architecture
-To understand how a feed is generated in Bluesky, one must first understand that Bluesky is not a single monolithic server. It is built on the AT Protocol, which separates the network into distinct physical and logical layers. The generation of a feed spans across these distinct environments:
+```TypeScript
+const reqUrl = constructMethodCallUrl(methodNsid, def, params)
+const reqMethod = getMethodSchemaHTTPMethod(def)
+const reqHeaders = constructMethodCallHeaders(def, data, opts)
+```
 
-The Lexicon (The Blueprint): A set of JSON schemas that define the exact inputs and outputs of every network request. It is the contract that both clients and servers must follow.
+Constructs the HTTP petition the agent will perform. Line 73
+```TypeScript
+const response = await this.fetchHandler.call(undefined, reqUrl, init)
+```
+Will perform the HTTP petition, in our case to the PDS of the user. Lastly, lines 86-88 will validate that the lexicon output is complying with the response recieved of the petition.
 
-The PDS (Personal Data Server): The server where a user's data actually lives. It holds cryptographic keys and personal posts, but it lacks the global database required to build a network-wide feed.
+```TypeScript
+try {
+  this.lex.assertValidXrpcOutput(methodNsid, resBody)
+}
+```
 
-The App View: The massive aggregator server for the Bluesky application. It listens to the entire network firehose, indexes everything into a PostgreSQL database, and handles the heavy lifting of building timelines.
+== Client Petition
 
-The Data Plane: An internal microservice within the App View designed specifically to execute high-performance, raw SQL queries against the database.
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/api/src/client/types/app/bsky/feed/getTimeline.ts")[Reference File]
 
-Because of this separation, a request for a timeline originates at the PDS, gets forwarded to the App View, reaches down into the Data Plane for raw IDs, and bubbles back up through a complex pipeline before reaching the user.
-
-2. The Timeline Lifecycle: From Request to Render
-When a user's app requests their home timeline, it triggers a multi-step pipeline. Below is the exact step-by-step lifecycle of that request.
-
-Step 1: The Request Definition (Lexicon)
-The client app initiates a request to the app.bsky.feed.getTimeline endpoint. The structure of this request (accepting limit and cursor parameters, and returning an array of FeedViewPost objects) is rigidly defined by the auto-generated Lexicon types.
-
-Reference File: packages/bsky/src/lexicon/types/app/bsky/feed/getTimeline.ts [Accessed: Feb 19, 2026]
-
-Note: The legacy algorithm string parameter still exists in this schema but is largely unused natively, as custom feeds were offloaded to the external Feed Generator architecture.
-
-Step 2: The PDS Proxy & Read-After-Write
-The request first hits the user's PDS. Since the PDS cannot compute a global timeline, it acts as a proxy.
-
-Reference File: packages/pds/src/api/app/bsky/feed/getTimeline.ts [Accessed: Feb 19, 2026]
-
-Key Functions: * computeProxyTo(): Forwards the client's request to the massive App View server.
-
-pipethroughReadAfterWrite() & formatAndInsertPostsInFeed(): Intercepts the returning feed from the App View and artificially injects the user's most recent local posts at the top of the feed to create an illusion of instantaneous posting.
-
-Step 3: The App View Pipeline Entry
-Once the request reaches the App View, it enters a strict four-step pipeline that constructs the feed from the ground up.
-
-Reference File: packages/bsky/src/api/app/bsky/feed/getTimeline.ts [Accessed: Feb 19, 2026]
-
-Key Function: createPipeline(skeleton, hydration, noBlocksOrMutes, presentation)
-
-Step 4: The Skeleton (Data Plane SQL)
-The first step of the pipeline (skeleton) asks the Data Plane for the raw database rows. The Data Plane does not query a "posts" table; it queries a unified feed_item table that tracks all timeline-eligible actions (posts, reposts, etc.).
-
-Reference File: packages/bsky/src/data-plane/server/routes/feeds.ts [Accessed: Feb 19, 2026]
-
-Key Functions:
-
-getTimeline(): Executes the raw Kysely/SQL queries. It joins the feed_item table with the user's follow table and sorts everything chronologically by sortAt and cid. Crucially, it fetches all replies and quotes blindly without filtering them at the database level.
-
-feedItemFromRow(): A simple function that checks if an action's uri matches the target postUri. If they differ, the item is flagged as a Repost.
-
-Step 5: Hydration (Batching the Context)
-The skeleton returns an array of bare URIs. The hydration step takes these URIs and fetches the massive amount of context needed to render them (text, author profiles, like counts, viewer states, moderation tags).
-
-Reference File: packages/bsky/src/hydration/feed.ts [Accessed: Feb 19, 2026]
-
-Key Class/Functions: * FeedHydrator: The class responsible for this engine.
-
-Functions like getPosts(), getPostViewerStates(), and getPostAggregates() utilize the DataLoader pattern. Instead of querying the database per post, they accept arrays of URIs (uris: string[]) to batch hundreds of requests into a few highly optimized queries.
-
-Step 6: Presentation (Stitching the JSON)
-The final step (presentation) takes the raw, hydrated buckets of data and snaps them together into the nested JSON structure required by the Lexicon. It also acts as the final bouncer for moderation.
-
-Reference File (Main Views): packages/bsky/src/views/index.ts [Accessed: Feb 19, 2026]
-
-Key Functions:
-
-feedViewPost(): Constructs the final wrapper. It merges the main post, attaches the reason if it's a repost, and calls replyRef() to append the parent/root context if the post is a comment.
-
-recordEmbed(): Recursively calls the post-formatting logic to nest Quoted posts inside the main post's embed property.
-
-blockedPost(): Intercepts posts from blocked users and replaces them with a safe tombstone ($type: 'app.bsky.feed.defs#blockedPost') so the client app knows to render a "Post hidden" warning instead of the content.
-
-Step 7: Thread Sorting Algorithm (The Math)
-While the Following feed is reverse-chronological, the comment section (Thread View) requires a highly complex sorting algorithm to surface the best replies.
-
-Reference File: packages/bsky/src/views/threads-v2.ts [Accessed: Feb 19, 2026]
-
-Key Functions:
-
-applyBumping(): Forces VIP comments to the top (replies from the OP, replies from the viewer, or replies from mutual follows) and pushes unwanted comments to the bottom (muted users, bad tags).
-
-topSortValue(): The mathematical heart of comment sorting. It calculates a logarithmic score based on likes: Math.log(3 + likeCount) * (hasOPLike ? 1.45 : 1.0). If the Original Poster liked the reply, its score receives a massive 1.45x multiplier.
-
-flattenTree() & flattenInDirection(): Takes the infinitely nested tree of replies and artificially flattens it into a 1D array so mobile devices can render it efficiently using visual indentations.
+From the lexicon definition, the client id is generated at `packages/api/src/client/types/app/bsky/feed/getTimeline.ts`. Line 17 `const id = app.bsky.feed.getTimeline` shows the id defined in the lexicon, which allowed us to connect this is the petition start.
 
 
-3. The Reply Paradox: How Comments are Handled in the Timeline
-A common point of confusion is whether replies (comments) are included in the main "Following" feed and how they are filtered. The architecture handles replies through a distinct split between backend aggregation and frontend filtering.
+== PDS Redirection
 
-3.1 The Backend Firehose (No Database Filtering)
-Unlike a user's profile page (which explicitly uses rules like .where('post.replyParent', 'is', null) to hide comments), the home timeline query does not filter out replies at the database level.
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/pds/src/api/app/bsky/feed/getTimeline.ts")[Reference File: `packages/pds/src/api/app/bsky/feed/getTimeline.ts`].
 
-Reference File: packages/bsky/src/data-plane/server/routes/feeds.ts [Accessed: Feb 19, 2026]
+The request tries to fetch the data from the user PDS, specifically this lines:
+```
+export default function (server: Server, ctx: AppContext) {
+  if (!ctx.bskyAppView) return
 
-Mechanism: The getTimeline() function queries the feed_item table blindly. To the Data Plane, a comment is structurally identical to a standard post. Every single reply authored by someone the user follows is scooped up in the initial chronological fetch.
+  server.app.bsky.feed.getTimeline({
+    auth: ctx.authVerifier.authorization({
+      authorize: (permissions, { req }) => {
+        const lxm = ids.AppBskyFeedGetTimeline
+        const aud = computeProxyTo(ctx, req, lxm)
+        permissions.assertRpc({ aud, lxm })
+      },
+    }),
+    handler: async (reqCtx) => {
+      return pipethroughReadAfterWrite(ctx, reqCtx, getTimelineMunge)
+    },
+  })
+}
+```
+Since the PDS cannot compute a global timeline, it acts as a proxy `computeProxyTo` and gets handled to the App View implementation, which will actually construct the timeline.
 
-3.2 Context Packaging (The Presentation Layer)
-Once the pipeline realizes a feed_item is a comment, it must provide enough context so the post makes sense when it arrives on the user's phone.
+== Timeline Creation
 
-Reference File: packages/bsky/src/views/index.ts [Accessed: Feb 19, 2026]
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/bsky/src/api/app/bsky/feed/getTimeline.ts")[Reference File: `packages/bsky/src/api/app/bsky/feed/getTimeline.ts`]
 
-Mechanism: Inside the feedViewPost() function, the code detects the presence of a reply and calls this.replyRef(). This function reaches out and fetches the Parent post (the specific post being replied to) and the Root post (the start of the entire thread). It bundles the original comment and this relational context into one unified JSON package.
+The App View is where the actual ensamble of the contents of the timeline will happen, as it can be seen in lines 17-45:
 
-3.3 The Frontend Bouncer (Client-Side Filtering)
-If the backend sends all replies, the timeline would theoretically be cluttered with half-conversations between mutuals and strangers. Bluesky solves this by moving the final filtering step to the client application (the user's device).
+```TypeScript
+export default function (server: Server, ctx: AppContext) {
+  const getTimeline = createPipeline(
+    skeleton,
+    hydration,
+    noBlocksOrMutes,
+    presentation,
+  )
+  server.app.bsky.feed.getTimeline({
+    auth: ctx.authVerifier.standard,
+    handler: async ({ params, auth, req }) => {
+      const viewer = auth.credentials.iss
+      const labelers = ctx.reqLabelers(req)
+      const hydrateCtx = await ctx.hydrator.createContext({ labelers, viewer })
 
-Mechanism: The backend sends the fully packaged reply JSON over the network. The frontend app (built in React Native) receives it and cross-references the replyRef context with the user's local "Following Feed Preferences" settings.
+      const result = await getTimeline(
+        { ...params, hydrateCtx: hydrateCtx.copy({ viewer }) },
+        ctx,
+      )
 
-Execution: If the user's settings dictate "Require following both users," the mobile app inspects the JSON, sees that the parent author is a stranger, and simply drops the post from the UI before it ever renders on the screen. The backend provides the data; the frontend acts as the final gatekeeper.
+      const repoRev = await ctx.hydrator.actor.getRepoRevSafe(viewer)
+
+      return {
+        encoding: 'application/json',
+        body: result,
+        headers: resHeaders({ labelers: hydrateCtx.labelers, repoRev }),
+      }
+    },
+  })
+}
+```
+
+Specifically, the `createPipeline` function will use those four arguments to create the timeline in four steps, which can be summarized by the following:
+- Skeleton: fetches a reverse-chronological sorted list of IDs from the `data-plane`. Here are the high-performance SQL queries.
+- Hydration: given the list of IDs, the actual contents of the posts are attached to the skeleton.
+- No blocks or Mutes: deletes the posts from muted and blocked users.
+- Presentation: formats the JSON to comply with the lexicon defined output.
+
+=== Skeleton
+
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/bsky/src/data-plane/server/routes/feeds.ts")[Reference File: packages/bsky/src/data-plane/server/routes/feeds.ts]
+
+The function getTimeline gets all the ids. The code explains itself, and the comments are added explanations, not from the source code.
+
+```TypeScript
+async getTimeline(req) {
+  const { actorDid, limit, cursor } = req
+  const { ref } = db.db.dynamic
+  
+  // output must be sorted by time and id
+  const keyset = new TimeCidKeyset(
+    ref('feed_item.sortAt'),
+    ref('feed_item.cid'),
+  )
+  
+  // fetch all follow posts
+  let followQb = db.db
+    .selectFrom('feed_item')
+    .innerJoin('follow', 'follow.subjectDid', 'feed_item.originatorDid')
+    .where('follow.creator', '=', actorDid)
+    .selectAll('feed_item')
+
+  // structure it in paginations for easier retreival
+  followQb = paginate(followQb, {
+    limit,
+    cursor,
+    keyset,
+    tryIndex: true,
+  })
+  
+  // fetch user own posts
+  let selfQb = db.db
+    .selectFrom('feed_item')
+    .where('feed_item.originatorDid', '=', actorDid)
+    .selectAll('feed_item')
+
+  selfQb = paginate(selfQb, {
+    limit: Math.min(limit, 10),
+    cursor,
+    keyset,
+    tryIndex: true,
+  })
+  
+  // execute the query
+  const [followRes, selfRes] = await Promise.all([
+    followQb.execute(),
+    selfQb.execute(),
+  ])
+  
+  // sort all the ids from the merged lists.
+  const feedItems = [...followRes, ...selfRes]
+    .sort((a, b) => {
+      if (a.sortAt > b.sortAt) return -1
+      if (a.sortAt < b.sortAt) return 1
+      return a.cid > b.cid ? -1 : 1
+    })
+    .slice(0, limit)
+  
+  // return the results
+  return {
+    items: feedItems.map(feedItemFromRow),
+    cursor: keyset.packFromResult(feedItems),
+  }
+}
+
+// If the row.uri === row.postUri, means that this post is a repost!
+const feedItemFromRow = (row: { postUri: string; uri: string }) => {
+  return {
+    uri: row.postUri,
+    repost: row.uri === row.postUri ? undefined : row.uri,
+  }
+}
+```
+
+Summary: this function fetches *all written posts*: posts, quotes and replies. If it's a repost, `feedItemFromRow` handles it.
+
+=== Presentation
+
+#link("https://github.com/bluesky-social/atproto/blob/main/packages/bsky/src/views/index.ts")[Reference File: `packages/bsky/src/views/index.ts`]
+
+The Presentation layer is the final quality-control checkpoint. Inside the `feedViewPost` orchestrator, the server ensures the raw IDs fetched during the Skeleton phase are safely converted into the strict JSON format required by the Lexicon.
+
+Crucially, it acts as a defensive safety net against "traps" like deleted content or third-party blocks. If a referenced post (like a parent reply) has been deleted or belongs to an author who blocked the viewing user, the presentation layer does not simply drop the item or crash. Instead, it uses a helper function like `maybePost` to swap the missing content with a safe "tombstone" object (e.g., `$type: 'app.bsky.feed.defs#notFoundPost`). This tells the mobile application to gracefully render a "Post deleted" or "Post hidden" warning instead of breaking the timeline.
+
+
+The `replyRef` function is specifically responsible for packaging conversational context so that replies make sense on the user's screen.
+
+Let's model a network where user $u_1$ follows user $u_2$, and user $u_3$ is a stranger (not followed by $u_1$). If $u_2$ takes an action, the server will evaluate and bundle the context for $u_1$'s timeline as follows:
+- Scenario A (Root Reply): If $u_2$ replies directly to a root post authored by $u_3$ (and $u_3$ is neither blocked nor muted by $u_1$), the server bundles both posts into a single timeline item. The payload guarantees $u_1$ receives $u_2$'s reply and $u_3$'s root post for context.
+- Scenario B (Deep Thread Reply): If $u_2$ replies to a deep comment authored by $u_3$, the server will bundle $u_2$'s reply, $u_3$'s specific comment (the parent), and the original root post of the thread.
+
+In all valid scenarios, the server delivers these bundled posts as a single, unified item. The client application uses this package to visually draw the conversational thread. (Note: The frontend application retains the ultimate power to drop this entire bundle from the screen if $u_1$'s personal settings dictate they do not want to see replies involving strangers).
+
+
+
+
+#bibliography("timeline_bib.yml")

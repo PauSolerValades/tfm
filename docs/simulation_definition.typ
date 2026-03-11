@@ -542,7 +542,7 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 
 == Implementation details
 
-Essentially, as the axiom of stability remains unchanged, all the data will remain exactly the same. 
+Essentially, as the axiom of stability remains unchanged, all the data structures will remain exactly the same. 
 
 *Regarding User Heap*
 Now the Heap associated to every user must output in reverse-chronological order, that is, return the element with the largest timestamp instead of the gloabal Heap, which has to do the opposite.
