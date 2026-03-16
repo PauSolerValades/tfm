@@ -14,33 +14,47 @@ const Precision = config.Precision;
 
 pub const Index: type = u32;
 
+
+
 /// User of the simulation
 pub const User = struct {
     id: Index,
     follower_start: Index,
     follower_count: Index, 
     policy: Categorical(Precision, Action),
+    last_published_post: Index = 0,
 };
 
 // Post of the simulation
 pub const Post = struct {
     id: Index,
-    time: f64,
+//    time: f64,
     author: Index,
 };
 
 
 /// all the actions performable in the simulaiton by a user
 //const Action = enum { nothing, like, repost, reply, quote };
-pub const Action = enum { ignore, like, repost, start_session, end_session };
+pub const Action = enum { ignore, like, repost, start_session, end_session, create };
 
 /// Simulation Event 
-pub const Event = struct {
+const EventChron = struct {
     time: f64,          // when will the action be due
     type: Action,       // what will the user do
     user_id: Index,     // user id
     id: u64,            // which action is it
 };
+
+const EventRevChron = struct {
+    time: f64,          // when will the action be due
+    type: Action,       // what will the user do
+    user_id: Index,     // user id
+    id: u64,            // which action is it
+    session_gen: u64    // in which session from the user_id does this event belong
+};
+
+const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
+pub const Event = if (is_v1) EventChron else EventRevChron;
 
 pub fn compareEvent(context: void, a: Event, b: Event) Order {
     _ = context;
@@ -53,8 +67,8 @@ pub const TracePost = struct {
     time: f64,
     type: Action,
     event_id: u64,
-    user_id: u64,
-    post_id: u64,
+    user_id: Index,
+    post_id: Index,
 };
 
 /// Auxiliar object to contain into the timeline Heap

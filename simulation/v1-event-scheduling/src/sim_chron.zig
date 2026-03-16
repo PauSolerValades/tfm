@@ -42,7 +42,7 @@ fn CreateRandomEvent(user_id: Index, event_id: u64, t_clock: f64, simconf: SimCo
     return event;
 }
 
-pub fn v1(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
+pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
 
     const EventQueue: type = Heap(Event, void, entities.compareEvent);
 
@@ -188,10 +188,7 @@ pub fn v1(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
     return result;
 }
 
-
-const Unif = dist.Uniform(Precision);
-
-pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
+pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
 
     const EventQueue: type = Heap(Event, void, entities.compareEvent);
 
@@ -205,27 +202,28 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
     var starting_events = try gpa.alloc(Event, graph.users.len);
     //defer gpa.free(starting_events); <- NO!! fromOwnedSlice takes ownership of this
     
-    var is_user_online: []bool = try gpa.alloc(bool, graph.users.len); // true: is online 
-    defer gpa.free(is_user_online);
-
-    const unif: Unif = .init(0, 1, dist.Interval.cc);
-    
-    // add a first event per every user
-    for (0..graph.users.len) |i| {
-        const event = blk: {
-            const r = unif.sample(rng); 
-            if (r < simconf.init_vacation_ratio) {
-                // this user is going in vacation. We schedule a wake up and we set them as inactive
-                is_user_online[i] = false;
-                const wake_up_time = simconf.user_inter_session.sample(rng);
-                break :blk Event{ .time = wake_up_time, .type = .start_session, .user_id = @intCast(i), .id = processed_events }; 
-            } else {
-                // No vacation, start_time = t_clock = 0
-                is_user_online[i] = true;
-                break :blk try CreateRandomEvent(@intCast(i), processed_events, 0, simconf, rng);
+    // schedule all posts per user
+    for (0..graph.users.len) |user_id| { 
+        for (graph.user_post_list[user_id]) |post_id| {
+            // find the post the user has created, the next one on the list
+            const follower_start = graph.users.items(.follower_start)[user_id];
+            const follower_count = graph.users.items(.follower_count)[user_id];
+            
+            for (graph.followers[follower_start..follower_start+follower_count]) |follower_id| {
+                const propagation_delay = simconf.propagation_delay.sample(rng);
+                const t_post = simconf.post_time_creation.sample(rng);
+                const pe = entities.TimelineEvent{ 
+                    .post_id = post_id,
+                    .time = t_post + propagation_delay,
+                };
+                try graph.timelines[follower_id].add(gpa, pe);
             }
-        };
-        
+        }
+    }
+
+    // add a first event per every user
+    for (0..graph.users.len) |i| { // users are in odrder, that i is the user id
+        const event = try CreateRandomEvent(@intCast(i), processed_events, 0, simconf, rng);
         starting_events[i] = event;
         processed_events += 1;
     }
@@ -237,7 +235,7 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
         const current_event = queue.remove();
         t_clock = current_event.time;
         
-        const current_user_id: Index = current_event.user_id;
+        const current_user_id: Index = current_event.user_id; 
         const event = try CreateRandomEvent(current_user_id, processed_events, t_clock, simconf, rng);
 
         try queue.add(gpa, event);
@@ -247,11 +245,8 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
 
         // if a user has no remaing posts in the timeline (eg simulation is very long it could run out of posts)
         // we CANT stop generating actions, due to potential reply, repor or quotes that could fill the timeline again
-        // if no new posts are available, we should schedule an end of the session.
         const current_post = poped_post orelse continue;
 
-        // TODO: IF NOT NULL GO OFFLINE AND LET YOUR TIMELINE FILL IN
-        
         // add the post reference to the historic of the current user
         const post_id: Index = current_post.post_id;
         // Use the DynamicBitMap
@@ -265,7 +260,7 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
             .user_id = current_user_id,
             .post_id = post_id,
         };
-        // this might be very slow, it could be better to use the lower json api
+   
         try std.json.Stringify.value(trace_event, .{}, trace);
         try trace.writeAll("\n");
 
@@ -295,18 +290,6 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
             },
             .like => interactions += 1,
             .ignore => ignored += 1,
-            .start_session => is_user_online[current_user_id] = true,
-            .end_session => { 
-                // TODO: QUESTION: should the timeline empty out when the user goes offline?¿ like, we can assumer 
-                // there won't look at posts they've already looked at?? If they could the heap is already a bad choice as they
-                // get poped xd
-                
-                // schedule users wake up time
-                is_user_online[current_user_id] = false;
-                const offline_duration = simconf.user_inter_session.sample(rng);
-                const e = Event{ .time = t_clock + offline_duration, .type = .start_session, .user_id = current_user_id, .id = processed_events }; 
-                try queue.add(gpa, e);
-            },
             else => {},
         }
     }
@@ -331,5 +314,4 @@ pub fn v2(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetw
     
     return result;
 }
-
 

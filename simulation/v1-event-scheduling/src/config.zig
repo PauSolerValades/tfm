@@ -13,23 +13,24 @@ const ContDist = stats.ContinuousDistribution;
 const DiscDist = stats.DiscreteDistribution;
 
 const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
-pub const SimConfig = if(is_v1) SimConfigV1 else SimConfigV2;
+pub const SimConfig = if(is_v1) SimConfigChron else SimConfigRevChron;
 
 // accepts just f64 and f32 due to rng implementaiton
 pub const Precision = f32;
 
 
-const SimConfigV1 = struct {
+const SimConfigChron = struct {
     seed: ?u64,
-    user_policy: DiscDist(Precision, entities.Action),       // probability of available actions of the user
-    user_inter_action: ContDist(Precision), // time between a user two actions
-    propagation_delay: ContDist(f64),       // time between an action over a post and showing up followers timeline
-    interaction_delay: ContDist(f64),       // time between 
-    trace_to_file: bool,                    // true is trace is written to a file. False not
-    horizon: f64,                           // duration of the simulation
+    user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
+    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
+    user_inter_action: ContDist(Precision),                 // time between a user two actions
+    propagation_delay: ContDist(f64),                       // time between an action over a post and showing up followers timeline
+    interaction_delay: ContDist(f64),                       // time between 
+    trace_to_file: bool,                                    // true is trace is written to a file. False not
+    horizon: f64,                                           // duration of the simulation
 
     pub fn format(
-        self: SimConfigV1,
+        self: @This(),
         writer: *std.Io.Writer,
     ) !void {
         try writer.writeAll("\n");
@@ -45,12 +46,14 @@ const SimConfigV1 = struct {
     }
 };
 
-const SimConfigV2 = struct {
+const SimConfigRevChron = struct {
     seed: ?u64,
     horizon: f64,                           // duration of the simulation
     // user related actions
     user_policy: DiscDist(Precision, entities.Action),   // probability of available actions of the user
     user_inter_action: ContDist(Precision),     // time between a user two actions
+    // to init posts
+    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
     // delays on posts transmissions
     propagation_delay: ContDist(f64),           // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),           // time between 
@@ -58,15 +61,11 @@ const SimConfigV2 = struct {
     init_vacation_ratio: Precision,             // which proportion of the users start on vacation
     session_duration: ContDist(f64),           // duration of the current session
     user_inter_session: ContDist(f64),         // time between sessions
-    // notification stuff
-    // if you receive a notification when online, go see that reply 
-    // if you receive a notification when online, which chance to go online (and see that reply): Precision             
-    // if seeing a reply to a post, chance to read the the thread from the beginning: ???? no friking clue
     // misc config
     trace_to_file: bool,                        // true is trace is written to a file. False not
 
     pub fn format(
-        self: SimConfigV2,
+        self: @This(),
         writer: *std.Io.Writer,
     ) !void {
         try writer.writeAll("\n");
@@ -92,8 +91,54 @@ const SimConfigV2 = struct {
 };
 
 
+pub const SimResults = if (is_v1) SimResultsChron else SimResultsRevChron;
 
-pub const SimResults = struct {
+const SimResultsRevChron = struct {
+    duration: f64,
+    processed_events: u64,
+
+    total_impressions: u64,      // Every time a post is popped from a timeline
+    total_interactions: u64,     // Sum of likes, replies, reposts, quotes
+    total_ignored: u64,          // Events where action was .nothing
+
+    avg_impressions_per_user: f64,
+    engagement_rate: f64,        // interactions / impressions
+    avg_timeline_backlog: f64,   // How many unread posts remain in heaps at horizon
+   
+    total_sessions: u64,         // number of sessions for all the users
+    avg_session_length: f64,     // mean length of sessionsa
+    avg_post_per_session: f64,  // mean posts per sessions
+    timeline_drain_ratio: f64,
+    
+    pub fn format(
+        self: @This(),
+        writer: *std.Io.Writer,
+    ) !void {
+        
+        try writer.writeAll("\n+---------------------------------+\n");
+        try writer.print("| SOCIAL NETWORK SIMULATION STATS |\n", .{});
+        try writer.writeAll("+---------------------------------+\n");
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Simulation Duration (T)", self.duration });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Processed", self.processed_events });
+        try writer.writeAll("------- Global Post Metrics -------\n");
+        try writer.print("{s: <28}: {d}\n", .{ "Total Impressions", self.total_impressions });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Interactions", self.total_interactions });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Ignored", self.total_ignored });
+        try writer.writeAll("------------- Averages ------------\n");
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Avg Impressions / User", self.avg_impressions_per_user });
+        try writer.print("{s: <28}: {d:.2}%\n", .{ "Global Engagement Rate", self.engagement_rate * 100.0 });
+        try writer.print("{s: <28}: {d:.2}\n", .{ "Avg Unread Backlog / User", self.avg_timeline_backlog });
+        try writer.writeAll("------------- Sessions ------------\n");
+        try writer.print("{s: <28}: {d}\n", .{ "Total Sessions (all users)", self.total_sessions });
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Avg session length / cum session length", self.avg_session_length });
+        try writer.print("{s: <28}: {d:.4}\n", .{ "Avg posts (user) / post (total)", self.avg_post_per_session });
+        try writer.print("{s: <28}: {d:.2}\n", .{ "Timeline Drain Ratio", self.timeline_drain_ratio });
+        try writer.writeAll("+---------------------------------+\n");
+    }
+};
+
+
+const SimResultsChron = struct {
     duration: f64,
     processed_events: u64,
 
@@ -106,7 +151,7 @@ pub const SimResults = struct {
     avg_timeline_backlog: f64,   // How many unread posts remain in heaps at horizon
     
     pub fn format(
-        self: SimResults,
+        self: @This(),
         writer: *std.Io.Writer,
     ) !void {
         

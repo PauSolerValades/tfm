@@ -37,7 +37,7 @@ const ParsedUser = struct {
 
 const ParsedPost = struct {
     id: Index,
-    time: f64,
+    //time: f64,
 };
 
 const ParsedFollow = struct {

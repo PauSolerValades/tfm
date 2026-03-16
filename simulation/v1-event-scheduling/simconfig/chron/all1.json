@@ -1,8 +1,15 @@
 {
   "user_policy": {
     "categorical": {
-      "weights": [0.33, 0.33, 0.34],
+      "weights": [0.50, 0.30, 0.20 ],
       "data": [ "ignore", "like", "repost" ]
+    }
+  },
+  "post_time_creation": {
+    "uniform": {
+      "min": 0,
+      "max": 10000,
+      "interval": "oc"
     }
   },
   "user_inter_action": {
@@ -20,7 +27,7 @@
       "value": 1
     }
   },
-  "trace_to_file": true,
+  "trace_to_file": false,
   "horizon": 10000,
   "seed": null 
 }

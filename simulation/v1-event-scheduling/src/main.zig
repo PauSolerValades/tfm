@@ -12,15 +12,14 @@ const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
 
 const structs = @import("config.zig");
 
-const simulation = @import("simulation.zig");
-const simulate = if (is_v1) simulation.v1 else simulation.v2;
+const simulation = if (is_v1) @import("sim_chron.zig") else @import("sim_rev_chron.zig");
 
 const loader = @import("json_loading.zig");
 const gn = @import("graph_network.zig");
-const v1 = simulation.v1;
 
 const Distribution = structs.Distribution;
 const SimConfig = structs.SimConfig;
+const SimResults = structs.SimResults;
 
 const User = simulation.User;
 const Post = simulation.Post;
@@ -28,11 +27,16 @@ const TimelineEvent = simulation.TimelineEvent;
 
 const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
+const PostGeneration = enum {
+    all,
+    one,
+};
 
 const def = .{
     .name = "v1",
-    .description = "BSKY sim v1",
+    .description = "BSKY sim",
     .required = .{
+        Arg(PostGeneration, "postinit", "Post initialization strategy"),
         Arg([]const u8, "config", "Configuration file for the simulation"),
         Arg([]const u8, "data", "Data file containing the network definition"),
     },
@@ -62,6 +66,7 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };   
 
+    // const parsed_config = try loader.loadJson(arena, init.io, args.config, SimConfig);
     const parsed_config = loader.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
         try stderr.print("Error parsing the JSON: {any}", .{err});
         try stderr.flush();
@@ -130,7 +135,19 @@ pub fn main(init: std.process.Init) !void {
             break :blk &discard_writer.writer;
         }
     };
+    const SimulateFn = *const fn (
+        Allocator, 
+        Random, 
+        SimConfig, 
+        *gn.StaticNetworkGraph, 
+        *Io.Writer
+    ) anyerror!SimResults;
 
+    // var simulate: *const fn (Allocator, Random, SimConfig, *gn.StaticNetworkGraph, *Io.Writer) anyerror!SimResults;
+    const simulate: SimulateFn = switch (args.postinit) {
+        .one => simulation.staticOnePostScheduled,
+        .all => simulation.staticAllPostsScheduled,
+    };
     const startTime = Io.Timestamp.now(init.io, .real);
     const results = try simulate(arena, rng, config, &graph, trace_writer);
     const elapsedTime = startTime.untilNow(init.io, .real);
