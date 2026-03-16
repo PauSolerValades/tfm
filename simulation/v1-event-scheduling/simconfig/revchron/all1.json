@@ -14,7 +14,7 @@
   },
   "user_inter_action": {
     "exponential": {
-      "rate": 3
+      "mean": 3 
     }
   },
   "propagation_delay": {
@@ -30,14 +30,15 @@
   "init_vacation_ratio": 0.5,
   "session_duration": {
     "exponential": {
-      "rate": 60
+      "mean": 60
     }
   },
   "user_inter_session": {
     "exponential": {
-      "rate": 120
+      "mean": 120
     }
   },
+  "warmup_time": 1000,
   "trace_to_file": false,
   "horizon": 10000,
   "seed": null 

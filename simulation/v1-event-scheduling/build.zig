@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) !void {
         const options = b.addOptions();
         options.addOption([]const u8, "build", version);
         const exe = b.addExecutable(.{
-            .name = "bskysim",
+            .name = b.fmt("bskysim-{s}", .{version}),
             .root_module = b.createModule(.{
                 .root_source_file = b.path("src/main.zig"),
                 .target = target,

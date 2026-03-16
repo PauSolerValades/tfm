@@ -135,7 +135,21 @@ pub fn main(init: std.process.Init) !void {
             break :blk &discard_writer.writer;
         }
     };
-    const SimulateFn = *const fn (
+    
+    const session_writer = blk: { 
+        if (config.trace_to_file) {
+            const trace_path = "results/session_trace.txt"; 
+            var trace_buffer: [64 * 1024]u8 = undefined;
+            const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
+            var trace_file_writer = trace_file.writer(init.io, &trace_buffer);
+            break :blk &trace_file_writer.interface;
+        } else {
+            var discard_writer = std.Io.Writer.Discarding.init(&.{});
+            break :blk &discard_writer.writer;
+        }
+    };
+
+    const SimulateFnChron = *const fn (
         Allocator, 
         Random, 
         SimConfig, 
@@ -143,15 +157,32 @@ pub fn main(init: std.process.Init) !void {
         *Io.Writer
     ) anyerror!SimResults;
 
+    const SimulateFnRevChron = *const fn (
+        Allocator, 
+        Random, 
+        SimConfig, 
+        *gn.StaticNetworkGraph, 
+        *Io.Writer,
+        *Io.Writer
+    ) anyerror!SimResults;
+    
+    const SimulateFn = if (is_v1) SimulateFnChron else SimulateFnRevChron;
+
     // var simulate: *const fn (Allocator, Random, SimConfig, *gn.StaticNetworkGraph, *Io.Writer) anyerror!SimResults;
     const simulate: SimulateFn = switch (args.postinit) {
         .one => simulation.staticOnePostScheduled,
         .all => simulation.staticAllPostsScheduled,
     };
+    
     const startTime = Io.Timestamp.now(init.io, .real);
-    const results = try simulate(arena, rng, config, &graph, trace_writer);
-    const elapsedTime = startTime.untilNow(init.io, .real);
-   
+
+    const results = if (is_v1)
+        try simulate(arena, rng, config, &graph, trace_writer)
+    else
+        try simulate(arena, rng, config, &graph, trace_writer, session_writer);
+
+    const elapsedTime = startTime.untilNow(init.io, .real);   
+
     try stdout.print("{f}\n", .{results});
     try stdout.print("Time Elapsed: {d} ms\n", .{ elapsedTime.toMilliseconds()});
     try stdout.flush();

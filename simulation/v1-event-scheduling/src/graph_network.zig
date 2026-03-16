@@ -9,18 +9,19 @@ const build = @import("build");
 
 const Heap = @import("heap").Heap;
 
-const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
-const TimelineHeap = if(is_v1) Heap(entities.TimelineEvent, void, entities.compareTimelineEvent) else Heap(entities.TimelineEvent, void, entities.compareTimelineEventOposite);
-
 
 const dist = @import("distributions");
 const Categorical = dist.Categorical;
 
 const entities = @import("entities.zig");
+const TimelineEvent = entities.TimelineEvent;
 const User = entities.User;
 const Post = entities.Post;
 const Index = entities.Index;
 const Action = entities.Action;
+
+// Changes according to v1
+const TimelineHeap = Heap(entities.TimelineEvent, void, entities.compareTimelineEvent);
 
 const Precision = @import("config.zig").Precision;
 

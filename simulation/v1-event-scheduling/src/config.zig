@@ -61,6 +61,9 @@ const SimConfigRevChron = struct {
     init_vacation_ratio: Precision,             // which proportion of the users start on vacation
     session_duration: ContDist(f64),           // duration of the current session
     user_inter_session: ContDist(f64),         // time between sessions
+    // regarding warmup
+    warmup_time: f64,
+
     // misc config
     trace_to_file: bool,                        // true is trace is written to a file. False not
 

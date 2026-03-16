@@ -23,7 +23,7 @@ const Event = entities.Event;
 const Action = entities.Action;
 const User = entities.User;
 const Post = entities.Post;
-const TracePost = entities.TracePost;
+const TraceAction = entities.TraceAction;
 const TimelineEvent = entities.TimelineEvent;
 const compareTimelineEvent = entities.compareTimelineEvent;
 const Index = entities.Index;
@@ -88,7 +88,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
             }
             const new_post_id = graph.user_post_list[current_user_id][new_post_index];
 
-            const trace_event = TracePost{
+            const trace_event = TraceAction{
                 .time = t_clock,
                 .type = current_event.type,
                 .event_id = processed_events,
@@ -126,7 +126,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
         graph.user_seen_post.set(current_user_id * graph.posts.len + post_id);
         impressions += 1;
         
-        const trace_event = TracePost{
+        const trace_event = TraceAction{
             .time = t_clock,
             .type = current_event.type,
             .event_id = processed_events,
@@ -253,7 +253,7 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
         graph.user_seen_post.set(current_user_id * graph.posts.len + post_id);
         impressions += 1;
         
-        const trace_event = TracePost{
+        const trace_event = TraceAction{
             .time = t_clock,
             .type = current_event.type,
             .event_id = processed_events,

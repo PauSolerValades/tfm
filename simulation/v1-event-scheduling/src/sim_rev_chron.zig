@@ -21,9 +21,10 @@ const Precision = config.Precision;
 
 const Event = entities.Event;
 const Action = entities.Action;
+const Session = entities.Session;
 const User = entities.User;
 const Post = entities.Post;
-const TracePost = entities.TracePost;
+const TraceAction = entities.TraceAction;
 const TimelineEvent = entities.TimelineEvent;
 const compareTimelineEvent = entities.compareTimelineEvent;
 const Index = entities.Index;
@@ -34,7 +35,7 @@ fn CreateRandomEvent(user_id: Index, user_session_gen: u64, event_id: u64, t_clo
     const interaction_delay = simconf.interaction_delay.sample(rng);
     const event = Event{ 
         .time = t_clock + event_time + interaction_delay, 
-        .type = action, 
+        .type = .{ .action = action }, 
         .user_id = user_id, 
         .id = event_id, 
         .session_gen = user_session_gen,
@@ -45,12 +46,14 @@ fn CreateRandomEvent(user_id: Index, user_session_gen: u64, event_id: u64, t_clo
 
 const Unif = dist.Uniform(Precision);
 
-pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
+pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer, trace2: *Io.Writer) !SimResults {
     _ = gpa;
     _ = rng;
     _ = simconf;
     _ = graph;
     _ = trace;
+    _ = trace2;
+
     const result = SimResults {
         .processed_events = 0,
         .duration = 0,
@@ -217,13 +220,16 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
 //
 //     return result;
 // }
-//
-pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, trace: *Io.Writer) !SimResults {
+
+const TraceSession = entities.TraceSession;
+
+pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, action_trace: *Io.Writer, session_trace: *Io.Writer) !SimResults {
 
     const EventQueue: type = Heap(Event, void, entities.compareEvent);
 
     var processed_events: u64 = 0;
     var t_clock: f64 = 0.0;
+    var is_warmed_up: bool = false;
     
     var impressions: u64 = 0;
     var interactions: u64 = 0;
@@ -238,222 +244,269 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
     var session_start_times: []f64 = try gpa.alloc(f64, graph.users.len);
     @memset(session_start_times, 0.0); // Zero-initialize
     defer gpa.free(session_start_times);
-    
-    var starting_events = try gpa.alloc(Event, graph.users.len);
-    //defer gpa.free(starting_events); <- NO!! fromOwnedSlice takes ownership of this
-    
-    var is_user_online: []bool = try gpa.alloc(bool, graph.users.len); // true: is online 
+   
+    var is_user_online: []bool = try gpa.alloc(bool, graph.users.len);
     defer gpa.free(is_user_online);
 
+    var user_session_gen: []u64 = try gpa.alloc(u64, graph.users.len);
+    @memset(user_session_gen, 0);
+    defer gpa.free(user_session_gen);
+  
     const unif: Unif = .init(0, 1, dist.Interval.cc);
-   
-    // schedule all posts per user
+
+    var total_initial_events: usize = graph.users.len; // Space for the initial wakeups/sleeps
+    for (0..graph.users.len) |user_id| {
+        const post_count = graph.user_post_list[user_id].len;
+        const follower_count = graph.users.items(.follower_count)[user_id];
+        total_initial_events += post_count * follower_count; // Space for every single post delivery
+    }
+
+    var starting_events = try gpa.alloc(Event, total_initial_events);
+    //defer gpa.free(starting_events); <- NO!! fromOwnedSlice takes ownership of this
+    var event_idx: usize = 0;
+
     for (0..graph.users.len) |user_id| { 
         for (graph.user_post_list[user_id]) |post_id| {
-            // find the post the user has created, the next one on the list
             const follower_start = graph.users.items(.follower_start)[user_id];
             const follower_count = graph.users.items(.follower_count)[user_id];
             
             for (graph.followers[follower_start..follower_start+follower_count]) |follower_id| {
                 const propagation_delay = simconf.propagation_delay.sample(rng);
                 const t_post = simconf.post_time_creation.sample(rng);
-                const pe = entities.TimelineEvent{ 
-                    .post_id = post_id,
-                    .time = t_post + propagation_delay,
+                
+                // Route to the main queue, NOT the timeline!
+                starting_events[event_idx] = Event{ 
+                    .time = t_post + propagation_delay, 
+                    .type = .{ .receive_post = post_id }, 
+                    .user_id = follower_id, 
+                    .id = processed_events, 
+                    .session_gen = 0 
                 };
-                try graph.timelines[follower_id].add(gpa, pe);
+                event_idx += 1;
+                processed_events += 1;
             }
         }
     }
-   
-    var user_session_gen: []u64 = try gpa.alloc(u64, graph.users.len);
-    @memset(user_session_gen, 0);
-    defer gpa.free(user_session_gen);
-
     
+    // SCHEDULE INITIAL SESSIONS
     for (0..graph.users.len) |i| {
         const r = unif.sample(rng); 
         if (r < simconf.init_vacation_ratio) {
-            // Start on vacation
             is_user_online[i] = false;
-            const wake_up_time = simconf.user_inter_session.sample(rng);
-            starting_events[i] = Event{ 
-                .time = wake_up_time, 
-                .type = .start_session, 
+            starting_events[event_idx] = Event{ 
+                .time = simconf.user_inter_session.sample(rng), 
+                .type = .{ .session = .start }, 
                 .user_id = @intCast(i), 
                 .id = processed_events, 
                 .session_gen = 0 
             }; 
         } else {
-            // Start online
             is_user_online[i] = true;
             session_start_times[i] = 0.0;
             total_sessions += 1;
-            starting_events[i] = try CreateRandomEvent(@intCast(i), 0, processed_events, 0, simconf, rng);
-        }
-        processed_events += 1;
-    }
-
-    // initialize the heap (queue takes ownership of starting_events here)
-    var queue = EventQueue.fromOwnedSlice(starting_events, {});
-    defer queue.deinit(gpa);
-
-    // schedule the bedtimes for the users who started online
-    for (0..graph.users.len) |i| {
-        if (is_user_online[i]) {
-            const max_duration = simconf.session_duration.sample(rng);
-            const e = Event{ 
-                .time = max_duration, 
-                .type = .end_session, 
+            // They start online, so schedule their bed time!
+            starting_events[event_idx] = Event{ 
+                .time = simconf.session_duration.sample(rng), 
+                .type = .{ .session = .end }, 
                 .user_id = @intCast(i), 
                 .id = processed_events, 
                 .session_gen = 0 
             }; 
-            try queue.add(gpa, e);
-            processed_events += 1; // Don't forget to bump the ID for these new events!
         }
-    }   
+        event_idx += 1;
+        processed_events += 1;
+    }
+
+    var queue = EventQueue.fromOwnedSlice(starting_events, {});
+    defer queue.deinit(gpa);
+
+    // Give online users their first action
+    for (0..graph.users.len) |i| {
+        if (is_user_online[i]) {
+            const first_action = try CreateRandomEvent(@intCast(i), 0, processed_events, 0, simconf, rng);
+            try queue.add(gpa, first_action);
+            processed_events += 1;
+        }
+    }
+
     while (t_clock <= simconf.horizon and queue.items.len > 0) : (processed_events += 1) {
         const current_event = queue.remove();
         const current_user_id: Index = current_event.user_id;
-        
-        // this is to avoid the intrusive heap for the overlaping session
-        // This is a stale event from a previous session. Ignore it!
-        if (current_event.type == .end_session and (!is_user_online[current_user_id] or current_event.session_gen != user_session_gen[current_user_id])) {
-            continue; 
-        }
-        
         t_clock = current_event.time;
-       
-        if (current_event.type == .start_session) {
-            is_user_online[current_user_id] = true;
-            user_session_gen[current_user_id] += 1; // which session is the user on
+
+        // warmup reset 
+        if (!is_warmed_up and t_clock >= simconf.warmup_time) {
+            std.debug.print("warmed up finished\n", .{});
+            is_warmed_up = true;
+            // reset all metrics
+            impressions = 0; interactions = 0; ignored = 0;
+            total_sessions = 0; total_online_time = 0.0;
+            empty_timeline_ends = 0; max_duration_ends = 0;
             
-            session_start_times[current_user_id] = t_clock; // Record start time
-            total_sessions += 1;
-
-            const max_duration = simconf.session_duration.sample(rng);
-            const e = Event{ 
-                .time = t_clock + max_duration, 
-                .type = .end_session, 
-                .user_id = current_user_id, 
-                .id = processed_events,
-                .session_gen = user_session_gen[current_user_id] // every event must be stamped 
-            }; 
-            try queue.add(gpa, e);
-
-            const first_action = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
-            try queue.add(gpa, first_action);
-
-            continue;
-        }
-
-        
-        if (current_event.type == .end_session) {
-            // schedule users wake up time
-            is_user_online[current_user_id] = false;
-            // metrics 
-            total_online_time += (t_clock - session_start_times[current_user_id]);
-            max_duration_ends += 1;
-
-            const offline_duration = simconf.user_inter_session.sample(rng);
-            const e = Event{ 
-                .time = t_clock + offline_duration, 
-                .type = .start_session, 
-                .user_id = current_user_id, 
-                .id = processed_events,
-                .session_gen = user_session_gen[current_user_id],
-            }; 
-            try queue.add(gpa, e);
-
-            // post non seen when session finished will get nuked
-            graph.timelines[current_user_id].clearRetainingCapacity();
-            continue;
-        }
-    
-        if (!is_user_online[current_user_id]) {
-            continue;
-        }
-       
-        // pop seen post from the user associated with the event
-        const poped_post: ?TimelineEvent = graph.timelines[current_user_id].removeOrNull();
-
-        // if a user has no remaing posts in the timeline, it's session should be terminated
-        if (poped_post) |current_post| { // not null, go forth
-            const post_id: Index = current_post.post_id;
-            const matrix_index = current_user_id * graph.posts.len + post_id;
-
-            if (graph.user_seen_post.isSet(matrix_index)) {
-                const next_action = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
-                try queue.add(gpa, next_action);
-                continue; 
+            for (0..graph.users.len) |i| {
+                if (is_user_online[i]) session_start_times[i] = t_clock;
+                total_sessions += 1;
             }
-
-            graph.user_seen_post.set(matrix_index);
-            impressions += 1;
-            
-            if (simconf.trace_to_file) {
-                const trace_event = TracePost{
+        }
+        
+        switch (current_event.type) {
+            .receive_post => |pid| {
+                const pe = TimelineEvent{
+                    .post_id = pid,
                     .time = t_clock,
-                    .type = current_event.type,
-                    .event_id = processed_events,
-                    .user_id = current_user_id,
-                    .post_id = post_id,
                 };
+                try graph.timelines[current_user_id].add(gpa, pe);
+            },
 
-                // this might be very slow, it could be better to use the lower json api
-                try std.json.Stringify.value(trace_event, .{}, trace);
-                try trace.writeAll("\n");
-            } 
+            .session => |ssn| {
+                // this is to avoid the intrusive heap for the overlaping session
+                // This is a stale event from a previous session. Ignore it!
+                if (ssn == .end and (!is_user_online[current_user_id] or current_event.session_gen != user_session_gen[current_user_id])) {
+                    continue; 
+                }
+       
+                if (simconf.trace_to_file) {
+                     const trace_event = TraceSession {
+                        .time = t_clock,
+                        .type = ssn,
+                        .event_id = processed_events,
+                        .user_id = current_user_id,
+                    };
 
-            switch (current_event.type) {
-                .repost => {
+                    // this might be very slow, it could be better to use the lower json api
+                    try std.json.Stringify.value(trace_event, .{}, session_trace);
+                    try session_trace.writeAll("\n");
+                }
 
-                    const follower_start = graph.users.items(.follower_start)[current_user_id];
-                    const follower_count = graph.users.items(.follower_count)[current_user_id];
+                switch (ssn) {
+                    .start => {
+                        is_user_online[current_user_id] = true;
+                        user_session_gen[current_user_id] += 1; // which session is the user on
 
-                    for (graph.followers[follower_start..follower_start+follower_count]) |follower_id| {
-                        //check that user_ptr has not seen this post already...
-                        const p_id: Index = current_post.post_id;
-                        const follower_matrix_index = follower_id * graph.posts.len + p_id; 
-                        
-                        if (!graph.user_seen_post.isSet(follower_matrix_index)) {
-                            const propagation_delay = simconf.propagation_delay.sample(rng);
-                            const propagated_event = TimelineEvent{
-                                .time = t_clock + propagation_delay, 
-                                .post_id = p_id,
-                            };
+                        session_start_times[current_user_id] = t_clock; // Record start time
+                        total_sessions += 1;
 
-                            try graph.timelines[follower_id].add(gpa, propagated_event);
+                        const max_duration = simconf.session_duration.sample(rng);
+                        const e = Event{ 
+                            .time = t_clock + max_duration, 
+                            .type = .{ .session = .end }, 
+                            .user_id = current_user_id, 
+                            .id = processed_events,
+                            .session_gen = user_session_gen[current_user_id] // every event must be stamped 
+                        }; 
+                        try queue.add(gpa, e);
 
-                        } // else the post was seen_posts to do not add it
+                        const first_action = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
+                        try queue.add(gpa, first_action);
+                    },
+                    .end => {
+                        // schedule users wake up time
+                        is_user_online[current_user_id] = false;
+                        // metrics 
+                        total_online_time += (t_clock - session_start_times[current_user_id]);
+                        max_duration_ends += 1;
+
+                        const offline_duration = simconf.user_inter_session.sample(rng);
+                        const e = Event{ 
+                            .time = t_clock + offline_duration, 
+                            .type = .{ .session = .start }, 
+                            .user_id = current_user_id, 
+                            .id = processed_events,
+                            .session_gen = user_session_gen[current_user_id],
+                        }; 
+                        try queue.add(gpa, e);
+
+                        // post non seen when session finished will get nuked
+                        graph.timelines[current_user_id].clearRetainingCapacity();
+                    }
+                }
+            },
+            .action => |act| {
+                // Guardrail against different session
+                if (!is_user_online[current_user_id]) {
+                    continue;
+                }
+
+                if (graph.timelines[current_user_id].removeOrNull()) |current_post| {
+                    const post_id: Index = current_post.post_id;
+                    const matrix_index = current_user_id * graph.posts.len + post_id;
+
+                    if (graph.user_seen_post.isSet(matrix_index)) {
+                        const next_action = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
+                        try queue.add(gpa, next_action);
+                        continue; 
                     }
 
-                    interactions += 1;
-                },
-                .like => interactions += 1,
-                .ignore => ignored += 1,
-                else => unreachable,
-            }
+                    if (simconf.trace_to_file) {
+                        const trace_event = TraceAction{
+                            .time = t_clock,
+                            .type = act,
+                            .event_id = processed_events,
+                            .user_id = current_user_id,
+                            .post_id = post_id,
+                        };
 
-            const event = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
-            try queue.add(gpa, event);
+                        // this might be very slow, it could be better to use the lower json api
+                        try std.json.Stringify.value(trace_event, .{}, action_trace);
+                        try action_trace.writeAll("\n");
+                    } 
 
-        } else { // not any posts left in the timeline, let's end the session
-            is_user_online[current_user_id] = false;
+                    graph.user_seen_post.set(matrix_index);
+                    impressions += 1;
+           
+                    switch (act) {
+                        .repost => {
+
+                            const follower_start = graph.users.items(.follower_start)[current_user_id];
+                            const follower_count = graph.users.items(.follower_count)[current_user_id];
+
+                            for (graph.followers[follower_start..follower_start+follower_count]) |follower_id| {
+                                //check that user_ptr has not seen this post already...
+                                const p_id: Index = current_post.post_id;
+                                const follower_matrix_index = follower_id * graph.posts.len + p_id; 
+
+                                if (!graph.user_seen_post.isSet(follower_matrix_index)) {
+                                    const propagation_delay = simconf.propagation_delay.sample(rng);
+                                    const e = Event{ 
+                                        .time = t_clock + propagation_delay, 
+                                        .type = .{ .receive_post = p_id }, 
+                                        .user_id = follower_id, 
+                                        .id = processed_events, 
+                                        .session_gen = 0 
+                                    };
+                                    try queue.add(gpa, e);
+                                    processed_events += 1;
+                                } // else the post was seen_posts to do not add it
+                            }
+
+                            interactions += 1;
+                        },
+                        .like => interactions += 1,
+                        .ignore => ignored += 1,
+                        else => unreachable,
+                    }
+
+                    const event = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
+                    try queue.add(gpa, event);
    
-            total_online_time += (t_clock - session_start_times[current_user_id]);
-            empty_timeline_ends += 1;
+                } else {
+                    is_user_online[current_user_id] = false;
+        
+                    total_online_time += (t_clock - session_start_times[current_user_id]);
+                    empty_timeline_ends += 1;
 
-            const offline_duration = simconf.user_inter_session.sample(rng);
-            const e = Event{ .time = t_clock + offline_duration, .type = .start_session, .user_id = current_user_id, .id = processed_events, .session_gen = user_session_gen[current_user_id] }; 
-            try queue.add(gpa, e);
-            // no need to nuke the timeline, it's already empty
+                    const offline_duration = simconf.user_inter_session.sample(rng);
+                    const e = Event{ .time = t_clock + offline_duration, .type = .{ .session = .start }, .user_id = current_user_id, .id = processed_events, .session_gen = user_session_gen[current_user_id] }; 
+                    try queue.add(gpa, e);
+                    // no need to nuke the timeline, it's already empty
+                }
+            }
         }
-    }
-    
-    try trace.flush();
-    
+    } 
+   
+    try action_trace.flush();
+    try session_trace.flush();
+
     var timeline_backlog: usize = 0;
     for (graph.timelines) |*timeline| {
         timeline_backlog += timeline.items.len;
