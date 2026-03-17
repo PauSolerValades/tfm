@@ -27,7 +27,7 @@ pub const User = struct {
     follower_start: Index,
     follower_count: Index, 
     policy: Categorical(Precision, Action),
-    last_published_post: Index = 0,
+    max_posts: u32,
 };
 
 /// Post of the simulation

@@ -336,7 +336,7 @@ pub fn staticAllPostsScheduledV1(gpa: Allocator, rng: Random, simconf: SimConfig
         }
     }
 
-    const t_end = @min(simconf.warmup_time + duration, simconf.horizon);
+    const t_end = @min(simconf.warmup_time + simconf.duration, simconf.horizon);
     while (t_clock <= t_end and queue.items.len > 0) : (processed_events += 1) {
         const current_event = queue.remove();
         const current_user_id: Index = current_event.user_id;

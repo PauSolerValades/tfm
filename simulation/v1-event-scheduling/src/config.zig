@@ -22,13 +22,30 @@ pub const Precision = f32;
 
 const SimConfigChron = struct {
     seed: ?u64,
+   
+    horizon: f64,                                           // duration of the simulation
+    duration: f64,
+    warmup_time: f64,
+
     user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
-    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
     user_inter_action: ContDist(Precision),                 // time between a user two actions
+                                                            //
+    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
     propagation_delay: ContDist(f64),                       // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),                       // time between 
+
     trace_to_file: bool,                                    // true is trace is written to a file. False not
-    horizon: f64,                                           // duration of the simulation
+
+    pub fn isValid(self: @This()) bool {
+        assert(self.horizon > 0);
+        assert(self.duration > 0);
+        assert(self.warmup_time > 0);
+        assert(self.warmup_time + self.duration > self.horizon);
+
+        // check that the Distribution picked to generate the posts is not able to 
+        // generate a post later than warmup_time
+        return true;
+    }
 
     pub fn format(
         self: @This(),
@@ -54,10 +71,10 @@ const SimConfigRevChron = struct {
     duration: f64,                          // Duration of the simulation
     warmup_time: f64,                       // time when warmup ends
     // user related actions
-    user_policy: DiscDist(Precision, entities.Action),   // probability of available actions of the user
-    user_inter_action: ContDist(Precision),     // time between a user two actions
+    user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
+    user_inter_action: ContDist(Precision),                 // time between a user two actions
     // to init posts
-    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
+    post_time_creation: ContDist(f64),           // time of the post created in the simulation 
     // delays on posts transmissions
     propagation_delay: ContDist(f64),           // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),           // time between 
@@ -77,6 +94,7 @@ const SimConfigRevChron = struct {
 
         // check that the Distribution picked to generate the posts is not able to 
         // generate a post later than warmup_time
+        return true;
     }
 
     pub fn format(

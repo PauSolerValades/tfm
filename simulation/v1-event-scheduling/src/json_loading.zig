@@ -24,15 +24,14 @@ const compareTimelineEvent = entities.compareTimelineEvent;
 
 pub const NetworkJson = struct {
     users: []ParsedUser,
-    posts: []ParsedPost,
     followers: []ParsedFollow,
-    user_owns_post: []ParsedOwns,
 };
 
 const ParsedUser = struct {
     id: Index,
     actions: []entities.Action,
     policy: []Precision,
+    max_posts: u32,
 };
 
 const ParsedPost = struct {

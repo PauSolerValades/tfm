@@ -73,8 +73,8 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };
     defer parsed_config.deinit();
-    assertConfig(); 
     const config = parsed_config.value;
+    _ = config.isValid(); // not used for now
 
     const startTimeLoadData = Io.Timestamp.now(init.io, .real);
     // const loaded_data = try loader.loadJson(arena, init.io, args.data, loader.NetworkJson);

@@ -33,13 +33,88 @@ const NetworkJson = @import("json_loading.zig").NetworkJson;
 /// 3. No new follows between users will be added to the network
 pub const StaticNetworkGraph = struct {
     users: MultiArrayList(User),   // Contains all users of the simulations
-    posts: MultiArrayList(Post),   // Contains present and Future posts
     followers: []Index,                     // Compressed Sparse Row, aka Static Adjacency Array
     timelines: []TimelineHeap,              // Timelines for every user. Optimaly, we should use FixedBufferAllocator 
     user_seen_post: DynamicBitSet,          // N-to-M user seen post matrix as a 2D bitset, amazingly fast
-    user_post_list: [][]Index,              //
 
     pub fn create(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
+        // Converteix les coses de la network json en Static Network Graph
+        var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
+
+        for (parsed_network.users) |user| { // ParsedUser
+            const cat: Categorical(Precision, Action) = try .init(gpa, user.policy, user.actions);
+            const u = User{ 
+                .id = user.id, 
+                .follower_start = 0, 
+                .follower_count = 0, 
+                .max_posts = user.max_posts,
+                .policy = cat,
+            }; 
+            users.appendAssumeCapacity(u);
+        }
+       
+        var followers: []Index = try gpa.alloc(Index, parsed_network.followers.len);
+        
+        // temporary list of arraylists to hold the followers:
+        var tmp_followers: []ArrayList(Index) = try gpa.alloc(ArrayList(Index), parsed_network.users.len);
+        for (0..tmp_followers.len) |i| {
+            tmp_followers[i] = .empty; 
+        } 
+        defer {
+            for (tmp_followers) |*f| {
+                f.deinit(gpa);
+            }
+        }
+
+        for (parsed_network.followers) |edge| {
+            const follower_id = edge.follower_id;
+            const followed_id = edge.followed_id;
+            try tmp_followers[follower_id].append(gpa, followed_id);
+        }
+
+        var acc: usize = 0;
+        for (tmp_followers, 0..) |follow, i| {
+            const follower_count = follow.items.len;
+            users.items(.follower_start)[i] = @intCast(acc);
+            users.items(.follower_count)[i] = @intCast(follower_count);
+            @memcpy(followers[acc..acc+follower_count], follow.items);
+            acc += follower_count;
+        }
+        
+        var timelines: []TimelineHeap = try gpa.alloc(TimelineHeap, parsed_network.users.len);
+        
+        for (0..timelines.len) |i| {
+            timelines[i] = .empty;
+        }
+        
+        // User Homogeneity, max_post is the same per every user
+        const total_bits = parsed_network.users.len * parsed_network.users[0].max_posts;
+        const matrix = try DynamicBitSet.initEmpty(gpa, total_bits);
+        
+        return .{
+            .users = users,
+            .followers = followers,
+            .timelines = timelines,
+            .user_seen_post = matrix, 
+        };
+    }
+
+
+    pub fn delete(self: *StaticNetworkGraph, gpa: Allocator) !void {
+        try self.users.deinit(gpa);
+        try gpa.free(self.followers);
+
+        for (self.timelines) |timeline| {
+            timeline.deinit();
+        }
+        
+        try self.user_seen_post.deinit();
+
+    }
+    
+    /// Old create, when posts where in the data generation.
+    /// This will probably be good to keep arround if i implement checkpoint
+    pub fn createGraphFromCheckpoint(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
         // Converteix les coses de la network json en Static Network Graph
         var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
         var posts: MultiArrayList(Post) = try .initCapacity(gpa, parsed_network.posts.len);
@@ -128,25 +203,7 @@ pub const StaticNetworkGraph = struct {
             .followers = followers,
             .timelines = timelines,
             .user_seen_post = matrix, 
-            .user_post_list = user_post_list,
         };
-    }
-
-
-    pub fn delete(self: *StaticNetworkGraph, gpa: Allocator) !void {
-        try self.users.deinit(gpa);
-        try self.posts.deinit(gpa);
-        try gpa.free(self.followers);
-
-        for (self.timelines) |timeline| {
-            timeline.deinit();
-        }
-        
-        try self.user_seen_post.deinit();
-
-        for (self.user_post_list) |l| {
-            try gpa.free(l);
-        }
     }
 
 };
