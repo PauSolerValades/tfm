@@ -15,8 +15,8 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
     for i in range(num_nodes):
         users_data.append({
             'id': i,
-            'actions': ["ignore", "like", "repost"],
-            'policy': [0.8, 0.15, 0.05], 
+            'actions': ["ignore", "like", "repost", "create"],
+            'policy': [0.5, 0.2, 0.15, 0.15], 
         })
 
     # --- 2. FOLLOWERS (Plain Python Graph Generator) ---
@@ -58,20 +58,14 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
     user_owns_post_data = []
     post_id_counter = 0 
     
-    # Define your simulation horizon
-    horizon = 10000.0 
-
     for user in users_data:
         # Uniform posting behavior (e.g., an average of 2 posts per user)
         num_posts = int(random.expovariate(1.0 / 2)) 
         
         for _ in range(num_posts):
-            # Generate a floating-point time t anywhere between 0.0 and the horizon
-            t = random.uniform(0.0, horizon)
             
             posts_data.append({
                 'id': post_id_counter,
-                'time': round(t, 4)  # Rounding to 4 decimals keeps the JSON clean but precise
             })
             
             user_owns_post_data.append({

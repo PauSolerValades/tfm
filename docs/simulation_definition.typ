@@ -133,6 +133,45 @@ Lastly, we define three ways of evaluating and keeping track of
 - *Item Trajectory*: $cal(H)^"traj"_i(t) = { e in V | v_"dst" = i "and" "type" in {"repost", "reply_to", "quote"} "and" tau < t }$. The list of all spreading actions applied to post $i$, which tracks the cascade.
 - *Simulation Trace*: $cal(H)^"trace" = "sorted"(V, "horizon") $: All that the simulation must output to review the full picture is just  the sorted edged at the end of the simulation.
 
+
+#pagebreak()
+= Simulation Concepts and Definitions
+
+In this section we explain all rellevant simulations concepts.
+
+== Static _versus_ Dynamic
+
+Let's take a step back from the problem defined at @sec-modeling for a minute. In there, we assumed for the sake of simplicity that $cal(U)$ remained _static_ for the duration of the simulation. Let's define what that means.
+
+*Definition* An *entity* is called static when the amount of them in the simulation will not change. On the contrary, we will call it *dynamic* if the cardinal of the set changes during the simulation duration.
+
+In @sec-modeling we assumed all entities and relationships between users are static, so they are not going to be added or removed during the simulation. A different thing is when an entity appears, and which strategy we follow to make them appear.
+
+=== Warm Up and Timeline
+<sec-warmup>
+
+The time creation of the posts make the simulation vary widely according to where the most amount of posts are created. If all the posts are generated with an exponential with mean 1, all the posts will be created for all the simulation duration. Instead, if we use a $"Unif"(0, "horizon")$ they will appear as the simulation goes on. 
+
+To have the freedom of picking how's the state of the network when the simulation starts, we define a warm up state, which is a time in where the simulation executes itself but stores no trace until a condition is met.
+
+A simulation timeline now contains of this rellevant timestamps:
+- Horizon $t_h$: maximum time the simulation will be ran.
+- Duration $d$: actual time in which the simulation will be ran.
+- Warm up $t_w$: time where the trace and metrics are not being stored.
+
+So, we can define the duration of the simulation as the following:
+- A simulation _executes_ always from 0 to $t_"end" = min {t_w + d, t_h}$.
+- A simulation is _evaluated_ always from $t_w$ to $t_"end"$.
+
+This allows us to introduce two new concepts, regarding when and how a new event plays into the simulation.
+
+*Definition* We call an event:
+- *deterministic* if it appears at the same exact timestamp between runs i.e is not randomly generated.
+- *scheduled* if it gets created stochastically before the simulation runs.
+- *stochastic* if it gets created stochastically while the simulation is running.
+
+(Normally) If an entity is dynamic, then it will be always an stochastic. 
+
 #pagebreak()
 = Version 1: Bare-bones 
 
@@ -235,6 +274,7 @@ Additionally, the transition function explicitly handles the scenario where a us
 #text(blue)[
 
 *Sobre això: pot ser que en tingui, o no, però no podem dir-ho sense demostrar-ho*
+
 === The Absorbing State Transition
 
 The simulation reaches its ultimate absorbing state, denoted as $G_"final"$, when the filtered timelines $cal(T)(u, n)$ for all users $u in cal(U)$ are completely empty, and all pre-scheduled posts in $cal(I)$ have been exhausted. At this point, no topological changes can occur.
@@ -242,6 +282,7 @@ The simulation reaches its ultimate absorbing state, denoted as $G_"final"$, whe
 By definition, an absorbing state only transitions to itself with absolute certainty:
 $ PP(G(n) = G_"final" | G(n-1) = G_"final") = 1 $
 ]
+
 === Proof of State Equivalence (Global Graph vs. Local Histories)
 
 We can also view the state of the chain as the state of the entities (users and posts). It can be proved that defining the state as the global graph $G(n)$ is mathematically isomorphic to defining it as the union of all localized entity histories.
@@ -266,7 +307,19 @@ Therefore, the global graph state $G(n)$ contains the exact same information as 
 
 We can simulate the networks with a Discrete Event Simulation with the Event Scheduling Algorithm. This coincides with the Embedded Discreet-Time Markov Chain formalized described in the previous section as an approximation of the CTMC that could be deduced from the data.
 
+=== Types of Implementation 
+
+As v1 is absolutely _static_ we can define four different types of implementations according how the post entities get managed:
+
++ Diffusion simulation: if we wanted to analyze just the post spreading, we could decide a fixed amount of posts per user that will be created at the exact same time. This would be a deterministic way of handling posts. If you were to randomize when those post appear, it would make the events scheduled.
++ Standard: an event scheduling implementation making the user creating the posts stochastically. To enforce the maximum amount of posts per simulation, we must keep track of how many posts did the user create, and when reached, not generate any more posts. This approach allows a warm up strategy to investigate more advanced stages in the network. All post creation events are stochastic by nature.
+
+Additionally, by implementing a loading checkpoint strategy in the standard approach, we can skip the warm up. If what it's actually needed is to evaluate a network from an starting deterministic position, this would be the correct approach. Tho also allowing warm up, it makes no sense to do it, as the initial state can be already rich enough to not need it.
+
+
 === Data Generation and Structure
+
+// TODO update to modern generation
 
 First, we'll use synthetic data generated in JSON format to run the simulation. This code can be found in [simulation/synthetic_data_generation/main.py], and generates the following structure:
 
@@ -383,6 +436,7 @@ Before detailing the algorithm, we define the following helper functions and str
   + *end*
 ]
 
+
 === Implementation details
 
 There must be a list with all the scheduled events (min heap), and then each user has a min-heap (?) with a index (or a pointer) to the post the user has to see (the oldest one). 
@@ -407,7 +461,7 @@ As per axiom of stability of the simulation, the follows are predefined and stat
 
 Instead of each user storing an array of followers (pointers to a user or user ids) we centralize all the following logic in an static dynamically allocated slice `followers: []Index`. It does not need to grow dynamically, therefore an `ArrayList` is not needed. All the followers are stored sequentially on the array, concatenating one another, and then we store the starting index and it's count in separate arrays. Lets make an example to showcase it:
 
-$ cal(N)_("out") (u_1) = {u_2, u_3, u_4, u_5} \ cal(N)_("out") (u_2) = {u_3} \ cal(N)_("out") (u_3) = emptyset \ cal(N)_("out") (u_4) = { u_1, u_5} \ cal(N)_("out") = (u_5) = emtpyset $
+$ cal(N)_("out") (u_1) = {u_2, u_3, u_4, u_5} \ cal(N)_("out") (u_2) = {u_3} \ cal(N)_("out") (u_3) = emptyset \ cal(N)_("out") (u_4) = { u_1, u_5} \ cal(N)_("out") = (u_5) = emptyset $
 
 Then, this code would allow us to access the information:
 
@@ -453,7 +507,7 @@ To improve locality this matrix is not implemented as an array of arrays, but is
 
 Instead of storing slices of pointer to users and posts `user: []*User` we use the index of the element in an array with a `u32` type, that is `user: []u32`. This obeys two reasons:
 1. Avoid pointer chasing: Every pointer defererences involves the CPU fetching from memory the contents of the pointer. Again, this is slow due to RAM being slow. Repeated access in a for loop over the accumulates several delays over the data.
-2. Smaller significant representation: in a 64-bit architecture CPU, a memory address is 64 bits (8 bytes). By representing the indexes as a $u32$ (32-bits, just 4 byte (32-bits, just 4 bytes) when a cache line is loaded it will contain double the amount of data than it had when loading a pointer. This implies tho that maximum users (and posts) is reduced to a maximum of $4294967296$, which is still absolutely enough. This is totally acceptable trade of for the improved speed that smaller structs in memory will result.
+2. Smaller significant representation: in a 64-bit architecture CPU, a memory address is 64 bits (8 bytes). By representing the indexes as a `u32` (32-bits, just 4 byte (32-bits, just 4 bytes) when a cache line is loaded it will contain double the amount of data than it had when loading a pointer. This implies tho that maximum users (and posts) is reduced to a maximum of $4294967296$, which is still absolutely enough. This is totally acceptable trade of for the improved speed that smaller structs in memory will result.
 
 *Data Structure Representation*
 
@@ -504,7 +558,7 @@ We'll expand the @sec-modeling notation. First we have to add when the user is i
 
 This does not need to be modeled actually, the topology of the graph does not change. It's only a restriction on when the user posts will appear.
 
-Let's redefine the user set $cal(U) = {(1,s_1), ... (n, s_n)}$ where $(i, s)$, where $s in { "online", "offline" }$. Now, a user cannot do any action in $cal(R)$ if $s_i = "offline"$. Let's define what "online" and "offline" even mean.
+Let's redefine the user set $cal(U) = {(1,s_1), ... (n, s_n)}$ where $(i, s)$, where $s in { "online", "offline" }$. Now, a user cannot do any action in $cal(R)$ if $s_i = "offline"$.
 
 #text(blue)[Analogous to the other definition we can do it function based. Let define a set $S$ with cardinal $N$ number of users. The function $"status": cal(U) --> S$ says in which status is user $u$ in.]
 
@@ -530,7 +584,6 @@ $ PP (e = (u, i, a, t) | cal(H)^"act"_u(t)) = pi(a) $
 
 5. Relationship Subset: The only User-to-Post actions that can occur are $cal(R)^' _(cal(U) cal(U)) = {"ignore", "like", "repost", "quote"} subset cal(R)_(cal(U), cal(U))$
 
-6. Notifications Mechanism: if $(u, j, "quote", t), (i,j, "quotes", t)$, user $v$ such as $i in cal(P) (u,t)$ can come back from vacation early.
 
 7. Algorithm: shows followers posts with a reverse-chronological (oldest to newest) order within it's session.
 
@@ -540,8 +593,17 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 
 9. Single-Action Loop: A user can interact with an item once.
 
-== Implementation details
 
+
+== Implementation
+
+=== Types of Implementation 
+
+v2 shares a large amount of features and characteristics with v1, and as well the type of implementations are very similar: both standard (with warm up allowed) and checkpointing from a fixed state simulation (no warm up allowed) work with the same dynamics.
+
+The diffusion model requires a small tweak to be coded. In v1, the user timelines could be prefilled with the appropiate `TimelineEvent` struct. Now, the timelines being a MaxHeap, scheduling of all events outside of that session will create a time incongruency: if all the timeline is filled with events ouside of current session, specifically from the future, poping an element will give you an event skipping some events in the middle. If implemented, it should fill the `Queue` structure with `.create` events.
+
+== Implementation Details
 Essentially, as the axiom of stability remains unchanged, all the data structures will remain exactly the same. 
 
 *Regarding User Heap*
@@ -551,6 +613,14 @@ This makes us consider mainly when we have to "empty" the heap of a user, becaus
 
 *Regarding Sessions*
 Main problem of the sessions is to make sure an action $a_(u,i)^k$ is performed when the user is inactive. DoD: store another array called mask with 0 or 1 depeding of when the user is online or not and prevent generation of actions if that is set
+
+#pagebreak()
+
+= Version 3: Replies and notifications
+
+
+6. Notifications Mechanism: if $(u, j, "quote", t), (i,j, "quotes", t)$, user $v$ such as $i in cal(P) (u,t)$ can come back from vacation early. When a reply to a post is made, 
+
 
 
 
