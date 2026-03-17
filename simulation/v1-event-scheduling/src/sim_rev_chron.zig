@@ -223,7 +223,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
 
 const TraceSession = entities.TraceSession;
 
-pub fn staticAllPostsScheduledV1(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, action_trace: *Io.Writer, session_trace: *Io.Writer) !SimResults {
+pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, action_trace: *Io.Writer, session_trace: *Io.Writer) !SimResults {
 
     const EventQueue: type = Heap(Event, void, entities.compareEvent);
 

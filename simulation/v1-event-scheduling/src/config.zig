@@ -12,6 +12,7 @@ const entities = @import("entities.zig");
 
 const ContDist = stats.ContinuousDistribution;
 const DiscDist = stats.DiscreteDistribution;
+const Uniform = stats.Uniform;
 
 const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
 pub const SimConfig = if(is_v1) SimConfigChron else SimConfigRevChron;
@@ -29,8 +30,10 @@ const SimConfigChron = struct {
 
     user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
     user_inter_action: ContDist(Precision),                 // time between a user two actions
-                                                            //
-    post_time_creation: ContDist(f64),                      // time of the post created in the simulation 
+                                                            
+    max_post_per_user: u32,
+    diffusion_post_schedule: Uniform(Precision),                      // time of the post created in the simulation 
+                                                            
     propagation_delay: ContDist(f64),                       // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),                       // time between 
 
@@ -40,7 +43,7 @@ const SimConfigChron = struct {
         assert(self.horizon > 0);
         assert(self.duration > 0);
         assert(self.warmup_time > 0);
-        assert(self.warmup_time + self.duration > self.horizon);
+        assert(self.warmup_time + self.duration <= self.horizon);
 
         // check that the Distribution picked to generate the posts is not able to 
         // generate a post later than warmup_time
@@ -90,7 +93,7 @@ const SimConfigRevChron = struct {
         assert(self.horizon > 0);
         assert(self.duration > 0);
         assert(self.warmup_time > 0);
-        assert(self.warmup_time + self.duration > self.horizon);
+        assert(self.warmup_time + self.duration >= self.horizon);
 
         // check that the Distribution picked to generate the posts is not able to 
         // generate a post later than warmup_time

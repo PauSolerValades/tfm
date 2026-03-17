@@ -1,21 +1,24 @@
 {
+  "seed": null,
+  "horizon": 10001,
+  "duration": 9000,
+  "warmup_time": 1000,
   "user_policy": {
     "categorical": {
       "weights": [0.50, 0.30, 0.20 ],
       "data": [ "ignore", "like", "repost" ]
     }
   },
-  "post_time_creation": {
-    "uniform": {
-      "min": 0,
-      "max": 10000,
-      "interval": "oc"
-    }
-  },
   "user_inter_action": {
     "exponential": {
-      "rate": 3
+      "mean": 3
     }
+  },
+  "max_post_per_user": 10,
+  "diffusion_post_schedule": {
+    "min": 0,
+    "max": 10000,
+    "interval": "oc"
   },
   "propagation_delay": {
     "constant": {
@@ -27,7 +30,5 @@
       "value": 1
     }
   },
-  "trace_to_file": false,
-  "horizon": 10000,
-  "seed": null 
+  "trace_to_file": false
 }

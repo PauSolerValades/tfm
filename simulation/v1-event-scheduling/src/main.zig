@@ -68,7 +68,7 @@ pub fn main(init: std.process.Init) !void {
 
     // const parsed_config = try loader.loadJson(arena, init.io, args.config, SimConfig);
     const parsed_config = loader.loadJson(arena, init.io, args.config, SimConfig) catch |err| {
-        try stderr.print("Error parsing the JSON: {any}", .{err});
+        try stderr.print("Error parsing config JSON file: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
     };
@@ -168,12 +168,21 @@ pub fn main(init: std.process.Init) !void {
     
     const SimulateFn = if (is_v1) SimulateFnChron else SimulateFnRevChron;
 
+    const simulate: SimulateFn = if (comptime is_v1)
+        switch (args.postinit) {
+            // .one => simulation.staticOnePostScheduled,
+            .all => simulation.diffusionSimulation,
+            else => unreachable,
+        }
+    else
+        std.process.exit(0);
+        //@compileError("Unfortunalely this is not available now");
+        // switch (args.postinit) {
+        //     .one => simulation.staticOnePostScheduled, // (Assuming this matches the 6-arg signature!)
+        //     .all => simulation.staticAllPostsScheduled,
+        // };
     // var simulate: *const fn (Allocator, Random, SimConfig, *gn.StaticNetworkGraph, *Io.Writer) anyerror!SimResults;
-    const simulate: SimulateFn = switch (args.postinit) {
-        .one => simulation.staticOnePostScheduled,
-        .all => simulation.staticAllPostsScheduled,
-    };
-    
+        
     const startTime = Io.Timestamp.now(init.io, .real);
 
     const results = if (is_v1)

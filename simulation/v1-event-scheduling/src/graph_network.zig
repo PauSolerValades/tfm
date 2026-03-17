@@ -88,7 +88,7 @@ pub const StaticNetworkGraph = struct {
         }
         
         // User Homogeneity, max_post is the same per every user
-        const total_bits = parsed_network.users.len * parsed_network.users[0].max_posts;
+        const total_bits = parsed_network.users.len * parsed_network.users.len * parsed_network.users[0].max_posts;
         const matrix = try DynamicBitSet.initEmpty(gpa, total_bits);
         
         return .{
