@@ -73,7 +73,7 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     };
     defer parsed_config.deinit();
-    
+    assertConfig(); 
     const config = parsed_config.value;
 
     const startTimeLoadData = Io.Timestamp.now(init.io, .real);

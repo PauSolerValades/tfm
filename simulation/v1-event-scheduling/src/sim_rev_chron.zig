@@ -223,7 +223,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
 
 const TraceSession = entities.TraceSession;
 
-pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, action_trace: *Io.Writer, session_trace: *Io.Writer) !SimResults {
+pub fn staticAllPostsScheduledV1(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *gn.StaticNetworkGraph, action_trace: *Io.Writer, session_trace: *Io.Writer) !SimResults {
 
     const EventQueue: type = Heap(Event, void, entities.compareEvent);
 
@@ -251,9 +251,9 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
     var user_session_gen: []u64 = try gpa.alloc(u64, graph.users.len);
     @memset(user_session_gen, 0);
     defer gpa.free(user_session_gen);
-  
-    const unif: Unif = .init(0, 1, dist.Interval.cc);
 
+    // START: Generate all posts
+    // as all the posts must be pregenerated, they all have to start before the warmup.
     var total_initial_events: usize = graph.users.len; // Space for the initial wakeups/sleeps
     for (0..graph.users.len) |user_id| {
         const post_count = graph.user_post_list[user_id].len;
@@ -287,12 +287,17 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
             }
         }
     }
+    // END: generate initial events.
     
-    // SCHEDULE INITIAL SESSIONS
+    // START: schedule sessions: which users start online, and when the offline ones will wake up
+    const unif: Unif = .init(0, 1, dist.Interval.cc);
+
     for (0..graph.users.len) |i| {
         const r = unif.sample(rng); 
-        if (r < simconf.init_vacation_ratio) {
+        if (r < simconf.init_offline_ratio) { // user starts offline
             is_user_online[i] = false;
+            
+            // when will the user go online 
             starting_events[event_idx] = Event{ 
                 .time = simconf.user_inter_session.sample(rng), 
                 .type = .{ .session = .start }, 
@@ -300,11 +305,12 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
                 .id = processed_events, 
                 .session_gen = 0 
             }; 
-        } else {
+        } else { // users starts online
             is_user_online[i] = true;
             session_start_times[i] = 0.0;
             total_sessions += 1;
-            // They start online, so schedule their bed time!
+            
+            // when will the user go offline
             starting_events[event_idx] = Event{ 
                 .time = simconf.session_duration.sample(rng), 
                 .type = .{ .session = .end }, 
@@ -316,11 +322,12 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
         event_idx += 1;
         processed_events += 1;
     }
-
+    // END: schedule sessions
+    
     var queue = EventQueue.fromOwnedSlice(starting_events, {});
     defer queue.deinit(gpa);
 
-    // Give online users their first action
+    // set online users first action
     for (0..graph.users.len) |i| {
         if (is_user_online[i]) {
             const first_action = try CreateRandomEvent(@intCast(i), 0, processed_events, 0, simconf, rng);
@@ -329,14 +336,14 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
         }
     }
 
-    while (t_clock <= simconf.horizon and queue.items.len > 0) : (processed_events += 1) {
+    const t_end = @min(simconf.warmup_time + duration, simconf.horizon);
+    while (t_clock <= t_end and queue.items.len > 0) : (processed_events += 1) {
         const current_event = queue.remove();
         const current_user_id: Index = current_event.user_id;
         t_clock = current_event.time;
 
         // warmup reset 
         if (!is_warmed_up and t_clock >= simconf.warmup_time) {
-            std.debug.print("warmed up finished\n", .{});
             is_warmed_up = true;
             // reset all metrics
             impressions = 0; interactions = 0; ignored = 0;
@@ -430,7 +437,8 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
                 if (graph.timelines[current_user_id].removeOrNull()) |current_post| {
                     const post_id: Index = current_post.post_id;
                     const matrix_index = current_user_id * graph.posts.len + post_id;
-
+                    
+                    // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
                     if (graph.user_seen_post.isSet(matrix_index)) {
                         const next_action = try CreateRandomEvent(current_user_id, user_session_gen[current_user_id], processed_events, t_clock, simconf, rng);
                         try queue.add(gpa, next_action);
@@ -460,9 +468,10 @@ pub fn staticAllPostsScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, 
                             const follower_start = graph.users.items(.follower_start)[current_user_id];
                             const follower_count = graph.users.items(.follower_count)[current_user_id];
 
+                            const p_id: Index = current_post.post_id;
+
                             for (graph.followers[follower_start..follower_start+follower_count]) |follower_id| {
                                 //check that user_ptr has not seen this post already...
-                                const p_id: Index = current_post.post_id;
                                 const follower_matrix_index = follower_id * graph.posts.len + p_id; 
 
                                 if (!graph.user_seen_post.isSet(follower_matrix_index)) {

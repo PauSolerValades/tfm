@@ -1,12 +1,13 @@
 const std = @import("std");
-const stats = @import("distributions");
 
 const Random = std.Random;
 const ArrayList = std.ArrayList;
 const Io = std.Io;
 
+const stats = @import("distributions");
+const assert = std.debug.assert;
+
 const main = @import("main.zig");
-const sampling = @import("rng.zig");
 const entities = @import("entities.zig");
 
 const ContDist = stats.ContinuousDistribution;
@@ -48,7 +49,10 @@ const SimConfigChron = struct {
 
 const SimConfigRevChron = struct {
     seed: ?u64,
-    horizon: f64,                           // duration of the simulation
+    // time marks
+    horizon: f64,                           // max duration of the simulation
+    duration: f64,                          // Duration of the simulation
+    warmup_time: f64,                       // time when warmup ends
     // user related actions
     user_policy: DiscDist(Precision, entities.Action),   // probability of available actions of the user
     user_inter_action: ContDist(Precision),     // time between a user two actions
@@ -61,11 +65,19 @@ const SimConfigRevChron = struct {
     init_vacation_ratio: Precision,             // which proportion of the users start on vacation
     session_duration: ContDist(f64),           // duration of the current session
     user_inter_session: ContDist(f64),         // time between sessions
-    // regarding warmup
-    warmup_time: f64,
 
     // misc config
     trace_to_file: bool,                        // true is trace is written to a file. False not
+
+    pub fn isValid(self: @This()) bool {
+        assert(self.horizon > 0);
+        assert(self.duration > 0);
+        assert(self.warmup_time > 0);
+        assert(self.warmup_time + self.duration > self.horizon);
+
+        // check that the Distribution picked to generate the posts is not able to 
+        // generate a post later than warmup_time
+    }
 
     pub fn format(
         self: @This(),
