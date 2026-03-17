@@ -16,7 +16,8 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
         users_data.append({
             'id': i,
             'actions': ["ignore", "like", "repost", "create"],
-            'policy': [0.5, 0.2, 0.15, 0.15], 
+            'policy': [0.5, 0.2, 0.15, 0.15],
+            'max_posts': 10
         })
 
     # --- 2. FOLLOWERS (Plain Python Graph Generator) ---
@@ -53,42 +54,15 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
             adj[new_node].append(t)
             adj[t].append(new_node)
 
-    # --- 3. POSTS & USER_OWNS_POST (DES Time Horizon) ---
-    posts_data = []
-    user_owns_post_data = []
-    post_id_counter = 0 
-    
-    for user in users_data:
-        # Uniform posting behavior (e.g., an average of 2 posts per user)
-        num_posts = int(random.expovariate(1.0 / 2)) 
-        
-        for _ in range(num_posts):
-            
-            posts_data.append({
-                'id': post_id_counter,
-            })
-            
-            user_owns_post_data.append({
-                'user_id': user['id'],
-                'post_id': post_id_counter
-            })
-            post_id_counter += 1
-            
-    # Sort posts by time_created so they are strictly chronological for your event queue
-    # posts_data.sort(key=lambda x: x['time'])
 
     # --- 4. LOAD INTO POLARS ---
     # Polars easily handles nested dictionaries for your policy column
     df_users = pl.DataFrame(users_data)
     df_followers = pl.DataFrame(followers_data)
-    df_posts = pl.DataFrame(posts_data)
-    df_user_owns_post = pl.DataFrame(user_owns_post_data)
 
     # --- 5. EXPORT TO JSON ---
     master_json = {
         "users": users_data,
-        "posts": posts_data,
-        "user_owns_post": user_owns_post_data,
         "followers": followers_data
     }
     
@@ -100,9 +74,10 @@ if __name__ == "__main__":
     os.makedirs('data', exist_ok=True)
 
     network_sizes = {
-        "small": 1000,
-        "mid": 10000,
-        "large": 100000
+        "small":    1000,
+        "mid":      10000,
+        "large":    100000,
+        "larger":   1000000,
     }
 
     for size_name, num_users in network_sizes.items():
