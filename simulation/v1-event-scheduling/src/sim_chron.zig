@@ -23,7 +23,7 @@ const Event = entities.Event;
 const Action = entities.Action;
 const User = entities.User;
 const Post = entities.Post;
-const TraceAction = entities.TraceAction;
+const Trace = entities.Trace;
 const TimelineEvent = entities.TimelineEvent;
 const compareTimelineEvent = entities.compareTimelineEvent;
 const Index = entities.Index;
@@ -118,12 +118,11 @@ pub fn diffusionSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, grap
         graph.user_seen_post.set(current_user_id * simconf.max_post_per_user + post_id);
         impressions += 1;
         
-        const trace_event = TraceAction{
+        const trace_event = Trace{
             .time = t_clock,
-            .type = current_event.type,
+            .type = .{ .action = current_event.type },
             .event_id = processed_events,
             .user_id = current_user_id,
-            .post_id = post_id,
         };
    
         try std.json.Stringify.value(trace_event, .{}, trace);
@@ -155,7 +154,6 @@ pub fn diffusionSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, grap
             },
             .like => interactions += 1,
             .ignore => ignored += 1,
-            else => {},
         }
     }
     
@@ -228,7 +226,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
             }
             const new_post_id = graph.user_post_list[current_user_id][new_post_index];
 
-            const trace_event = TraceAction{
+            const trace_event = Trace{
                 .time = t_clock,
                 .type = current_event.type,
                 .event_id = processed_events,
@@ -266,7 +264,7 @@ pub fn staticOnePostScheduled(gpa: Allocator, rng: Random, simconf: SimConfig, g
         graph.user_seen_post.set(current_user_id * graph.posts.len + post_id);
         impressions += 1;
         
-        const trace_event = TraceAction{
+        const trace_event = Trace{
             .time = t_clock,
             .type = current_event.type,
             .event_id = processed_events,

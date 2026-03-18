@@ -21,7 +21,6 @@ const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
 /// - follower start: index of follower starts on StaticNetworkGraph 
 /// - follower count: how many users does this user follow. StaticNetworkGraph[u.follower_start..u.follower_start+u.follower_count]
 /// - policy: actions of the used with its probability associated
-/// - last_published_post: index the last post in graph in user_post_list[uid]. TODO: this should go out of here as it's just for CAPS and be inited in that funciton
 pub const User = struct {
     id: Index,
     follower_start: Index,
@@ -42,7 +41,7 @@ pub const Post = struct {
 /// - like: adds one to interaction. No behaviour on the simu
 /// - repost: propagates to the followers of the user timelines
 /// - create: fetches a post from the simulation.
-pub const Action = enum { ignore, like, repost, create };
+pub const Action = enum { ignore, like, repost };
 /// Session states
 /// - start: makes the user go back online, see posts and interact with them
 /// - end: makes the user go offline: should nuke it's timeline
@@ -53,7 +52,7 @@ pub const Session = enum { start, end };
 pub const EventType = union(enum) {
     action: Action,
     session: Session,
-    receive_post: Index,
+    create: Index,
 };
 
 /// with comptime tricks, when importing event it will be exactly the one
@@ -74,7 +73,7 @@ const EventRevChron = struct {
     type: EventType,    // 
     user_id: Index,     // user id
     id: u64,            // which action is it
-    session_gen: u64    // in which session from the user_id does this event belong
+    session_gen: u64,    // in which session from the user_id does this event belong
 };
 
 /// Heap function to compare between events. It access the .time field
@@ -92,7 +91,6 @@ pub const TimelineEvent = struct {
 };
 
 
-// TODO: do the compiletime trick here also:
 pub const compareTimelineEvent = if (is_v1) compareTimelineEventChron else compareTimelineEventRevChron;
 
 
@@ -108,16 +106,15 @@ fn compareTimelineEventRevChron(context: void, a: TimelineEvent, b: TimelineEven
     return std.math.order(b.time, a.time);
 }
 
-
 /// Auxiliar struct for trace writing. Contains all 
 /// the entities that need to be written on the trace
-pub const TraceAction = struct {
+pub const Trace = struct {
     time: f64,
-    type: Action,
+    type: EventType,
     event_id: u64,
     user_id: Index,
-    post_id: Index,
 };
+
 
 pub const TraceSession = struct {
     time: f64,

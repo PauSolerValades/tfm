@@ -76,15 +76,17 @@ const SimConfigRevChron = struct {
     // user related actions
     user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
     user_inter_action: ContDist(Precision),                 // time between a user two actions
+    max_post_per_user: u32,
     // to init posts
-    post_time_creation: ContDist(f64),           // time of the post created in the simulation 
+    warmup_post_inter_creation: ContDist(f64),           // time of the post created in the simulation 
+    post_inter_creation: ContDist(f64),
     // delays on posts transmissions
     propagation_delay: ContDist(f64),           // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),           // time between 
     // session configuration                                        
-    init_vacation_ratio: Precision,             // which proportion of the users start on vacation
+    offline_startup_ratio: Precision,             // which proportion of the users start on vacation
     session_duration: ContDist(f64),           // duration of the current session
-    user_inter_session: ContDist(f64),         // time between sessions
+    user_inter_session: ContDist(f64),         // duration of time between sessions
 
     // misc config
     trace_to_file: bool,                        // true is trace is written to a file. False not
@@ -118,7 +120,7 @@ const SimConfigRevChron = struct {
         try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
         
         try writer.writeAll("--- User Sessions (Vacations) ---\n");
-        try writer.print("{s: <24}:  {d}\n", .{ "% of user starting on vacation", self.init_vacation_ratio});
+        try writer.print("{s: <24}:  {d}\n", .{ "% of user starting on vacation", self.offline_startup_ratio});
         try writer.print("{s: <24}:  {f}\n", .{ "Vacation Duration", self.session_duration});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between Vacations", self.user_inter_session});
         try writer.writeAll("---------\n");

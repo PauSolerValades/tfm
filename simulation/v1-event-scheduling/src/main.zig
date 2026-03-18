@@ -175,12 +175,10 @@ pub fn main(init: std.process.Init) !void {
             else => unreachable,
         }
     else
-        std.process.exit(0);
-        //@compileError("Unfortunalely this is not available now");
-        // switch (args.postinit) {
-        //     .one => simulation.staticOnePostScheduled, // (Assuming this matches the 6-arg signature!)
-        //     .all => simulation.staticAllPostsScheduled,
-        // };
+        switch (args.postinit) {
+            .one => simulation.staticOnePostScheduled, // (Assuming this matches the 6-arg signature!)
+            .all => simulation.stagedSimulation,
+        };
     // var simulate: *const fn (Allocator, Random, SimConfig, *gn.StaticNetworkGraph, *Io.Writer) anyerror!SimResults;
         
     const startTime = Io.Timestamp.now(init.io, .real);

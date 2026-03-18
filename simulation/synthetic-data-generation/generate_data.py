@@ -15,8 +15,8 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
     for i in range(num_nodes):
         users_data.append({
             'id': i,
-            'actions': ["ignore", "like", "repost", "create"],
-            'policy': [0.5, 0.2, 0.15, 0.15],
+            'actions': ["ignore", "like", "repost" ],
+            'policy': [0.5, 0.3, 0.2],
             'max_posts': 10
         })
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         "small":    1000,
         "mid":      10000,
         "large":    100000,
-        "larger":   1000000,
+        "larger":    1000000,
     }
 
     for size_name, num_users in network_sizes.items():

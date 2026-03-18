@@ -1,20 +1,30 @@
 {
+  "seed": null,
+  "horizon": 10000,
+  "duration": 9000,
+  "warmup_time": 1000,
   "user_policy": {
     "categorical": {
       "weights": [0.50, 0.30, 0.20 ],
       "data": [ "ignore", "like", "repost" ]
     }
   },
-  "post_time_creation": {
-    "uniform": {
-      "min": 0,
-      "max": 99,
-      "interval": "oc"
-    }
-  },
   "user_inter_action": {
     "exponential": {
       "mean": 3 
+    }
+  },
+  "warmup_post_inter_creation": {
+    "uniform": {
+      "min": 0,
+      "max": 100,
+      "interval": "oc"
+    }
+  },
+  "max_post_per_user": 10,
+  "post_inter_creation": {
+    "exponential": {
+      "mean": 20
     }
   },
   "propagation_delay": {
@@ -27,7 +37,7 @@
       "value": 1
     }
   },
-  "init_offline_ratio": 0.5,
+  "offline_startup_ratio": 0.5,
   "session_duration": {
     "exponential": {
       "mean": 60
@@ -38,9 +48,5 @@
       "mean": 120
     }
   },
-  "horizon": 1000,
-  "warmup_time": 100,
-  "duration": 900,
-  "trace_to_file": true,
-  "seed": null 
+  "trace_to_file": true
 }
