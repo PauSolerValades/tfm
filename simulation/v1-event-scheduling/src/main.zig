@@ -36,11 +36,11 @@ const def = .{
     .name = "v1",
     .description = "BSKY sim",
     .required = .{
-        Arg(PostGeneration, "postinit", "Post initialization strategy"),
         Arg([]const u8, "config", "Configuration file for the simulation"),
         Arg([]const u8, "data", "Data file containing the network definition"),
     },
 };
+
 
 
 pub fn main(init: std.process.Init) !void {
@@ -90,7 +90,7 @@ pub fn main(init: std.process.Init) !void {
     try stdout.flush();
 
     const startTimeWireData = Io.Timestamp.now(init.io, .real);
-    var graph: gn.StaticNetworkGraph = try .create(arena, loaded_data.value);
+    var graph: gn.StaticNetworkGraph = try .create(arena, loaded_data.value, config.max_post_per_user);
     const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
     
     try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});
@@ -123,37 +123,57 @@ pub fn main(init: std.process.Init) !void {
     // var trace_path_buffer: [256]u8 = undefined;
     // const traca_path = try std.fmt.bufPrint(&traca_path_buffer, "traca_{d}.txt", .{timestamp});
 
-    const trace_writer = blk: { 
-        if (config.trace_to_file) {
-            const trace_path = "results/trace.txt"; 
-            var trace_buffer: [64 * 1024]u8 = undefined;
-            const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
-            var trace_file_writer = trace_file.writer(init.io, &trace_buffer);
-            break :blk &trace_file_writer.interface;
-        } else {
-            var discard_writer = std.Io.Writer.Discarding.init(&.{});
-            break :blk &discard_writer.writer;
-        }
-    };
-    
-    const session_writer = blk: { 
-        if (config.trace_to_file) {
-            const trace_path = "results/session_trace.txt"; 
-            var trace_buffer: [64 * 1024]u8 = undefined;
-            const trace_file = try cwd.createFile(init.io, trace_path, .{ .read = false });
-            var trace_file_writer = trace_file.writer(init.io, &trace_buffer);
-            break :blk &trace_file_writer.interface;
-        } else {
-            var discard_writer = std.Io.Writer.Discarding.init(&.{});
-            break :blk &discard_writer.writer;
-        }
-    };
+    const action_name = if (is_v1) "action_trace_v1.json" else "action_trace_v2.json";
+    const session_name = if (is_v1) "session_trace_v1.json" else "session_trace_v2.json";
+    const create_name = if (is_v1) "create_trace_v1.json" else "create_trace_v2.json";
+   
+    var action_path_buf: [std.fs.max_path_bytes]u8 = undefined;
+    const action_path = try std.fmt.bufPrint(&action_path_buf, "results/{s}", .{action_name});
 
-    const SimulateFnChron = *const fn (
+    var session_path_buf: [std.fs.max_path_bytes]u8 = undefined;
+    const session_path = try std.fmt.bufPrint(&session_path_buf, "results/{s}", .{session_name});
+
+    var create_path_buf: [std.fs.max_path_bytes]u8 = undefined;
+    const create_path = try std.fmt.bufPrint(&create_path_buf, "results/{s}", .{create_name});
+
+    var action_buffer: [64 * 1024]u8 = undefined;
+    var session_buffer: [64 * 1024]u8 = undefined;
+    var create_buffer: [64 * 1024]u8 = undefined;
+
+    var action_file = if (config.trace_to_file) 
+        try cwd.createFile(init.io, action_path, .{ .read = false }) else undefined;
+    var action_file_writer = if (config.trace_to_file) 
+        action_file.writer(init.io, &action_buffer) else undefined;
+    var action_discard = if (!config.trace_to_file) 
+        std.Io.Writer.Discarding.init(&.{}) else undefined;
+        
+    const actions_writer: *Io.Writer = if (config.trace_to_file) 
+        &action_file_writer.interface else &action_discard.writer;
+
+    var session_file = if (config.trace_to_file) 
+        try cwd.createFile(init.io, session_path, .{ .read = false }) else undefined;
+    var session_file_writer = if (config.trace_to_file) 
+        session_file.writer(init.io, &session_buffer) else undefined;
+    var session_discard = if (!config.trace_to_file) 
+        std.Io.Writer.Discarding.init(&.{}) else undefined;
+        
+    const session_writer: *Io.Writer = if (config.trace_to_file) 
+        &session_file_writer.interface else &session_discard.writer;
+
+    var create_file = if (config.trace_to_file) 
+        try cwd.createFile(init.io, create_path, .{ .read = false }) else undefined;
+    var create_file_writer = if (config.trace_to_file) 
+        create_file.writer(init.io, &create_buffer) else undefined;
+    var create_discard = if (!config.trace_to_file) 
+        std.Io.Writer.Discarding.init(&.{}) else undefined;
+        
+    const create_writer: *Io.Writer = if (config.trace_to_file) 
+        &create_file_writer.interface else &create_discard.writer;    const SimulateFnChron = *const fn (
         Allocator, 
         Random, 
         SimConfig, 
         *gn.StaticNetworkGraph, 
+        *Io.Writer,
         *Io.Writer
     ) anyerror!SimResults;
 
@@ -163,30 +183,24 @@ pub fn main(init: std.process.Init) !void {
         SimConfig, 
         *gn.StaticNetworkGraph, 
         *Io.Writer,
+        *Io.Writer,
         *Io.Writer
     ) anyerror!SimResults;
     
     const SimulateFn = if (is_v1) SimulateFnChron else SimulateFnRevChron;
 
     const simulate: SimulateFn = if (comptime is_v1)
-        switch (args.postinit) {
-            // .one => simulation.staticOnePostScheduled,
-            .all => simulation.diffusionSimulation,
-            else => unreachable,
-        }
+        simulation.diffusionSimulation
     else
-        switch (args.postinit) {
-            .one => simulation.staticOnePostScheduled, // (Assuming this matches the 6-arg signature!)
-            .all => simulation.stagedSimulation,
-        };
+        simulation.stagedSimulation;
     // var simulate: *const fn (Allocator, Random, SimConfig, *gn.StaticNetworkGraph, *Io.Writer) anyerror!SimResults;
         
     const startTime = Io.Timestamp.now(init.io, .real);
 
-    const results = if (is_v1)
-        try simulate(arena, rng, config, &graph, trace_writer)
+    const results = if (comptime is_v1)
+        try simulate(arena, rng, config, &graph, actions_writer, create_writer)
     else
-        try simulate(arena, rng, config, &graph, trace_writer, session_writer);
+        try simulate(arena, rng, config, &graph, actions_writer, session_writer, create_writer);
 
     const elapsedTime = startTime.untilNow(init.io, .real);   
 

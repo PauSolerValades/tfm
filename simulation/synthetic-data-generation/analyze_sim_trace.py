@@ -8,7 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-def propagation_actions_barplot(df: pl.DataFrame, n: int) -> None:
+def propagation_actions_barplot(df: pl.DataFrame, n: int, filename: str) -> None:
 
     top_posts = df.head(n)
 
@@ -32,10 +32,10 @@ def propagation_actions_barplot(df: pl.DataFrame, n: int) -> None:
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig(f"img/top_posts_{n}.png", dpi=300)
+    plt.savefig(f"img/top_posts_{n}_{filename}.png", dpi=300)
     plt.close()
 
-def histogram_power_law(df: pl.DataFrame) -> None:
+def histogram_power_law(df: pl.DataFrame, filename: str) -> None:
     plt.figure(figsize=(10, 6))
 
     plt.hist(
@@ -56,11 +56,11 @@ def histogram_power_law(df: pl.DataFrame) -> None:
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("img/virality_distribution.png", dpi=300)
+    plt.savefig(f"img/virality_distribution_{filename}.png", dpi=300)
     plt.close()
 
 
-def top_n_posts_growthrate(n: int, df: pl.DataFrame, df_hist: pl.DataFrame) -> None:
+def top_n_posts_growthrate(n: int, df: pl.DataFrame, df_hist: pl.DataFrame, filename: str) -> None:
     top_n_ids = df_hist.head(n)["post_id"].to_list()
 
     plt.figure(figsize=(12, 7))
@@ -95,7 +95,7 @@ def top_n_posts_growthrate(n: int, df: pl.DataFrame, df_hist: pl.DataFrame) -> N
     plt.legend(fontsize=12, loc="upper left")
 
     plt.tight_layout()
-    plt.savefig("img/viral_growth_trajectory.png", dpi=300)
+    plt.savefig(f"img/viral_growth_trajectory_{filename}.png", dpi=300)
     plt.close()
 
 
@@ -105,20 +105,22 @@ def main(filename: str) -> None:
     df = pl.read_ndjson(filename)
 
     hist_data = (
-        df.filter(pl.col("type").is_in(["repost", "reply", "quote"]))
+        df.filter(pl.col("type").is_in(["repost"]))
         .group_by("post_id")                      
         .len(name="count")                        
         .sort("count", descending=True)           
     )
 
     print(hist_data)
-    
-    propagation_actions_barplot(hist_data, 20)
+   
+    filename = filename.split('/')[-1]
+    propagation_actions_barplot(hist_data, 20, filename)
     print("Num of impressions genrated")
-    propagation_actions_barplot(hist_data, 2000)
-    histogram_power_law(hist_data)
+    propagation_actions_barplot(hist_data, 2000, filename)
+    propagation_actions_barplot(hist_data, 10000, filename)
+    histogram_power_law(hist_data, filename)
     print("Power law generated")
-    top_n_posts_growthrate(4, df, hist_data)
+    top_n_posts_growthrate(4, df, hist_data, filename)
     print("Growth historic of posts generated")
 
 

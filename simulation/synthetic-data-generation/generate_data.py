@@ -86,7 +86,7 @@ if __name__ == "__main__":
         # Generate the data (keeping m_edges constant gives a true scaling test)
         simulator_dataset = generate_social_simulator_data(
             num_nodes=num_users, 
-            m_edges=3, 
+            m_edges=40, 
             cc_prob=0.8
         )
         

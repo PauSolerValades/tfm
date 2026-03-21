@@ -16,18 +16,34 @@ pub const Index: type = u32;
 
 const is_v1 = std.mem.eql(u8, "v1", @import("build").build);
 
+pub const User = if (is_v1) UserChron else UserRevChron;
+
 /// User of the simulation
 /// - id: identifier
 /// - follower start: index of follower starts on StaticNetworkGraph 
 /// - follower count: how many users does this user follow. StaticNetworkGraph[u.follower_start..u.follower_start+u.follower_count]
 /// - policy: actions of the used with its probability associated
-pub const User = struct {
+const UserChron = struct {
     id: Index,
     follower_start: Index,
     follower_count: Index, 
     policy: Categorical(Precision, Action),
     max_posts: u32,
 };
+
+const UserRevChron = struct {
+    id: Index,
+    follower_start: Index,
+    follower_count: Index, 
+    policy: Categorical(Precision, Action),
+    max_posts: u32,
+
+    is_online: bool = false,
+    session_start_time: f64 = 0.0,
+    session_gen: u64 = 0,
+    num_posts: u32 = 0,
+};
+
 
 /// Post of the simulation
 pub const Post = struct {
@@ -108,13 +124,20 @@ fn compareTimelineEventRevChron(context: void, a: TimelineEvent, b: TimelineEven
 
 /// Auxiliar struct for trace writing. Contains all 
 /// the entities that need to be written on the trace
-pub const Trace = struct {
+pub const TraceAction = struct {
     time: f64,
-    type: EventType,
+    type: Action,
     event_id: u64,
     user_id: Index,
+    post_id: Index,
 };
 
+pub const TraceCreate = struct {
+    time: f64,
+    post_id: Index,
+    user_id: Index,
+    event_id: u64,
+};
 
 pub const TraceSession = struct {
     time: f64,

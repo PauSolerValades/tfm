@@ -30,5 +30,5 @@
       "value": 1
     }
   },
-  "trace_to_file": false
+  "trace_to_file": true 
 }

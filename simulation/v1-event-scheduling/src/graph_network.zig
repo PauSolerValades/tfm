@@ -37,7 +37,7 @@ pub const StaticNetworkGraph = struct {
     timelines: []TimelineHeap,              // Timelines for every user. Optimaly, we should use FixedBufferAllocator 
     user_seen_post: DynamicBitSet,          // N-to-M user seen post matrix as a 2D bitset, amazingly fast
 
-    pub fn create(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
+    pub fn create(gpa: Allocator, parsed_network: NetworkJson, max_post_per_user: u32) !StaticNetworkGraph {
         // Converteix les coses de la network json en Static Network Graph
         var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
 
@@ -88,7 +88,7 @@ pub const StaticNetworkGraph = struct {
         }
         
         // User Homogeneity, max_post is the same per every user
-        const total_bits = parsed_network.users.len * parsed_network.users.len * parsed_network.users[0].max_posts;
+        const total_bits = parsed_network.users.len * parsed_network.users.len * max_post_per_user;
         const matrix = try DynamicBitSet.initEmpty(gpa, total_bits);
         
         return .{

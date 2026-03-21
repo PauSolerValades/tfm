@@ -197,7 +197,7 @@ $ PP (e = (u, i, a, t) | cal(H)^"act"_u(t)) = pi(a) $
 
 3. Structural Stability: The underlying graph topology and population are static throughout the simulation.
    - Static Population: No new users or posts are created after initialization ($t=0$).
-   - Pre-scheduled new Items: New posts will be apended to the simulation, but not in a random way, that is: timelines will be predefined beforehand.
+   - Max Items: New posts will be apended to the simulation, but not in a random way, that is: timelines will be predefined beforehand.
    - Static User Relationship: The follower graph $cal(N)_"out"$ and $cal(N)_"in"$ remains constant; no follow/unfollow actions occur.
 
 4. Relationship Subset: The only User-to-Post actions that can occur are $cal(R)^' _(cal(U) cal(U)) = {"ignore", "like", "repost"} subset cal(R)_(cal(U), cal(U))$
@@ -602,6 +602,12 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 v2 shares a large amount of features and characteristics with v1, and as well the type of implementations are very similar: both standard (with warm up allowed) and checkpointing from a fixed state simulation (no warm up allowed) work with the same dynamics.
 
 The diffusion model requires a small tweak to be coded. In v1, the user timelines could be prefilled with the appropiate `TimelineEvent` struct. Now, the timelines being a MaxHeap, scheduling of all events outside of that session will create a time incongruency: if all the timeline is filled with events ouside of current session, specifically from the future, poping an element will give you an event skipping some events in the middle. If implemented, it should fill the `Queue` structure with `.create` events.
+
+As the session logic is sligtly more complex and the checkpoint from standard approach is quite heavy to actually implement we can follow the following approach to achieve an adequate init state for the simulation to run over it.
+
+*Staged*: the simulation will change behaviour when the warm up phase is over.
+1. Warm Up: just post creation and for a brief time. If there aren't a minimum amount of posts at the beginning there will be strange behaviour at the beginning.
+2. Standard: with just some posts created, we will run the standard implementation of the simulation, a normal event scheduling. 
 
 == Implementation Details
 Essentially, as the axiom of stability remains unchanged, all the data structures will remain exactly the same. 
