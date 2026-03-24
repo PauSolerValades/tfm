@@ -31,10 +31,12 @@ const Index = entities.Index;
 
 fn CreateRandomAction(user_id: Index, event_id: u64, t_clock: f64, simconf: SimConfig, rng: Random) !Event {
     const action: Action = simconf.user_policy.sample(rng);
-    const event_time = simconf.user_inter_action.sample(rng);
-    const interaction_delay = simconf.interaction_delay.sample(rng);
+      
+    const duration_between_actions = simconf.user_inter_action.sample(rng);
+    const t_decision = t_clock + duration_between_actions; // Time when the user decides to post
+    const interaction_delay = simconf.interaction_delay.sample(rng); // Time of the action to 
     const event = Event{ 
-        .time = t_clock + event_time + interaction_delay, 
+        .time = t_decision + interaction_delay, 
         .type = action, 
         .user_id = user_id, 
         .id = event_id, 
@@ -49,12 +51,14 @@ fn schedulePostsUserTimelines(gpa: Allocator, rng: Random, graph: *gn.StaticNetw
     for(0..graph.users.len) |uid| {
         for (0..simconf.max_post_per_user) |_| {
 
-            const new_post_time = simconf.diffusion_post_schedule.sample(rng);
-            try propagatePost(gpa, rng, graph, simconf, new_post_time, @intCast(uid), post_count);
+            const new_post_decision = simconf.diffusion_post_schedule.sample(rng);
+            const creation_delay = simconf.creation_delay.sample(rng);
+            const t_new_post = new_post_decision + creation_delay;
+            try propagatePost(gpa, rng, graph, simconf, t_new_post, @intCast(uid), post_count);
             
             if (simconf.trace_to_file) {
                 const e = TraceCreate {
-                    .time = new_post_time,
+                    .time = t_new_post,
                     .user_id = @intCast(uid),
                     .post_id = post_count,
                     .event_id = post_count,

@@ -36,6 +36,7 @@ const SimConfigChron = struct {
                                                             
     propagation_delay: ContDist(f64),                       // time between an action over a post and showing up followers timeline
     interaction_delay: ContDist(f64),                       // time between 
+    creation_delay: ContDist(f64),
 
     trace_to_file: bool,                                    // true is trace is written to a file. False not
 
@@ -58,11 +59,24 @@ const SimConfigChron = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("| SIMULATION CONFIGURATION |\n", .{});
         try writer.writeAll("+--------------------------+\n");
+       
+        try writer.writeAll("--- Diffusion ---\n");
+        try writer.print("{s: <24}:  {f}\n", .{ "Diffusion post schedule", self.diffusion_post_schedule});
+        
+        try writer.writeAll("--- User Actions Config ---\n");
         try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
+        try writer.print("{s: <24}:  {d}\n", .{ "Max Post per User", self.max_post_per_user});
+       
+        
+        try writer.writeAll("--- Propagation Delays ---\n");
         try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay});
         try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
-        try writer.writeAll("---------\n");
+        try writer.print("{s: <24}:  {f}\n", .{ "Creation delay", self.creation_delay});
+        
+        try writer.writeAll("---------------------------------\n");
+        try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Warm-up (Time)", self.warmup_time});
+        try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Duration", self.duration });
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
     }
 };
@@ -88,6 +102,8 @@ const SimConfigRevChron = struct {
     session_duration: ContDist(f64),           // duration of the current session
     user_inter_session: ContDist(f64),         // duration of time between sessions
 
+    creation_delay: ContDist(f64),
+    
     // misc config
     trace_to_file: bool,                        // true is trace is written to a file. False not
 
@@ -124,6 +140,7 @@ const SimConfigRevChron = struct {
         try writer.writeAll("--- Post Propagation Delays ---\n");
         try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay});
         try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
+        try writer.print("{s: <24}:  {f}\n", .{ "Creation delay", self.creation_delay});
         
         try writer.writeAll("--- User Sessions (Vacations) ---\n");
         try writer.print("{s: <24}:  {d}\n", .{ "% starting offline", self.offline_startup_ratio});

@@ -110,9 +110,10 @@ fn stageOne(
 ) !void {
     
     for (0..graph.users.len) |uid| {
-        const new_post_time = simconf.warmup_post_inter_creation.sample(rng);
+        const creation_delay = simconf.creation_delay.sample(rng);
+        const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
         const create_post = Event{
-            .time = new_post_time,
+            .time = t_creation_decision + creation_delay,
             .type = .{ .create = metrics.post_count },
             .user_id = @intCast(uid),
             .id = metrics.processed_events,
@@ -146,12 +147,13 @@ fn stageOne(
                 }
                 
                 try propagatePost(gpa, rng, graph, simconf, t_clock.*, current_uid, pid);
-                metrics.post_count += 1;
+                // metrics.post_count += 1;
                 
                 // Schedule the next post creation for this user
-                const new_post_time = simconf.warmup_post_inter_creation.sample(rng);
+                const creation_delay = simconf.creation_delay.sample(rng);
+                const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
                 const new_post = Event{
-                    .time = t_clock.* + new_post_time,
+                    .time = t_clock.* + duration_between_creation + creation_delay,
                     .type = .{ .create = metrics.post_count },
                     .user_id = current_uid,
                     .id = metrics.processed_events,
@@ -233,15 +235,14 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
     var processed_events: u64 = 0;
     
     var metrics = SimMetrics{};
-      
+    const total_posts = simconf.max_post_per_user * graph.users.len;
+
     var queue: EventQueue = .empty;
     defer queue.deinit(gpa);
     
     // Post generation on init 
     try stageOne(gpa, rng, simconf, graph, &queue, &metrics, &t_clock);
     
-    const posts_created_warmup: f64 = @as(f64, @floatFromInt(metrics.post_count)) / @as(f64, @floatFromInt(graph.users.len * simconf.max_post_per_user));
-
     // decide which users start online or not
     try initSessions(gpa, rng, simconf, graph, &queue, &metrics, t_clock, session_trace);
 
@@ -269,16 +270,21 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
         t_clock = current_event.time;
 
         switch (current_event.type) {
-            .create => |to_propagate_pid| {
+            .create => {
                
                 const is_event_stale: bool = current_event.session_gen != graph.users.items(.session_gen)[current_uid];
                 const max_posts_reached = graph.users.items(.num_posts)[current_uid] > simconf.max_post_per_user;
 
                 if (is_event_stale or max_posts_reached) continue;
+                const to_propagate_pid = metrics.post_count;
+                metrics.post_count += 1;
+                graph.users.items(.num_posts)[current_uid] += 1;
 
                 if (graph.users.items(.is_online)[current_uid]) {
-                    graph.user_seen_post.set(current_uid * simconf.max_post_per_user + to_propagate_pid);
-                
+
+                    graph.users.items(.num_posts)[current_uid] += 1;
+                    graph.user_seen_post.set(current_uid * total_posts + to_propagate_pid);
+                    
                     try propagatePost(gpa, rng, graph, simconf, t_clock, current_uid, to_propagate_pid);
                     
                     if (simconf.trace_to_file) {
@@ -295,17 +301,17 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
                 }
             
                 // schedule new creation
-                const new_post_time = simconf.post_inter_creation.sample(rng);
+                const creation_delay = simconf.creation_delay.sample(rng);
+                const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
                 const new_post = Event{
-                    .time = t_clock + new_post_time,
-                    .type = .{ .create = metrics.post_count },
+                    .time = t_clock + creation_delay + duration_between_creation,
+                    .type = .{ .create = 0 }, // dummy posts for now, will get assigned on creation
                     .user_id = current_uid,
                     .id = metrics.processed_events,
                     .session_gen = graph.users.items(.session_gen)[current_uid],
                 };
                 
                 try queue.add(gpa, new_post);
-                metrics.post_count += 1;
             },
 
             .session => |ssn| {
@@ -358,14 +364,12 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
                         const new_post_time = simconf.post_inter_creation.sample(rng);
                         const new_post = Event{
                             .time = t_clock + new_post_time,
-                            .type = .{ .create = metrics.post_count },
+                            .type = .{ .create = 0 },
                             .user_id = current_uid,
                             .id = metrics.processed_events,
                             .session_gen = graph.users.items(.session_gen)[current_uid],
                         };
                         try queue.add(gpa, new_post);
-                        
-                        metrics.post_count += 1;
                     },
                     .end => {
                         // schedule users wake up time
@@ -399,7 +403,6 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
                     // now it's safe to pop it and use it
                     const current_post = graph.timelines[current_uid].remove();
                     const post_id: Index = current_post.post_id;
-                    const total_posts = simconf.max_post_per_user * graph.users.len;
                     const matrix_index = current_uid * total_posts + post_id;
                     
                     // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
@@ -526,7 +529,7 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
         .avg_session_length = metrics.total_online_time / @as(f64, @floatFromInt(metrics.total_sessions)),
         .avg_post_per_session = @as(f64, @floatFromInt(metrics.impressions)) / @as(f64, @floatFromInt(metrics.total_sessions)),
         .timeline_drain_ratio = @as(f64, @floatFromInt(metrics.empty_timeline_ends)) / @as(f64, @floatFromInt(metrics.total_sessions)),
-        .posts_at_warmup = posts_created_warmup,
+        .posts_at_warmup = @as(f64, @floatFromInt(metrics.post_count)) / @as(f64, @floatFromInt(graph.users.len * simconf.max_post_per_user)),
     };
     
     return result;

@@ -54,10 +54,10 @@ pub fn build(b: *std.Build) !void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step("run" ++ version, "Run the app");
+        const run_step = b.step("run-" ++ version, "Run the app");
         run_step.dependOn(&run_cmd.step);
 
-        const release_step = b.step("release" ++ version, "Build for Windows (x64), Linux (x64) and Mac (ARM64)");
+        const release_step = b.step("release-" ++ version, "Build for Windows (x64), Linux (x64) and Mac (ARM64)");
 
         const targets: []const std.Target.Query = &.{
             //.{ .cpu_arch = .x86_64, .os_tag = .windows },
@@ -67,7 +67,7 @@ pub fn build(b: *std.Build) !void {
 
         for (targets) |t| {
             const release_exe = b.addExecutable(.{
-                .name = "bskysim" ++ version,
+                .name = "bskysim-" ++ version,
                 .root_module = b.createModule(.{
                     .root_source_file = b.path("src/main.zig"),
                     .target = b.resolveTargetQuery(t),
