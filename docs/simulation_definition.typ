@@ -170,7 +170,7 @@ This allows us to introduce two new concepts, regarding when and how a new event
 - *scheduled* if it gets created stochastically before the simulation runs.
 - *stochastic* if it gets created stochastically while the simulation is running.
 
-(Normally) If an entity is dynamic, then it will be always an stochastic. 
+(Probably) If an entity is dynamic, then it will be always an stochastic. 
 
 #pagebreak()
 = Version 1: Bare-bones 
@@ -210,102 +210,9 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 
 7. Single-Action Loop: A user can interact with an item once.
 
-== Algorithm Evaluation via Markov Properties
-#text(blue)[
-Under the axioms defined in @sec:axioms, we can characterize the underlying model as a Continuous-Time Markov Chain (CTMC) where interarrival times of actions follow an exponential distribution. *Move to implementation*]. However, to formally prove the correctness of the Simulation Engine's state transitions and simplify analytical verification, we evaluate its Embedded Discrete-Time Markov Chain (DTMC), commonly known as the jump chain. [This is the pdf `embbedded_markov.pdf`, ask for a better source.]
-
-For this to be a Markov chain, we must ensure the memoryless property is fulfilled, where considering states $s_0, ..., s_t$ can be expressed as follows:
-
-$ PP (s_j | s_1,...,s_(j-1)) = PP (s_j | s_(j-1)) $
-
-
-To ensure that, we need to discretize time strictly to the sequence of events, denoted by step $n in NN$. We define the global state of the simulation $S_n$ strictly as the time-evolving network graph at step $n$:
-
-$ S_n = G(n) = (V, E_n) $
-
-Where $V = cal(U) union cal(I)$ is the static set of all users and pre-scheduled items (Axiom 3), and $E_n$ is the cumulative set of all edges (interactions and creations) that have occurred up to step $n$.
-
-Under this graph-state formulation, the system satisfies the memoryless Markov property:
-
-$ PP (G(n) | G(n-1), ..., G(1)) = PP (G(n) | G(n-1)) $
-
-The transition from graph $G(n-1)$ to $G(n)$ is determined entirely by the current edge configuration $E_(n-1)$. In this configuration, $E_(n-1)$ is used to deterministically compute the current user timelines (Axiom 5), and applies the static policy $pi$ (Axioms 1 and 2) to generate the next edge $e_n$. Because no historical state prior to $n-1$ is required to compute $n$-th state, the process is memoryless.
-
-Let's invoke the remaining axioms to guarantee the model is a Markov Chain. Axiom 2 ensures that the decision policy $pi_u$ does not change with step $n$. While the contents of a user's timeline depend on the simulation's progress, the probability rules governing their actions remain constant, making the system time-homogeneous, as well as Axioms 3 and 4. Although posts are revealed sequentially during the simulation, the finite set of total posts and the static user graph are predefined, meaning the underlying structural rules do not shift. 
-
-Furthermore, Axiom 5 ensures a deterministic, chronological ordering of timelines. This strictly defines the state transitions—the topology of the chain's state space. A more sophisticated, dynamic recommender algorithm might introduce hidden historical dependencies, which would (probably) violate the Markov property. Ultimately, satisfying the memoryless property allows us to formalize the entire simulation engine as a MC. Because it operates as an absorbing chain, we can statically analyze its expected final state to mathematically verify the implementation.
-
-As a final note, the User Homogeneity axiom is not required for the system to be modeled as a Markov chain. It is, however, strictly necessary to simplify the transition probabilities enough to derive an analytical expression to test the code against.
-
-
-== Transition Probabilities
-
-To define the transition probability function that governs the step-by-step stochastic evolution from $G(n-1)$ to $G(n)$ to analytically express what we are going to approximate with the simulation.
-
-In the embedded DTMC, a discrete step occurs when any user's continuous exponential timer triggers. Under the User Homogeneity assumption (Axiom 1), the mathematical probability of any specific user $u$ being the next to act is uniformly distributed across the active population. Thus, the probability of a specific user $u$ "waking up" to act at step $n$ is $frac(1, |cal(U)|)$. 
-
-When a user $u$ acts, their specific action $a_n$ is drawn from the probability policy $pi = (p_"ignore", p_"like", p_"repost", p_"create")$ do to the action limitation in axiom 5.
-
-Let $G'$ represent a candidate for the next state. If the user's timeline $cal(T)(u, n-1)$ is not empty, let $i_u$ be the chronologically oldest unseen post in that timeline. For a "create" action, we bypass the timeline entirely; instead, the action activates an inert, pre-scheduled node $j_"new" in cal(I)$ to satisfy the topological requirement of adding new nodes versus linking existing ones). 
-
-The conditional transition probability when user $u$ acts a step $n$, is defined as:
-
-$ 
-PP(G' | G(n-1), "user" u "is active") = cases(
-  p_"ignore" & "if" G' = G(n-1) union { (u, i_u, "ignore", n) },
-  p_"like" & "if" G' = G(n-1) union { (u, i_u, "like", n) },
-  p_"repost" & "if" G' = G(n-1) union { (u, i_u, "repost", n) },
-  p_"create" & "if" G' = G(n-1) union { (u, j_"new", "create", n) },
-  1 & "if" cal(T)(u, n-1) = emptyset "and" G' = G(n-1),
-  0 & "otherwise"
-) 
-$
-
-
-To obtain the global transition probability of moving from $G(n-1)$ to $G'$, we marginalize over all possible users in the network:
-
-$ PP(G(n) = G' | G(n-1)) = sum_(u in cal(U)) frac(1, |cal(U)|) dot PP(G' | G(n-1), "user" u "is active") $
-
-*Note*: Action "ignore" has chosen to be modeled due to the need to diferenciate between a user that has seen (and chosen to not interact with) the post and a user who has not seen this post at all. With this, both the graph and the historics are representing everything.
-
-Additionally, the transition function explicitly handles the scenario where a user activates but their timeline is empty ($cal(T)(u, n-1) = emptyset$). In this case, the user cannot interact with a post. The step $n$ effectively advances the clock (or jump sequence), but the graph topology remains mathematically identical to the previous step ($G' = G(n-1)$).
-
-
-#text(blue)[
-
-*Sobre això: pot ser que en tingui, o no, però no podem dir-ho sense demostrar-ho*
-
-=== The Absorbing State Transition
-
-The simulation reaches its ultimate absorbing state, denoted as $G_"final"$, when the filtered timelines $cal(T)(u, n)$ for all users $u in cal(U)$ are completely empty, and all pre-scheduled posts in $cal(I)$ have been exhausted. At this point, no topological changes can occur.
-
-By definition, an absorbing state only transitions to itself with absolute certainty:
-$ PP(G(n) = G_"final" | G(n-1) = G_"final") = 1 $
-]
-
-=== Proof of State Equivalence (Global Graph vs. Local Histories)
-
-We can also view the state of the chain as the state of the entities (users and posts). It can be proved that defining the state as the global graph $G(n)$ is mathematically isomorphic to defining it as the union of all localized entity histories.
-
-Let $E(v, n) subset.eq E_n$ be the localized edge set (history) for any single node $v in V$ up to step $n$, defined as all edges where $v$ is either the source or destination:
-
-$ E(v, n) = { e in E_n | v_"src" = v "or" v_"dst" = v } $
-
-By the definition of a graph, the global edge set $E_n$ is exactly equal to the union of all localized node edge sets:
-
-$ E_n = union.big_(v in cal(V)) E(v, n) $
-
-Since the vertex set $V$ is strictly partitioned into users $cal(U)$ and items $cal(I)$, we can decompose this union:
-
-$ E_n = ( union.big_(u in cal(U)) E(u, n) ) union ( union.big_(i in cal(I)) E(i, n) )  =  ( union.big_(i in cal(I)) cal(H)^"act"_u(n) ) union ( union.big_(u in cal(U)) cal(H)^"traj"_i(n) ) $
-
-Notice that for any user $u$, their localized edge set $E(u, n)$ perfectly encapsulates their historical actions $cal(H)^"act"_u(n)$ and impression interactions. Similarly, for any item $i$, $E(i, n)$ perfectly encapsulates its cascade trajectory $cal(H)^"traj"_i(n)$. 
-
-Therefore, the global graph state $G(n)$ contains the exact same information as the union of all individual user histories and item trajectories. Constructing the next event from $G(n)$ is mathematically identical to querying the localized histories of the active entities.
-
 == Implementation
 
-We can simulate the networks with a Discrete Event Simulation with the Event Scheduling Algorithm. This coincides with the Embedded Discreet-Time Markov Chain formalized described in the previous section as an approximation of the CTMC that could be deduced from the data.
+We can simulate the networks with a Discrete Event Simulation with the Event Scheduling algorithm. This coincides with the Embedded Discreet-Time Markov Chain formalized described in the previous section as an approximation of the CTMC that could be deduced from the data.
 
 === Types of Implementation 
 
@@ -316,52 +223,16 @@ As v1 is absolutely _static_ we can define four different types of implementatio
 
 Additionally, by implementing a loading checkpoint strategy in the standard approach, we can skip the warm up. If what it's actually needed is to evaluate a network from an starting deterministic position, this would be the correct approach. Tho also allowing warm up, it makes no sense to do it, as the initial state can be already rich enough to not need it.
 
+The actual implementation of v1 is the diffusion simulation.
 
 === Data Generation and Structure
 
-// TODO update to modern generation
+[Paper about how to generate social networks topologies here: @amin2022scale]
 
-First, we'll use synthetic data generated in JSON format to run the simulation. This code can be found in [simulation/synthetic_data_generation/main.py], and generates the following structure:
+First, we'll use synthetic data generated in JSON format to run the simulation. This code can be found in [simulation/synthetic_data_generation/generate_data.py]. The graph has three parameters that controls the end result.
+ 
+#text(blue)[TODO: Read the paper and make a section regarding this (summarized)]
 
-```json
-{
-  "posts": [
-    { "id": 0, "time": 6.56 },
-    { "id": 1, "time": 12.86 }
-  ],
-  "users": [
-    {
-      "id": 0,
-      "policy": [0.2, 0.2, 0.2, 0.2, 0.2],
-      "following": [84, 65, 80],
-      "followers": [1, 7, 9],
-      "authored_post_ids": ["0_0", "0_1"]
-    },
-    {
-      "id": 1,
-      "policy": [0.1, 0.9, 0.0, 0.0, 0.0],
-      "following": [0],
-      "followers": [],
-      "authored_post_ids": []
-    }
-  ]
-}
-```
-
-Next step is to create the simulation graph from the synthetic data. That is
-- Users: How many, which followers and following, and store them in an array. This is $U$ from the notation section.
-- Posts: Every user will have authored posts, and store them in an array. This is $I$ from the notation section.
-- Fill timelines: every user has to see the posts of users that already follow him.
-
-A user in the simulation contains the following information:
-- id: identifier of the user.
-- following: other users which our user follows. They determine the timeline. This is $cal(N)_("out")(u)$ from our notation.
-- followers: other users which follow this user. Those users will be affected when our user interacts with a post. This is the $cal(N)_("in")(u)$ from the simulation.
-- timeline: all the post the user has to see in the future. Is $cal(T)_u (t)$ from the notation section.
-- posts: which post did the user author.
-- policy: Probability associated to each action ($pi$). Must add to one.
-
-A user will be able to perform three actions over a post: like, repost or nothing.
 
 === Options and Configuration
 
@@ -369,29 +240,46 @@ For the simulation to run, the following config file needs to be provided as a v
 
 ```json
 {
-  "user_policy": {
-    "weighted": [0.33, 0.33, 0.34] // ignore, like, repost
+  "seed": null,
+  "horizon": 10001,
+  "duration": 9000,
+  "warmup_time": 1000,
+  "user_policy": { // probability of each action
+    "categorical": {
+      "weights": [0.50, 0.30, 0.20 ],
+      "data": [ "ignore", "like", "repost" ]
+    }
   },
-  "user_inter_action": {
-    "exponential": 3 
+  "user_inter_action": { // Time between actoins
+    "exponential": {
+      "mean": 3
+    }
   },
-  "propagation_delay": {
-    "constant" : 1,
+  "max_post_per_user": 10, // Max amount of posts per user
+  "diffusion_post_schedule": {
+    "min": 0,
+    "max": 10000,
+    "interval": "oc"
   },
-  "interaction:delay": { 
-    "constant": 1,
+  "propagation_delay": { // Time between action and appearence of followers timeline
+    "constant": {
+      "value": 1
+    }
   },
-  "horizon": 10000,
-  "seed": null 
+  "interaction_delay": { // Time between seeing a post and acting upon it.
+    "constant": {
+      "value": 1
+    }
+  },
+  "creation_delay": { // Time between deciding to create a post and it's appearence
+    "constant": {
+      "value": 1
+    }
+  },
+  "trace_to_file": true // should the traces be outputed to file
 }
 ```
-
-- User policy is the vector $pi$.
-- User inter action is a distribution which modelizes every once in a while a user interacts with the system
-- Propagation delay is an small time added between a user reposting an action and this action arriving to it's timeline.
-- Interaction delay is an small time added between a user seeing a post and actually making the action.
-- Horizon: duration of the simulation.
-- seed: to control randomness.
+Each parameter in the JSON accepts a different type of distribution: Constant, Uniform, Exponential, Categorical or ECDF as part of the Distributions library @distributions-lib.
 
 To run the simulation we'll use the *Event Scheduling Algorithm*. An event in our simulation is defined as
 - time: which timestamp has this event happened.
@@ -399,53 +287,70 @@ To run the simulation we'll use the *Event Scheduling Algorithm*. An event in ou
 - user: all the information listed in the user category.
 - id: number of the event happening in the simulation.
 
-As the simulation wants to focus on posts, it will log out a trace in JSON format, which is a register of all events that happened in the simulation. Contains the same information of the event with the id of the post that has been interacted with.
+There is just one event in the simulation `Action` - ignore, like, repost. 
+
+The idea of the algorithm is to model every timeline of a given user as a MinHeap. All posts of the simulation get scheduled according to the Uniform `diffusion_post_schedule` - notice this is not allowed to be an arbitrary distribution, just a uniform one - to the whole simulation. That also constructs user timelines with all the posts they will see during the simulation. Once the simulation starts running, reposting will propagate posts to user timelines.
+
+The simulation will log out a trace in JSON format, which is a register of all events that happened in the simulation. Contains the same information of the event with the id of the post that has been interacted with.
 
 Before detailing the algorithm, we define the following helper functions and structures:
 - $Q$: A priority queue of events ordered by time $t$.
 - $"pop"(S)$: Extracts and returns the first element from an ordered set or queue $S$. If $S$ is empty, it returns $emptyset$.
 - $"push"(S, x)$: Inserts element $x$ into the set or queue $S$.
 - $"gen"(u, t)$: Generates a random future event $e$ with action $a$ for user $u$ at a time $t + tau$ where $tau ~ X$ is a random variable. 
-- An event $e$ is a tuple $(t, a, u, "id")$, where $t$ is the timestamp, $a in cal(A)$ is the action, $u$ is the user, and $"id"$ is the event identifier.
+- An event $e$ is a tuple $("time", "action", "user", "id")$, where $t$ is the timestamp, $a in cal(A)$ is the action, $u$ is the user, and $"id"$ is the event identifier.
 - Every user has a distinct timeline $cal(T)_u$, which is a priority queue defined at the first point and its already filled with data from the data loading step.
 - Recall from our notation that $r in cal(A)$ denotes a repost action.
+- $cal(S)$: A global set tracking $(u, i)$ pairs to ensure users do not process or receive posts they have already seen (maps to user_seen_post).
 
 #pseudocode-list[
   + $t_c <- 0.0$
   + $Q <- emptyset$
-  + *for* $u in U$
-    + $"push"(Q, "gen"(u, t_c))$
+  + $cal(S) <- emptyset$
+  + *for* $u in cal(U)$
+    + $"push"(Q, "gen_action"(u, t_c))$
   + *end*
-  + *while* $t_c <= "horizon"$ *and* $Q != emptyset$
-    + $e <- "pop"(Q)$
-    + $t_c <- e.t$
-    + $u <- e.u$
-    + $"push"(Q, "gen"(u, t_c))$ 
-    + $i <- "pop"(cal(T)_u)$
-    + *if* $i != emptyset$ *then*
-      + $cal(H)_u <- cal(H)_u union (i)$
+  + *while* $t_c <= t_h$ *and* $Q != emptyset$
+    + $"event" <- "pop"(Q)$
+    + $t_c <- "event"."time"$
+    + $u <- "event"."user"$
+    + $"push"(Q, "gen_action"(u, t_c))$ 
+    + $"post" <- "peek"(cal(T) (u))$
+    + *if* $"post" != emptyset$ *and* $"post"."time" <= t_c$ *then*
+      + $i <- "post"."id"$
+      + $"pop"(cal(T) (u))$
+      + $cal(S) <- cal(S) union \{(u, i)\}$
       + *if* tracing is enabled *then*
-        + $"Log"(t_c, e.a, e."id", u, i)$
+        + $"Log"(t_c, "event"."action", "event"."id", u, i)$
       + *end*
-      + *if* $e.a == r$ *then*
-        + *for* $v in Gamma_"in"(u)$
-          + $"push"(cal(T)_v, i)$
+      + *if* $"event"."action" == "repost"$ *then*
+        + *for* $v in  cal(N)_"out" (u)$
+          + *if* $(v, i) in.not cal(S)$ *then*
+            + $"push"(cal(T) (v), "gen_arrival"(i, t_c))$
+          + *end*
         + *end*
       + *end*
     + *end*
   + *end*
 ]
 
+=== Implementation quirks
 
-=== Implementation details
+There must be a list with all the scheduled events MinHeap, and then each user has a MinHeap with a index to the post the user has to see (the oldest one). 
 
-There must be a list with all the scheduled events (min heap), and then each user has a min-heap (?) with a index (or a pointer) to the post the user has to see (the oldest one). 
+*Peek and Time Travel*
 
-Each user must have both which posts has he written, which posts has he interacted and what action did the user performed (well, that's the trace)
+There is a potential time travelling due to the interaction of `propagation_delay`, $t_c$ and each user having it's own timeline. Let's give an example.
 
-Due to axiom 1, user will have all the same weights $pi$, but which action is performed is a weighted probability (uniform from zero to one and in which interval falls)
+1. User $u$ sees posts $i$ and reposts it.
+2. Post $i$ propagates to $cal(T) (v)$ at time $t_i = t_c + d_p$.
+3. User $v$ has an action scheduled at $t_a$ where $t_c < t_a < t_i$, but $cal(T) (v) = {i}$, so $"pop"(cal(T) (v)) = i$, which should be at time $t_i$ processed at time $t_a$.
 
-To guarantee maximum performance, we have designed the simulation taking into account the following data oriented design principles. 
+We have time traveled to the future. To avoid that, we introduce the $"peek"$ operation, where we access tot the post $i$ but it does not get deleted from $Q$. Let's replay the example
+
+3. User $v$ has an action scheduled at $t_a$ where $t_c < t_a < t_i$. $cal(T) (v) = {i}$, so $"peek"(cal(T) (v)) = i$ and $t_a < t_i$ so it does not get processed.
+4. Next event is another user $v$ action, now at $t_c > t_i$, so the peek condition will be fullfiled and the event processed.
+
 
 *Graph Representation* 
 
@@ -455,11 +360,11 @@ Normally, graphs are performance killers. Choosing a wrong representation of the
 + Relationships between users (follows)
 + Relationships of post ownership and viewship.
 
-List of users and post are covered in the following subsections. To further continue the explanation, we shall assume they exisist and they contain the information.
+List of users and post are covered in the following subsections. To further continue the explanation, we shall assume they exists and they contain the information.
 
 As per axiom of stability of the simulation, the follows are predefined and static, se we can make an adjacency list with fixed indexes instead of a matrix. This is called a Compressed Sparse Row or, with graph theory nomenclature, and static adjacency list. Normal OOP mindset would be to make every user have it's own followers array, but that implies loading small lists on to CPU cache from RAM, which is a time consuming operation. Specially, the transmission of a repost involves accessing this array per the post author, so it has to be done once per cycle in the main loop.
 
-Instead of each user storing an array of followers (pointers to a user or user ids) we centralize all the following logic in an static dynamically allocated slice `followers: []Index`. It does not need to grow dynamically, therefore an `ArrayList` is not needed. All the followers are stored sequentially on the array, concatenating one another, and then we store the starting index and it's count in separate arrays. Lets make an example to showcase it:
+Instead of each user storing an array of followers (pointers to a user or user ids) we centralize all the following logic in an static dynamically allocated slice `followers: []Index`. It does not need to grow dynamically, therefore an `ArrayList` is not needed. All the followers are stored sequentially on the array, concatenating one another, and then we store the starting index and it's count in separate arrays.  This paradigm is called CSC or CSR (compressed sparse row) #text(blue)[fins a good way to cite this] Lets make an example to showcase it:
 
 $ cal(N)_("out") (u_1) = {u_2, u_3, u_4, u_5} \ cal(N)_("out") (u_2) = {u_3} \ cal(N)_("out") (u_3) = emptyset \ cal(N)_("out") (u_4) = { u_1, u_5} \ cal(N)_("out") = (u_5) = emptyset $
 
@@ -492,14 +397,7 @@ for (followers[start..start+amount]) |f| { //4..5 -> just 4
 
 Additionally, this can be further simplified by eliminating the user_count array completely and use the next element of the array to know the count, making the struct smaller.
 
-To handle the relationship between users and posts, we also take advantage of the third action to make an stable representation of the users. First, we discard the conceptual difference of "seen" and "owner", and assume that onwenship implies seen the post. By keeping track of the latter suffices to make the structure work. This can be conceptually understood as a sparse matrix with dimensions $N times M$ (number of users times number of posts) with the following ones: 
 
-$
-M = cases(
-  1 "if" i in cal(P)(u, t),
-  0 "otherwise"
-)
-$
 
 To improve locality this matrix is not implemented as an array of arrays, but is flattened into a 2D array. To access user $u_j$ $i$-th post is with the formula $N*u + i$. Check data structures for actual implementation of this field.
 
@@ -517,9 +415,29 @@ The advantages are clear: when iterating over user id, we are just accessing one
 
 Posts are stored with the same approach, giving the exact same benefits.
 
-Implementation of `user_seen_post` is a DynamicBitSet, which allows the check of just an item being one extremely fast, due to small type repesentation (a bit) and the CPU being absolutely efficient at making bitwise operations comparisons.
+*Which user has seen which posts*
 
-Both user timelines and global timeline are implemented using a Heap structure, making every access $O(1)$, but every insertion $O(log n)$. This is the most optimal data structure without entering ring buffers implementations, which need of several assumptions to not fail.
+The simulation treats ownership and seeing the post equally, which can be consequence from the axioms 6 and 7 (user cannot see a post twice + user cannot see its own post)
+
+Implementation of `user_seen_post` (set $cal(S)$ on pseudocode) is a DynamicBitSet using a 1D representaiton of the following matrix:
+
+$ 
+S(u,i) = cases(
+  1 "if" bb(1)_( i in cal(H)_(u(t))^"imp" or i in cal(P) (u)) (u), 
+  0 "otherwise"
+) 
+$
+
+where $dim(cal(S)) = (N · m) · N = N^2 m$, where $m$ is the maximum amount of posts per user. As it's one dimensional, access to post $i$ of user $u$ is just
+
+$ j = u · T + i  "where" T = N m $ 
+ 
+Bitwise allows the check of an item being one to be very fast due to small type repesentation (a bit) and the CPU being absolutely efficient at making bitwise operations comparisons. the main problem with that is the implementation memory needs grow quadratic with the number of users and their max posts. To make it linearly scalable, a HashMap would be the proper choice to check if a user has seen a post. This being a proof of concept I've sacrificed scalability for speed with lower amounts of entities.
+
+
+*Keeping Events Order*
+
+Both user timelines and global timeline are implemented using a Heap structure, making every access $O(1)$, but every insertion $O(log n)$. This is the most optimal data structure without entering ring buffers implementations, which need of several assumptions to not fail. There are some data structures based on Circular Buffers called time wheels #text(blue)[reference the papers in documents] but they are a little bit more involved, although having an amazing speed up dues to not needed dynacmically allocated memory.
 
 *Random Number Generation*
 
@@ -534,12 +452,6 @@ The Axioms massively simplify what is a social network in order to provide a ver
 1. Chronologically sorted or reverse-sorted: most of social network feeds are not given from oldest to newest, but from newest to oldest. Assuming a not reverse chronological order helps not to ask unconfortable questions regarding new timeline added posts (when a newer post should appear in the timeline if you are showing it from newest to oldest) which would clutter a rather simple testing implementation. Additionally, non-reverse order for sure mantains a Markov structure, which I am not sure with reverse chronological order.
 2. Timeline definition: Once a user has seen a post, it cannot be seen again. It could be a system in place that refloats newer posts if they get popular again with some criteria.
 
-
-Current known limitations then are:
-1. Reverse chronological order instead of non-reversed.
-2. Timeline showing similar users popular posts a correct good enough times.
-3. Post relation with each other: a reply should show original and replied, as well as a quote, as a single item (so both reply and quote should _create_ a post).
-
 #pagebreak()
 = Version 2: Sessions
 
@@ -551,16 +463,22 @@ A user now can be in two states:
 
 A user will switch between those two states periodically according to a distribution or because it has received a notification and went back online to check an interaction.
 
-
 == Model
+
+#text(red)[*La modelització hauria de contenir els ids de sessions? Jo penso que no, que és un tema d'implementació. La modelització pot assumir que qualsevol esdeveniment s'organitza adequadament*]
 
 We'll expand the @sec-modeling notation. First we have to add when the user is inactive or active, and what this involves.
 
-This does not need to be modeled actually, the topology of the graph does not change. It's only a restriction on when the user posts will appear.
+All the part of modeling the topology does not need to be changed, as the only thing that has changed is user behaviour and when can a new edge be added to the state of the simulation.
 
-Let's redefine the user set $cal(U) = {(1,s_1), ... (n, s_n)}$ where $(i, s)$, where $s in { "online", "offline" }$. Now, a user cannot do any action in $cal(R)$ if $s_i = "offline"$.
+
+Let's redefine the user set $cal(U) = {(1,s_1, g_1), ... (n, s_n, g_n)}$ where $(i, s)$, where $s in { "online", "offline" }$, and $g_i in NN$ is the session counter. Now, a user cannot do any action in $cal(R)$ if $s_i = "offline"$, and the simulation won't be able to.
 
 #text(blue)[Analogous to the other definition we can do it function based. Let define a set $S$ with cardinal $N$ number of users. The function $"status": cal(U) --> S$ says in which status is user $u$ in.]
+
+To not create time inconsistencies, we need user timeline to return the most recent post propagated, not the oldest. We will still denote the timeline as $cal(T) (u)$, but the function $"pop"(cal(T) (u))$ will return max $t$ post.
+
+
 
 == Axioms/Assumptions
 <sec-axioms-v2>
@@ -593,7 +511,178 @@ Despite being enforced by the definition of $cal(T) (u,t)$, let's add this two o
 
 9. Single-Action Loop: A user can interact with an item once.
 
+== Pseudocode 
 
+We offer four pseudocodes in this section: PropagatePost is used when a post is reposted or created, moving to the followers of the user executing that action is doing, StageOne creates the initial state of the simulation by filling the timelines at $t=0$, InitSessions choses a random proportion of users that should start online, and assigns them their actions; if they start offline it assigns them when should they wake up, and SimulationV2 is the actual code of the simulation.
+
+#pseudocode-list[
++ *procedure* $"PropagatePost"(u, i, t_c)$
+  + *for* $v in cal(N)_"out"(u)$
+    + *if* $(v, i) in.not cal(S)$ *then*
+      + $"push"(cal(T)(v), "gen_arrival"(i, t_c))$
+    + *end*
+  + *end*
++ *end*
+]
+
+#pseudocode-list[
++ *procedure* $"StageOne"$
+  + *for* $u in cal(U)$
+    + $"push"(Q, "gen_create"(u, t_c))$
+    + $cal(S) <- cal(S) union \{(u, "post_count")\}$
+  + *end*
+  + *while* $t_c <= t_"warmup"$ *and* $Q != emptyset$
+    + $"event" <- "pop"(Q)$
+    + $t_c <- "event"."time"$
+    + $u <- "event"."user"$
+    + *if* $"event"."type" == "create"$ *then*
+      + $i <- "event"."post_id"$
+      + $"PropagatePost"(u, i, t_c)$
+      + $"push"(Q, "gen_create"(u, t_c))$
+    + *end*
+  + *end*
++ *end*
+]
+
+#pseudocode-list[
++ *procedure* $"InitSession"$
+  + *for* $u in cal(U)$
+    + $r <- "Uniform"(0, 1)$
+    + *if* $r < "offline_ratio"$ *then*
+      + $"online"(u) <- "false"$
+      + $"push"(Q, "gen_session_start"(u, t_c))$
+    + *else*
+      + $"online"(u) <- "true"$
+      + $"push"(Q, "gen_session_end"(u, t_c))$
+    + *end*
+  + *end*
++ *end*
+]
+
+#pseudocode-list[
++ *procedure* $"SimulationV2"$
+  + $t_c, Q, cal(S) <- 0.0, emptyset, emptyset$
+  + $"StageOne"()$
+  + $"InitSessions"()$
+  + *for* $u in cal(U)$ *where* $"online"(u) == "true"$
+    + $"push"(Q, "gen_action"(u, t_c))$
+  + *end*
+  + *while* $t_c <= t_h$ *and* $Q != emptyset$
+    + $"event" <- "pop"(Q)$
+    + $t_c, u <- "event"."time", "event"."user"$
+    + $"isEventStale" = "event"."session_gen" != u."session" $ 
+    + *if* $"isEventStale"$ *then* continue *end* // Skip stale events
+    + *if* $"event"."type" == "create"$ *then*
+      + *if* $"online"(u) == "true"$ *then*
+        + $i <- "event"."post_id"$
+        + $cal(S) <- cal(S) union \{(u, i)\}$
+        + $"PropagatePost"(u, i, t_c)$
+      + *end*
+      + $"push"(Q, "gen_create"(u, t_c))$
+    + *else if* $"event"."type" == "session.start"$ *then*
+      + $"online"(u) <- "true"$
+      + $"session_gen"(u) <- "session_gen"(u) + 1$
+      + $"push"(Q, "gen_session_end"(u, t_c))$
+      + $"push"(Q, "gen_action"(u, t_c))$
+      + $"push"(Q, "gen_create"(u, t_c))$
+    + *else if* $"event"."type" == "session.end"$ *then*
+      + $"online"(u) <- "false"$
+      + $"push"(Q, "gen_session_start"(u, t_c))$
+      + $"clear"(cal(T)(u))$
+    + *else if* $"event"."type" == "action"$ *and* $"online"(u) == "true"$ *then*
+      + $"post" <- "peek"(cal(T)(u))$
+      + *if* $"post" != emptyset$ *and* $"post"."time" <= t_c$ *then*
+        + $i <- "post"."id"$
+        + $"pop"(cal(T)(u))$
+        + *if* $(u, i) in cal(S)$ *then*
+          + $"push"(Q, "gen_action"(u, t_c))$
+          + *continue* // Safeguard against already seen posts
+        + *end*
+        + $cal(S) <- cal(S) union \{(u, i)\}$
+        + *if* $"event"."action" == "repost"$ *then*
+          + $"PropagatePost"(u, i, t_c)$
+        + *end*
+        + $"push"(Q, "gen_action"(u, t_c))$
+      + *else* // Timeline drained, user logs off early
+        + $"online"(u) <- "false"$
+        + $"session_gen"(u) <- "session_gen"(u) + 1$
+        + $"push"(Q, "gen_session_start"(u, t_c))$
+      + *end*
+    + *end*
+  + *end*
++ *end*
+]
+
+The introduction of sessions introduces several problems to handle, which are encoded in the pseudocode.
+
+Imagine the following example, with the following state of user $u$:
+- $(u, "online")$
+- $cal(T) (u) = { (1, t^p_1 ), (2, t_2^p) }$
+- $Q = { (u, "action", i, t_1), (u, "end", i+1, t_2), (u, "action", i+2, t_3) (v, \_, i+3, t_\_)}$
+
+1. Pop the first element of $Q$, an action, which pops $(2, t^p_2)$.
+- $(u, "online")$
+- $cal(T) (u) = { (1, t^p_1 ) }$
+- $Q = { (u, "end", i+1, t_2), (u, "action", i+2, t_3) (v, \_, i+3, t_\-}$
+
+2. User goes online
+- $(u, "offline")$
+- $cal(T) (u) = { (1, t^p_1 ) }$
+- $Q = { (u, "end", i+1, t_2), (u, "action", i+2, t_3) (v, \_, i+3, t_\-}$
+
+3. Next event is processed:
+- $(u, "offline")$
+- $cal(T) (u) = { (1, t^p_1 ) }$
+- $Q = { (u, "action", i+2, t_3), (v, \_, i+3, t_\-)}$
+
+Now, we have to question two things:
+1. What should be done with $cal(T) (u)$ when goes offline? Line 29, the timeline gets deleted.
+2. What should happen if an event of a user is popped from $Q$ when user $u$ is offline? We add a session id which tracks which session is the user in. An event can't be processed if the session of the user stored in the event is different from the session the user is currently in (specifically, the condition which will be invalid most of the time - if the `inter_session_duration` is reasonably long - will be $"current_event.session" + 1 == "user.session"$).
+
+=== Calibration, Session and breaking distributions in DES
+
+The above decision contains a sutile implication of calibration procedures: time between action and creation are measured _within a session_ and not globally.
+
+Discrete event simulations work by sampling an uninterrupted renewal process, which we characterize with sampling a given distribution.
+
+If the distribution we are renewing the process from is consistently truncated as the session identifier does, we are not using the specified distribtuion (eg, a GOF test would fail, as we are ommiting some samples which are dependent from another distribution) and this would _not_ be an uninterrupted renewal process.
+
+Now, this depends then on how do we calibrate the variables `action_inter_duration` and `create_inter_duration`. It's out of the question that those events cannot be scheduled when a user is online, but the process could be interrupted and just shifted by a constant amount: the duration of the offline period.
+
+Consider the same example as before, and we are not going to use the session counter to not break causality
+- $(u, "online")$
+- $cal(T) (u) = { (1, t^p_1 ) }$
+- $Q = { (u, "action", i, t_1), (u, "end", i+1, t_2), (u, "action", i+2, t_3) }$
+1. $"pop"(Q) -> (u, "action", i, t_1), "pop"( cal(T) (u))$
+2. $"pop"(Q) -> (u, "end", i+1, t_2) -> (u, "offline")$
+3. $"pop"(Q) -> (u, "action", i+2, t_3)$, but the user is offline. Instead of discarding it, we reeschedule it to appear when the user goes online:
+   1. Push the new $"start"$ event: $"push"(Q, (u, "start", i+3, t_4))$
+   2. Push the previous scheduled actions/create with the offset remining to create the simulation: $"push"(Q, (u, "action", i+4, t_4 + (t_3 - t_2))$
+   3. Stop $"action"$ generator for user $u$ until the event is processed.
+
+
+An implementation problem could arise if the following queue after processing the event.
+- $Q = { (u, "end", i+1, t_2), (u, "start", i+2, t_2), (u, "action", i+3, t_3) }$
+ 
+So a mechanism would be needed for now not reescheduling that action, which is already properly scheduled.
+
+TL;DR: it all cames down to this what is actually `action_inter_duration`
+- if it measures exactly what the name says (duration between two actions regardless of the sessions) then the current implementation is flawed.
+- if it measures `action_inter_duration_within_session` then current implementation is adequately representing the current state. 
+
+=== Proposed Session Calibration Solution
+#text(blue)[This section of the document is an AI dump of ideas]
+
+// This part of the document is an AI dump of ideas, 
+A fundamental limitation of utilizing public social media firehose data (such as the ATProto Jetstream) is the "dark matter" problem: the stream strictly broadcasts write-events (e.g., posts, likes, reposts) and completely obfuscates passive read-events (e.g., timeline scrolling, profile viewing). Consequently, explicit session boundaries cannot be directly observed. To calibrate the simulation's $time_"session_duration"$ and $time_"offline"$ parameters, we outline three viable methodologies for session estimation:
+
++ *Heuristic Thresholding ($tau$) with Boundary Padding ($delta$):* This approach infers sessions from the densest possible set of write-events. Two consecutive actions by user $u$ at times $t_i$ and $t_{i+1}$ are grouped into the same session if the inter-action duration $Delta t <= tau$ (where $tau$ is a predefined inactivity threshold, typically 10-15 minutes). To account for the unobserved passive scrolling before the first action and after the last action, a padding variable $delta$ is introduced. The estimated session boundaries become $t_"start" = t_1 - delta_"start"$ and $t_"end" = t_n + delta_"end"$, yielding a wider, more realistic session distribution.
+
++ *Literature-Informed Calibration:*
+  Rather than processing raw firehose data, the simulation parameters can be calibrated using established probability distributions from existing social media telemetry research. This provides immediate, empirically grounded parameters for session lengths and inter-session intervals, though it assumes user behavior on the target platform perfectly mirrors general macro-platform trends (e.g., X/Twitter or Reddit models). _(Note: Studies utilized for this calibration must be carefully selected for mobile-heavy platforms, accessed March 26, 2026)._
+
++ *Empirical Telemetry via Custom Feed Generators:*
+  To capture absolute ground-truth session data without relying on heuristics, explicit read-telemetry can be gathered by hosting a Custom Feed Generator. When users navigate to the custom feed, the platform's AppView forwards a `getFeedSkeleton` HTTP request to the feed server. Logging the timestamps and authenticated DIDs of these pagination and refresh requests completely resolves the silent boundary problem, providing exact metrics for timeline drain rates and session lengths.
 
 == Implementation
 
@@ -609,7 +698,9 @@ As the session logic is sligtly more complex and the checkpoint from standard ap
 1. Warm Up: just post creation and for a brief time. If there aren't a minimum amount of posts at the beginning there will be strange behaviour at the beginning.
 2. Standard: with just some posts created, we will run the standard implementation of the simulation, a normal event scheduling. 
 
+
 == Implementation Details
+
 Essentially, as the axiom of stability remains unchanged, all the data structures will remain exactly the same. 
 
 *Regarding User Heap*
@@ -617,16 +708,34 @@ Now the Heap associated to every user must output in reverse-chronological order
 
 This makes us consider mainly when we have to "empty" the heap of a user, because if a user timeline keeps getting bigger but its not online a lot, could lead to unbound memory growth of `TimelineEvents` structs.
 
-*Regarding Sessions*
-Main problem of the sessions is to make sure an action $a_(u,i)^k$ is performed when the user is inactive. DoD: store another array called mask with 0 or 1 depeding of when the user is online or not and prevent generation of actions if that is set
+*Post Creation*
+
+As posts can now be created during the middle of the simulation, a way to assign not repeated id must be figured out. The problem is essentially that the interaction with the session gen id, a post can be scheduled for creation (that means the event $(u, "create", p_"id", t) in Q$, but as it can be canceled it does not guarantee that the id assigned when scheduled is going to be the same as the one it's going to end up with.
+
+To account for this, we assign 0 as id when scheduled in the queue, but then it's created appropriately when it's checked that that event is going to be processed.
+
+
+#pagebreak()
+= Version 3: Unlimited Amount of Posts
+
+Despite being able to make `max_post_per_user` into a Possion random variable to make the number of posts change according to the simulation, it is beleived that users should not have a hard cap on posts by design. Therefore, v3 takes v2 and removes the post stability axiom. Users will not be created during simulation duration nor new follows added, but posts won't have an upper limit. We'll rename axiom 3 to Static Topology.
+
+This will also allow us to add a _reply_ and _quote_ action, due to posts not being limited on creation!
+
 
 #pagebreak()
 
-= Version 3: Replies and notifications
+= Version 3: Notifications
 
 
 6. Notifications Mechanism: if $(u, j, "quote", t), (i,j, "quotes", t)$, user $v$ such as $i in cal(P) (u,t)$ can come back from vacation early. When a reply to a post is made, 
 
+== Known Calibration Problems:
++ How do we obtain user sessions lenght?
++ How do we identify sessions started by a notification and sessions started by scheduling? are those independent events? (yes) but should a session started by a notification delete the scheduled session on start?
++ Action and creation variables are mesuared `_within_session` or they are independent from where the session does start/end?
+
+Problem with data :(
 
 
 
@@ -736,5 +845,98 @@ Regarding evaluation metrics, we have to distinguish between several traces of t
 - User historic activity: $H^"act"_u (t) = cal(H)_u (k)= {(i,a, tau) : a != emptyset, tau < t } $. What exactly did the user do, at which time.
 - Item trajectory: $T_i (t) = {(u, a, tau)  | tau < t } "where" a in {c, r, q}  $. That is a list with all the users who have reposted at given time time $tau$.
 
+#pagebreak()
+= Classification as a Markov Chain
+#text(blue)[
+Under the axioms defined in @sec:axioms, we can characterize the underlying model as a Continuous-Time Markov Chain (CTMC) where interarrival times of actions follow an exponential distribution. *Move to implementation*]. However, to formally prove the correctness of the Simulation Engine's state transitions and simplify analytical verification, we evaluate its Embedded Discrete-Time Markov Chain (DTMC), commonly known as the jump chain. [This is the pdf `embbedded_markov.pdf`, ask for a better source.]
+
+For this to be a Markov chain, we must ensure the memoryless property is fulfilled, where considering states $s_0, ..., s_t$ can be expressed as follows:
+
+$ PP (s_j | s_1,...,s_(j-1)) = PP (s_j | s_(j-1)) $
+
+
+To ensure that, we need to discretize time strictly to the sequence of events, denoted by step $n in NN$. We define the global state of the simulation $S_n$ strictly as the time-evolving network graph at step $n$:
+
+$ S_n = G(n) = (V, E_n) $
+
+Where $V = cal(U) union cal(I)$ is the static set of all users and pre-scheduled items (Axiom 3), and $E_n$ is the cumulative set of all edges (interactions and creations) that have occurred up to step $n$.
+
+Under this graph-state formulation, the system satisfies the memoryless Markov property:
+
+$ PP (G(n) | G(n-1), ..., G(1)) = PP (G(n) | G(n-1)) $
+
+The transition from graph $G(n-1)$ to $G(n)$ is determined entirely by the current edge configuration $E_(n-1)$. In this configuration, $E_(n-1)$ is used to deterministically compute the current user timelines (Axiom 5), and applies the static policy $pi$ (Axioms 1 and 2) to generate the next edge $e_n$. Because no historical state prior to $n-1$ is required to compute $n$-th state, the process is memoryless.
+
+Let's invoke the remaining axioms to guarantee the model is a Markov Chain. Axiom 2 ensures that the decision policy $pi_u$ does not change with step $n$. While the contents of a user's timeline depend on the simulation's progress, the probability rules governing their actions remain constant, making the system time-homogeneous, as well as Axioms 3 and 4. Although posts are revealed sequentially during the simulation, the finite set of total posts and the static user graph are predefined, meaning the underlying structural rules do not shift. 
+
+Furthermore, Axiom 5 ensures a deterministic, chronological ordering of timelines. This strictly defines the state transitions—the topology of the chain's state space. A more sophisticated, dynamic recommender algorithm might introduce hidden historical dependencies, which would (probably) violate the Markov property. Ultimately, satisfying the memoryless property allows us to formalize the entire simulation engine as a MC. Because it operates as an absorbing chain, we can statically analyze its expected final state to mathematically verify the implementation.
+
+As a final note, the User Homogeneity axiom is not required for the system to be modeled as a Markov chain. It is, however, strictly necessary to simplify the transition probabilities enough to derive an analytical expression to test the code against.
+
+
+== Transition Probabilities
+
+To define the transition probability function that governs the step-by-step stochastic evolution from $G(n-1)$ to $G(n)$ to analytically express what we are going to approximate with the simulation.
+
+In the embedded DTMC, a discrete step occurs when any user's continuous exponential timer triggers. Under the User Homogeneity assumption (Axiom 1), the mathematical probability of any specific user $u$ being the next to act is uniformly distributed across the active population. Thus, the probability of a specific user $u$ "waking up" to act at step $n$ is $frac(1, |cal(U)|)$. 
+
+When a user $u$ acts, their specific action $a_n$ is drawn from the probability policy $pi = (p_"ignore", p_"like", p_"repost", p_"create")$ do to the action limitation in axiom 5.
+
+Let $G'$ represent a candidate for the next state. If the user's timeline $cal(T)(u, n-1)$ is not empty, let $i_u$ be the chronologically oldest unseen post in that timeline. For a "create" action, we bypass the timeline entirely; instead, the action activates an inert, pre-scheduled node $j_"new" in cal(I)$ to satisfy the topological requirement of adding new nodes versus linking existing ones). 
+
+The conditional transition probability when user $u$ acts a step $n$, is defined as:
+
+$ 
+PP(G' | G(n-1), "user" u "is active") = cases(
+  p_"ignore" & "if" G' = G(n-1) union { (u, i_u, "ignore", n) },
+  p_"like" & "if" G' = G(n-1) union { (u, i_u, "like", n) },
+  p_"repost" & "if" G' = G(n-1) union { (u, i_u, "repost", n) },
+  p_"create" & "if" G' = G(n-1) union { (u, j_"new", "create", n) },
+  1 & "if" cal(T)(u, n-1) = emptyset "and" G' = G(n-1),
+  0 & "otherwise"
+) 
+$
+
+
+To obtain the global transition probability of moving from $G(n-1)$ to $G'$, we marginalize over all possible users in the network:
+
+$ PP(G(n) = G' | G(n-1)) = sum_(u in cal(U)) frac(1, |cal(U)|) dot PP(G' | G(n-1), "user" u "is active") $
+
+*Note*: Action "ignore" has chosen to be modeled due to the need to diferenciate between a user that has seen (and chosen to not interact with) the post and a user who has not seen this post at all. With this, both the graph and the historics are representing everything.
+
+Additionally, the transition function explicitly handles the scenario where a user activates but their timeline is empty ($cal(T)(u, n-1) = emptyset$). In this case, the user cannot interact with a post. The step $n$ effectively advances the clock (or jump sequence), but the graph topology remains mathematically identical to the previous step ($G' = G(n-1)$).
+
+
+#text(blue)[
+
+*Sobre això: pot ser que en tingui, o no, però no podem dir-ho sense demostrar-ho*
+
+=== The Absorbing State Transition
+
+The simulation reaches its ultimate absorbing state, denoted as $G_"final"$, when the filtered timelines $cal(T)(u, n)$ for all users $u in cal(U)$ are completely empty, and all pre-scheduled posts in $cal(I)$ have been exhausted. At this point, no topological changes can occur.
+
+By definition, an absorbing state only transitions to itself with absolute certainty:
+$ PP(G(n) = G_"final" | G(n-1) = G_"final") = 1 $
+]
+
+=== Proof of State Equivalence (Global Graph vs. Local Histories)
+
+We can also view the state of the chain as the state of the entities (users and posts). It can be proved that defining the state as the global graph $G(n)$ is mathematically isomorphic to defining it as the union of all localized entity histories.
+
+Let $E(v, n) subset.eq E_n$ be the localized edge set (history) for any single node $v in V$ up to step $n$, defined as all edges where $v$ is either the source or destination:
+
+$ E(v, n) = { e in E_n | v_"src" = v "or" v_"dst" = v } $
+
+By the definition of a graph, the global edge set $E_n$ is exactly equal to the union of all localized node edge sets:
+
+$ E_n = union.big_(v in cal(V)) E(v, n) $
+
+Since the vertex set $V$ is strictly partitioned into users $cal(U)$ and items $cal(I)$, we can decompose this union:
+
+$ E_n = ( union.big_(u in cal(U)) E(u, n) ) union ( union.big_(i in cal(I)) E(i, n) )  =  ( union.big_(i in cal(I)) cal(H)^"act"_u(n) ) union ( union.big_(u in cal(U)) cal(H)^"traj"_i(n) ) $
+
+Notice that for any user $u$, their localized edge set $E(u, n)$ perfectly encapsulates their historical actions $cal(H)^"act"_u(n)$ and impression interactions. Similarly, for any item $i$, $E(i, n)$ perfectly encapsulates its cascade trajectory $cal(H)^"traj"_i(n)$. 
+
+Therefore, the global graph state $G(n)$ contains the exact same information as the union of all individual user histories and item trajectories. Constructing the next event from $G(n)$ is mathematically identical to querying the localized histories of the active entities.
 
 

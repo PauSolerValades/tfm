@@ -1,4 +1,3 @@
-
 andriamampianina-2022-graph:
   type: article
   title: "Graph data temporal evolutions: From conceptual modelling to implementation"
@@ -24,3 +23,31 @@ andriamampianina-2025-selective:
     type: proceedings
     title: "Proceedings of the 28th International Conference on Extending Database Technology (EDBT)"
     location: "Barcelona, Spain"
+
+amin2022scale:
+  type: Article
+  title: Model for Generating Scale-Free Artificial Social Networks Using Small-World Networks
+  author:
+    - Amin, Farhan
+    - Choi, Gyu Sang
+  date: 2022-04-14
+  parent:
+    type: Periodical
+    title: "Computer Systems Science and Engineering" # This is the typical journal for these authors/topics
+    publisher: "Tech Science Press"
+    organization: "Department of Information and Communication Engineering, Yeungnam University"
+  note: "Accepted: 14 April 2022. Correspondence: castchoi@ynu.ac.kr"
+  url:
+    value: https://www.techscience.com/csse/v44n3/49151 # Standard DOI/URL for this specific paper
+    date: 2026-03-25
+
+distributions-lib:
+  type: Repository
+  title: distributions
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/distributions
+    date: 2026-03-25
+  parent:
+    title: GitHub
+  abstract: A library for working with and visualizing various probability distributions.
