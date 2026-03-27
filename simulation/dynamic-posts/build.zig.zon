@@ -40,9 +40,9 @@
             .url = "git+https://github.com/PauSolerValades/eazy-args#54e6cceb35b4942341c5d1ea41518028a906fb2c",
             .hash = "eazy_args-0.2.0-c374-NXlAQAGpNWGT_K3n9DCPbP_WY6fjhQXH8q23tDD",
         },
-        .heap = .{
-            .url = "git+https://github.com/PauSolerValades/heap#324312b8504d90c51af10d88f7f9139d3ebddf84",
-            .hash = "heap-0.0.0-zf0BENeSAAAJ1D6aZx87dDh_Tf_pMZf3Jb2ikdERW4wE",
+        .ds_bskysim = .{
+            .url = "git+https://github.com/PauSolerValades/ds-bskysim#018215608f542a79dbb57bd88cdc48099a0bca8d",
+            .hash = "ds_bskysim-0.0.1--ZLA_srGAABQ2Zc-HS7_TLYEXusC-Xa872Y6usRtQkTH",
         },
     },
     .paths = .{

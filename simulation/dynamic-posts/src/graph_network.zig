@@ -7,8 +7,11 @@ const Random = std.Random;
 
 const build = @import("build");
 
-const Heap = @import("heap").Heap;
+const ds = @import("ds");
 
+const Heap = ds.Heap;
+const SMAList = ds.SegmentedMultiArrayList;
+const PagedBitSet = ds.PagedBitSet;
 
 const dist = @import("distributions");
 const Categorical = dist.Categorical;
@@ -33,10 +36,11 @@ const NetworkJson = @import("json_loading.zig").NetworkJson;
 pub const StaticNetworkGraph = struct {
     users: MultiArrayList(User),   // Contains all users of the simulations
     followers: []Index,                     // Compressed Sparse Row, aka Static Adjacency Array
-    timelines: []TimelineHeap,              // Timelines for every user. Optimaly, we should use FixedBufferAllocator 
-    user_seen_post: DynamicBitSet,          // N-to-M user seen post matrix as a 2D bitset, amazingly fast
+    timelines: []TimelineHeap,              // Timelines for every user. Optimaly, we should use FixedBufferAllocator
+    posts: SMAList(Post, 16),                   // uwu
+    user_seen_post: PagedBitSet(16),        // N-to-M user seen post matrix as a 2D bitset, amazingly fast
 
-    pub fn create(gpa: Allocator, parsed_network: NetworkJson, max_post_per_user: u32) !StaticNetworkGraph {
+    pub fn create(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
         // Converteix les coses de la network json en Static Network Graph
         var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
 
@@ -85,15 +89,16 @@ pub const StaticNetworkGraph = struct {
         for (0..timelines.len) |i| {
             timelines[i] = .empty;
         }
-        
+       
+        const posts: SMAList(Post, 16) = .empty;
         // User Homogeneity, max_post is the same per every user
-        const total_bits = parsed_network.users.len * parsed_network.users.len * max_post_per_user;
-        const matrix = try DynamicBitSet.initEmpty(gpa, total_bits);
+        const matrix: PagedBitSet(16) = try .initPages(gpa, parsed_network.users.len, 16);
         
         return .{
             .users = users,
             .followers = followers,
             .timelines = timelines,
+            .posts = posts,
             .user_seen_post = matrix, 
         };
     }
@@ -102,13 +107,13 @@ pub const StaticNetworkGraph = struct {
     pub fn delete(self: *StaticNetworkGraph, gpa: Allocator) !void {
         try self.users.deinit(gpa);
         try gpa.free(self.followers);
-
+        
         for (self.timelines) |timeline| {
             timeline.deinit();
         }
         
-        try self.user_seen_post.deinit();
-
+        try self.user_seen_post.deinit(gpa);
+        try self.posts.deinit(gpa);
     }
     
     /// Old create, when posts where in the data generation.

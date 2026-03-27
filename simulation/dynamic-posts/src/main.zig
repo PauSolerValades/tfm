@@ -89,7 +89,7 @@ pub fn main(init: std.process.Init) !void {
     try stdout.flush();
 
     const startTimeWireData = Io.Timestamp.now(init.io, .real);
-    var graph: gn.StaticNetworkGraph = try .create(arena, loaded_data.value, config.max_post_per_user);
+    var graph: gn.StaticNetworkGraph = try .create(arena, loaded_data.value);
     const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
     
     try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{ elapsedTimeWireData.toMilliseconds()});

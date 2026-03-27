@@ -28,7 +28,7 @@ pub const SimConfig = struct {
     // user related actions
     user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
     user_inter_action: ContDist(Precision),                 // time between a user two actions
-    max_post_per_user: u32,
+    max_post_per_user: ?u32,
     // to init posts
     warmup_post_inter_creation: ContDist(f64),           // time of the post created in the simulation 
     post_inter_creation: ContDist(f64),

@@ -25,11 +25,11 @@ pub fn build(b: *std.Build) !void {
     });
     const eazy_args_mod = eazy_args_dep.module("eazy_args");
 
-    const heap_dep = b.dependency("heap", .{
+    const ds_dep = b.dependency("ds_bskysim", .{ // this is the repo name
         .target = target,
         .optimize = optimize,
     });
-    const heap_mod = heap_dep.module("heap");
+    const ds_mod = ds_dep.module("ds"); // this is the name on the build.zig on that repo
 
     const distributions_dep = b.dependency("distributions", .{
         .target = target,
@@ -39,7 +39,7 @@ pub fn build(b: *std.Build) !void {
 
     // link the dependencies in here
     exe.root_module.addImport("eazy_args", eazy_args_mod);
-    exe.root_module.addImport("heap", heap_mod);
+    exe.root_module.addImport("ds", ds_mod);
     exe.root_module.addImport("distributions", distributions_mod);
 
     b.installArtifact(exe); // creates the exe in the folder
@@ -76,7 +76,7 @@ pub fn build(b: *std.Build) !void {
 
         release_exe.root_module.addOptions("build", options);
         release_exe.root_module.addImport("eazy_args", eazy_args_mod);
-        release_exe.root_module.addImport("heap", heap_mod);
+        release_exe.root_module.addImport("ds", ds_mod);
         release_exe.root_module.addImport("distributions", distributions_mod);
 
         // This installs the artifact into a subfolder named after the target
