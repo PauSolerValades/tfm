@@ -33,14 +33,14 @@ const NetworkJson = @import("json_loading.zig").NetworkJson;
 /// 1. No new users will be added to the network.
 /// 2. No new posts will be added to the network.
 /// 3. No new follows between users will be added to the network
-pub const StaticNetworkGraph = struct {
+pub const Topology = struct {
     users: MultiArrayList(User),   // Contains all users of the simulations
     followers: []Index,                     // Compressed Sparse Row, aka Static Adjacency Array
     timelines: []TimelineHeap,              // Timelines for every user. Optimaly, we should use FixedBufferAllocator
     posts: SMAList(Post, 16),                   // uwu
     user_seen_post: PagedBitSet(16),        // N-to-M user seen post matrix as a 2D bitset, amazingly fast
 
-    pub fn create(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
+    pub fn create(gpa: Allocator, parsed_network: NetworkJson) !Topology {
         // Converteix les coses de la network json en Static Network Graph
         var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
 
@@ -104,7 +104,7 @@ pub const StaticNetworkGraph = struct {
     }
 
 
-    pub fn delete(self: *StaticNetworkGraph, gpa: Allocator) !void {
+    pub fn delete(self: *Topology, gpa: Allocator) !void {
         try self.users.deinit(gpa);
         try gpa.free(self.followers);
         
@@ -118,7 +118,7 @@ pub const StaticNetworkGraph = struct {
     
     /// Old create, when posts where in the data generation.
     /// This will probably be good to keep arround if i implement checkpoint
-    pub fn createGraphFromCheckpoint(gpa: Allocator, parsed_network: NetworkJson) !StaticNetworkGraph {
+    pub fn createGraphFromCheckpoint(gpa: Allocator, parsed_network: NetworkJson) !Topology {
         // Converteix les coses de la network json en Static Network Graph
         var users: MultiArrayList(User) = try .initCapacity(gpa, parsed_network.users.len);
         var posts: MultiArrayList(Post) = try .initCapacity(gpa, parsed_network.posts.len);

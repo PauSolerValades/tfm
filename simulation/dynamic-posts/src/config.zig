@@ -28,7 +28,6 @@ pub const SimConfig = struct {
     // user related actions
     user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
     user_inter_action: ContDist(Precision),                 // time between a user two actions
-    max_post_per_user: ?u32,
     // to init posts
     warmup_post_inter_creation: ContDist(f64),           // time of the post created in the simulation 
     post_inter_creation: ContDist(f64),
@@ -71,7 +70,6 @@ pub const SimConfig = struct {
         try writer.writeAll("--- User Actions Config ---\n");
         try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
-        try writer.print("{s: <24}:  {d}\n", .{ "Max Post per User", self.max_post_per_user});
         try writer.print("{s: <24}:  {f}\n", .{ "Time between post creation", self.post_inter_creation});
        
         

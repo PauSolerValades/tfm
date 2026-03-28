@@ -41,8 +41,8 @@
             .hash = "eazy_args-0.2.0-c374-NXlAQAGpNWGT_K3n9DCPbP_WY6fjhQXH8q23tDD",
         },
         .ds_bskysim = .{
-            .url = "git+https://github.com/PauSolerValades/ds-bskysim#018215608f542a79dbb57bd88cdc48099a0bca8d",
-            .hash = "ds_bskysim-0.0.1--ZLA_srGAABQ2Zc-HS7_TLYEXusC-Xa872Y6usRtQkTH",
+            .url = "git+https://github.com/PauSolerValades/ds-bskysim#b53425d6c29b8163d45165d5948b1b7f2476917d",
+            .hash = "ds_bskysim-0.0.1--ZLA_sXGAADawPHDzK4mfkb35PlXBXLsdPLXKwm4zBvT",
         },
     },
     .paths = .{

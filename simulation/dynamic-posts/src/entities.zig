@@ -19,7 +19,7 @@ pub const User = struct {
     follower_start: Index,
     follower_count: Index, 
     policy: Categorical(Precision, Action),
-    max_posts: u32,
+    max_posts: ?u32,
 
     is_online: bool = false,
     session_start_time: f64 = 0.0,
@@ -60,8 +60,8 @@ pub const Event = struct {
     time: f64,          // when will the action be due
     type: EventType,    // 
     user_id: Index,     // user id
+    session_gen: u64,   // in which session from the user_id does this event belong
     id: u64,            // which action is it
-    session_gen: u64,    // in which session from the user_id does this event belong
 };
 
 /// Heap function to compare between events. It access the .time field
@@ -90,9 +90,10 @@ pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) O
 pub const TraceAction = struct {
     time: f64,
     type: Action,
-    event_id: u64,
     user_id: Index,
     post_id: Index,
+    event_id: u64,
+    gen_id: u64,
 };
 
 pub const TraceCreate = struct {
@@ -100,11 +101,13 @@ pub const TraceCreate = struct {
     post_id: Index,
     user_id: Index,
     event_id: u64,
+    gen_id: u64,
 };
 
 pub const TraceSession = struct {
     time: f64,
     type: Session,
-    event_id: u64,
     user_id: Index,
+    event_id: u64,
+    gen_id: u64,
 };
