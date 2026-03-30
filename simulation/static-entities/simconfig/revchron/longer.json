@@ -1,30 +1,30 @@
 {
   "seed": null,
-  "horizon": 100000,
-  "duration": 90000,
+  "horizon": 10000,
+  "duration": 9000,
   "warmup_time": 1000,
   "user_policy": {
     "categorical": {
-      "weights": [0.85, 0.1, 0.05],
-      "data": ["ignore", "like", "repost"]
+      "weights": [0.50, 0.30, 0.20 ],
+      "data": [ "ignore", "like", "repost" ]
     }
   },
   "user_inter_action": {
     "exponential": {
-      "mean": 2 
+      "mean": 3 
     }
   },
   "warmup_post_inter_creation": {
     "uniform": {
       "min": 0,
-      "max": 1000, 
-      "interval": "oo"
+      "max": 1000,
+      "interval": "oc"
     }
   },
-  "max_post_per_user": 50,
+  "max_post_per_user": 10,
   "post_inter_creation": {
     "exponential": {
-      "mean": 200
+      "mean": 20
     }
   },
   "propagation_delay": {
@@ -45,12 +45,12 @@
   "offline_startup_ratio": 0.5,
   "session_duration": {
     "exponential": {
-      "mean": 900 
+      "mean": 60
     }
   },
   "user_inter_session": {
     "exponential": {
-      "mean": 3600
+      "mean": 120
     }
   },
   "trace_to_file": true

@@ -265,6 +265,10 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
     const t_end = @min(simconf.warmup_time + simconf.duration, simconf.horizon);
     while (t_clock <= t_end and queue.items.len > 0) : (processed_events += 1) {
         const current_event = queue.remove();
+        // if the event has become stale skip it        
+        if (current_event.session_gen != graph.users.items(.session_gen)[current_event.user_id]) {
+            continue;
+        }
         const current_uid: Index = current_event.user_id;
         std.debug.assert(current_event.time >= t_clock);
         t_clock = current_event.time;
@@ -272,10 +276,9 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
         switch (current_event.type) {
             .create => {
                
-                const is_event_stale: bool = current_event.session_gen != graph.users.items(.session_gen)[current_uid];
                 const max_posts_reached = graph.users.items(.num_posts)[current_uid] > simconf.max_post_per_user;
 
-                if (is_event_stale or max_posts_reached) continue;
+                if (max_posts_reached) continue;
                 const to_propagate_pid = metrics.post_count;
                 metrics.post_count += 1;
                 graph.users.items(.num_posts)[current_uid] += 1;
@@ -316,9 +319,7 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
 
             .session => |ssn| {
                 // this is to avoid the intrusive heap for the overlaping session
-                const is_event_stale: bool = current_event.session_gen != graph.users.items(.session_gen)[current_uid];
-                if (ssn == .end and (!graph.users.items(.is_online)[current_uid] or is_event_stale)) continue; 
-                
+                if (ssn == .end and !graph.users.items(.is_online)[current_uid]) continue; 
        
                 if (simconf.trace_to_file) {
                      const trace_event = TraceSession {
@@ -394,8 +395,8 @@ pub fn stagedSimulation(gpa: Allocator, rng: Random, simconf: SimConfig, graph: 
                 }
             },
             .action => |act| {
-                const is_event_stale: bool = current_event.session_gen != graph.users.items(.session_gen)[current_uid];
-                if (is_event_stale or !graph.users.items(.is_online)[current_uid]) continue;
+                // if user is not online (this should NEVER happen due to stalenes)
+                if (!graph.users.items(.is_online)[current_uid]) unreachable;
 
                 const has_post_arrived = if (graph.timelines[current_uid].peek()) |post| post.time <= t_clock else false;
 
