@@ -93,6 +93,8 @@ pub const SimConfig = struct {
 pub const SimResults = struct {
     duration: f64,
     processed_events: u64,
+    generated_events: u64,
+    dropped_events: u64,
 
     posts_at_warmup: f64,
 
@@ -123,6 +125,8 @@ pub const SimResults = struct {
         try writer.writeAll("+---------------------------------+\n");
         try writer.print("{s: <28}: {d:.4}\n", .{ "Simulation Duration (T)", self.duration });
         try writer.print("{s: <28}: {d}\n", .{ "Total Events Processed", self.processed_events });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Generated", self.generated_events});
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Dropped", self.dropped_events});
         try writer.writeAll("------ Warmup -----\n");
         try writer.print("{s: <28}: {d}\n", .{ "% of posts created", self.posts_at_warmup});
         try writer.writeAll("------- Global Post Metrics -------\n");

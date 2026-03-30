@@ -139,6 +139,7 @@ pub fn main(init: std.process.Init) !void {
     var session_buffer: [64 * 1024]u8 = undefined;
     var create_buffer: [64 * 1024]u8 = undefined;
 
+    // action_writer
     var action_file = if (config.trace_to_file) 
         try cwd.createFile(init.io, action_path, .{ .read = false }) else undefined;
     var action_file_writer = if (config.trace_to_file) 
@@ -149,6 +150,7 @@ pub fn main(init: std.process.Init) !void {
     const actions_writer: *Io.Writer = if (config.trace_to_file) 
         &action_file_writer.interface else &action_discard.writer;
 
+    // session_writer
     var session_file = if (config.trace_to_file) 
         try cwd.createFile(init.io, session_path, .{ .read = false }) else undefined;
     var session_file_writer = if (config.trace_to_file) 
@@ -159,6 +161,7 @@ pub fn main(init: std.process.Init) !void {
     const session_writer: *Io.Writer = if (config.trace_to_file) 
         &session_file_writer.interface else &session_discard.writer;
 
+    // create_writer
     var create_file = if (config.trace_to_file) 
         try cwd.createFile(init.io, create_path, .{ .read = false }) else undefined;
     var create_file_writer = if (config.trace_to_file) 
@@ -168,10 +171,9 @@ pub fn main(init: std.process.Init) !void {
         
     const create_writer: *Io.Writer = if (config.trace_to_file) &create_file_writer.interface else &create_discard.writer;    
 
+
     const startTime = Io.Timestamp.now(init.io, .real);
-
     const results = try simulation.simulate(arena, rng, config, &graph, actions_writer, session_writer, create_writer);
-
     const elapsedTime = startTime.untilNow(init.io, .real);   
 
     try stdout.print("{f}\n", .{results});

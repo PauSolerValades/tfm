@@ -55,20 +55,78 @@ pub const SimMetrics = struct {
 };
 
 
-fn CreateRandomAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, user_session_gen: u64, event_id: u64) !Event {
+fn eventAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, user_session_gen: u64, generated_events: u64) Event {
+   
     const action: Action = simconf.user_policy.sample(rng);
+    
     const event_time = simconf.user_inter_action.sample(rng);
     const interaction_delay = simconf.interaction_delay.sample(rng);
+
     const event = Event{ 
         .time = t_clock + event_time + interaction_delay, 
         .type = .{ .action = action }, 
         .user_id = user_id, 
-        .id = event_id, 
+        .id = generated_events, 
         .session_gen = user_session_gen,
     };
     
     return event;
 }
+
+fn eventSessionStart(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+    // when will the user go online 
+    const offline_duration = simconf.user_inter_session.sample(rng);
+    const event_start = Event{ 
+        .time = t_clock + offline_duration, 
+        .type = .{ .session = .start }, 
+        .user_id = user_id, 
+        .id = generated_events, 
+        .session_gen = session_id,
+    }; 
+    return event_start;
+}
+
+fn eventSessionEnd(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+    // when will the user go offline
+    const duration = simconf.session_duration.sample(rng);
+    const event_end = Event{ 
+        .time = t_clock + duration, 
+        .type = .{ .session = .end }, 
+        .user_id = user_id, 
+        .id = generated_events, 
+        .session_gen = session_id, 
+    }; 
+    return event_end;
+}
+
+fn eventCreateWarmup(rng: Random, simconf: SimConfig, user_id: Index, post_id: Index, generated_events: u64) Event {
+    const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
+
+    const creation_delay = simconf.creation_delay.sample(rng);
+    return Event{
+        .time = t_creation_decision + creation_delay,
+        .type = .{ .create = post_id },
+        .user_id = user_id,
+        .id = generated_events,
+        .session_gen = 0,
+    };
+}
+
+fn eventCreatePost(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, post_id: Index, session_id: u64, generated_events: u64) Event {
+    // Schedule the next post creation for this user
+    const creation_delay = simconf.creation_delay.sample(rng);
+    const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
+    
+    const new_post = Event{
+        .time = t_clock + duration_between_creation + creation_delay,
+        .type = .{ .create = post_id },
+        .user_id = user_id,
+        .id = generated_events,
+        .session_gen = session_id,
+    };
+    return new_post;
+}
+
 
 const Unif = dist.Uniform(Precision);
 
@@ -115,27 +173,18 @@ fn stageOne(
     // there will be at least one post per user, so we ensure this capacity at the beginng 
     try graph.user_seen_post.ensureItemCapacity(gpa, graph.users.len);
     for (0..graph.users.len) |uid| {
-        const creation_delay = simconf.creation_delay.sample(rng);
-        const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
-        const create_post = Event{
-            .time = t_creation_decision + creation_delay,
-            .type = .{ .create = metrics.post_count },
-            .user_id = @intCast(uid),
-            .id = metrics.generated_events,
-            .session_gen = 0,
-        };
-
-        graph.user_seen_post.set(uid, metrics.post_count);
         
+        graph.user_seen_post.set(uid, metrics.post_count);
+       
+        const create_post = eventCreateWarmup(rng, simconf, @intCast(uid), metrics.post_count, metrics.generated_events);
         try queue.add(gpa, create_post); 
         metrics.generated_events += 1;
         
         graph.users.items(.num_posts)[uid] += 1;
         try graph.posts.append(gpa, .{ .id = metrics.post_count, .author = @intCast(uid) });
         
-        metrics.processed_events += 1;
+        // metrics.processed_events += 1; // then scheduled, no event is processed
         metrics.post_count += 1;
-        
     }
 
     while (t_clock.* <= simconf.warmup_time and queue.items.len > 0) {
@@ -159,6 +208,7 @@ fn stageOne(
                 
                 try graph.posts.append(gpa, .{ .id = pid, .author = current_uid});
                 try graph.user_seen_post.ensureItemCapacity(gpa, pid);
+                graph.user_seen_post.set(current_uid, pid); // this user has seen this post
                 try propagatePost(gpa, rng, graph, simconf, t_clock.*, current_uid, pid);
                 
                 if (simconf.trace_to_file) { 
@@ -166,18 +216,8 @@ fn stageOne(
                     try writeToTrace(TraceCreate, create_trace, c);
                 } 
                 metrics.post_count += 1;
-                
-                // Schedule the next post creation for this user
-                const creation_delay = simconf.creation_delay.sample(rng);
-                const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
-                const new_post = Event{
-                    .time = t_clock.* + duration_between_creation + creation_delay,
-                    .type = .{ .create = metrics.post_count },
-                    .user_id = current_uid,
-                    .id = metrics.processed_events,
-                    .session_gen = graph.users.items(.session_gen)[current_uid],
-                };
-                
+               
+                const new_post = eventCreatePost(rng, simconf, t_clock.*, current_uid, metrics.post_count, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                 try queue.add(gpa, new_post);
                 metrics.generated_events += 1;
             },
@@ -195,47 +235,36 @@ pub fn initSessions(
     queue: *EventQueue,
     metrics: *SimMetrics, 
     t_clock: f64,
+    session_trace: *Io.Writer,
 ) !void {
     const unif: Unif = .init(0, 1, dist.Interval.cc);
 
     for (0..graph.users.len) |uid| {
         const r = unif.sample(rng); 
-        metrics.processed_events += 1;
         if (r < simconf.offline_startup_ratio) { // user starts offline
             graph.users.items(.is_online)[uid] = false;
-        
-            // when will the user go online 
-            const offline_duration = simconf.user_inter_session.sample(rng);
-            const event_start = Event{ 
-                .time = t_clock + offline_duration, 
-                .type = .{ .session = .start }, 
-                .user_id = @intCast(uid), 
-                .id = metrics.generated_events, 
-                .session_gen = 0 
-            }; 
-
+       
+            const event_start = eventSessionStart(rng, simconf, t_clock, @intCast(uid), 0, metrics.generated_events);
             try queue.add(gpa, event_start);
             metrics.generated_events += 1;
             
         } else { // users starts online
             graph.users.items(.is_online)[uid] = true;
-            graph.users.items(.session_start_time)[uid] = 0.0;
+            graph.users.items(.session_start_time)[uid] = t_clock;
             metrics.total_sessions += 1;
- 
-            // when will the user go offline
-            const duration = simconf.session_duration.sample(rng);
-            const event_end = Event{ 
-                .time = t_clock + duration, 
-                .type = .{ .session = .end }, 
-                .user_id = @intCast(uid), 
-                .id = metrics.generated_events, 
-                .session_gen = 0 
-            }; 
+
+            // as user starts online, we log this into the session trace, it's both a generation and a processed event
+            if (simconf.trace_to_file) { 
+                const s = TraceSession{ .time = t_clock, .type = .start, .user_id = @intCast(uid), .event_id = metrics.processed_events, .gen_id = metrics.generated_events};
+                try writeToTrace(TraceSession, session_trace, s);
+            }
+            metrics.*.generated_events += 1;
+            metrics.*.processed_events += 1;
             
+            const event_end = eventSessionEnd(rng, simconf, t_clock, @intCast(uid), 0, metrics.generated_events);
             try queue.add(gpa, event_end);
-            metrics.generated_events += 1;
+            metrics.*.generated_events += 1;
         }
-        //metrics.processed_events += 1; // not a single event has been processed
     }
 }
 
@@ -252,34 +281,19 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
     try stageOne(gpa, rng, simconf, graph, &queue, &metrics, &t_clock, create_trace);
     
     // decide which users start online or not
-    try initSessions(gpa, rng, simconf, graph, &queue, &metrics, t_clock);
+    try initSessions(gpa, rng, simconf, graph, &queue, &metrics, t_clock, session_trace);
 
     // set online users first action
     for (0..graph.users.len) |uid| {
         if (graph.users.items(.is_online)[uid]) {
-            const first_action = try CreateRandomAction(
-                rng,
-                simconf,
-                t_clock,
-                @intCast(uid), 
-                0, 
-                metrics.generated_events,
-            );
+            
+            const first_action = eventAction(rng, simconf, t_clock, @intCast(uid), 0, metrics.generated_events);
             try queue.add(gpa, first_action);
             metrics.generated_events += 1;
 
-            const creation_delay = simconf.creation_delay.sample(rng);
-            const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
-            const new_post = Event{
-                .time = t_clock + creation_delay + duration_between_creation,
-                .type = .{ .create = 0 },
-                .user_id = @intCast(uid),
-                .id = metrics.generated_events,
-                .session_gen = graph.users.items(.session_gen)[uid],
-            };
-            
-            try queue.add(gpa, new_post);
-            metrics.generated_events += 1;
+            // const new_post = eventCreatePost(rng, simconf, t_clock, @intCast(uid), 0, graph.users.items(.session_gen)[uid], metrics.generated_events);
+            // try queue.add(gpa, new_post);
+            // metrics.generated_events += 1;
         }
     }
 
@@ -310,7 +324,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                    
                 graph.users.items(.num_posts)[current_uid] += 1;
                 try graph.user_seen_post.ensureItemCapacity(gpa, new_post_id);
-                graph.user_seen_post.set(current_uid, new_post_id); // post is marked as created
+                graph.user_seen_post.set(current_uid, new_post_id); // post is marked as seen by its creator 
 
                 try propagatePost(gpa, rng, graph, simconf, t_clock, current_uid, new_post_id);
                 
@@ -321,17 +335,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                 metrics.post_count += 1;
                 metrics.processed_events += 1; 
                 
-                // schedule new creation
-                const creation_delay = simconf.creation_delay.sample(rng);
-                const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
-                const new_post = Event{
-                    .time = t_clock + creation_delay + duration_between_creation,
-                    .type = .{ .create = 0 }, // dummy posts for now, will get assigned on creation
-                    .user_id = current_uid,
-                    .session_gen = graph.users.items(.session_gen)[current_uid],
-                    .id = metrics.generated_events,
-                };
-                
+                const new_post =  eventCreatePost(rng, simconf, t_clock, current_uid, 0, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                 try queue.add(gpa, new_post);
                 metrics.generated_events += 1;
             },
@@ -357,39 +361,17 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                         graph.users.items(.session_start_time)[current_uid] = t_clock; // Record start time
                         metrics.total_sessions += 1;
 
-                        const max_duration = simconf.session_duration.sample(rng);
-                        const e = Event{ 
-                            .time = t_clock + max_duration, 
-                            .type = .{ .session = .end }, 
-                            .user_id = current_uid, 
-                            .id = metrics.generated_events,
-                            .session_gen = graph.users.items(.session_gen)[current_uid] // every event must be stamped 
-                        }; 
-                        try queue.add(gpa, e);
-                        metrics.generated_events += 1;
-
-                        const first_action = try CreateRandomAction(
-                            rng,
-                            simconf,
-                            t_clock,
-                            current_uid,
-                            graph.users.items(.session_gen)[current_uid], 
-                            metrics.generated_events, 
-                        );
+                        const first_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                         try queue.add(gpa, first_action);
                         metrics.generated_events += 1;
-                        
-                        const new_post_time = simconf.post_inter_creation.sample(rng);
-                        const new_post = Event{
-                            .time = t_clock + new_post_time,
-                            .type = .{ .create = 0 },
-                            .user_id = current_uid,
-                            .id = metrics.generated_events,
-                            .session_gen = graph.users.items(.session_gen)[current_uid],
-                        };
+                       
+                        const new_post = eventCreatePost(rng, simconf, t_clock, current_uid, 0, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                         try queue.add(gpa, new_post);
                         metrics.generated_events += 1;
 
+                        const end_session = eventSessionEnd(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                        try queue.add(gpa, end_session);
+                        metrics.generated_events += 1;
                     },
                     .end => {
                         // schedule users wake up time
@@ -398,15 +380,8 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                         metrics.total_online_time += (t_clock - graph.users.items(.session_start_time)[current_uid]);
                         metrics.max_duration_ends += 1;
 
-                        const offline_duration = simconf.user_inter_session.sample(rng);
-                        const e = Event{ 
-                            .time = t_clock + offline_duration, 
-                            .type = .{ .session = .start }, 
-                            .user_id = current_uid, 
-                            .id = metrics.processed_events + 1,
-                            .session_gen = graph.users.items(.session_gen)[current_uid],
-                        }; 
-                        try queue.add(gpa, e);
+                        const start_session = eventSessionStart(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                        try queue.add(gpa, start_session);
                         metrics.generated_events += 1;
 
                         // post non seen when session finished will get nuked
@@ -431,14 +406,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                     
                     // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
                     if (graph.user_seen_post.isSet(current_uid, post_id)) {
-                        const next_action = try CreateRandomAction(
-                            rng,
-                            simconf,
-                            t_clock,
-                            current_uid, 
-                            graph.users.items(.session_gen)[current_uid], 
-                            metrics.generated_events, 
-                        );
+                        const next_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                         try queue.add(gpa, next_action);
                         metrics.generated_events += 1;
                         continue; 
@@ -462,14 +430,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                     }
                     metrics.processed_events += 1;
 
-                    const event = try CreateRandomAction(
-                        rng,
-                        simconf,
-                        t_clock,
-                        current_uid, 
-                        graph.users.items(.session_gen)[current_uid], 
-                        metrics.processed_events
-                    );
+                    const event = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                     try queue.add(gpa, event);
                     metrics.generated_events += 1;
    
@@ -484,18 +445,12 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                         const s = TraceSession{ .time = t_clock, .type = .end, .user_id = current_uid, .event_id = metrics.processed_events, .gen_id = gen_id };
                         try writeToTrace(TraceSession, session_trace, s);
                     }
-                    
-                    const offline_duration = simconf.user_inter_session.sample(rng);
-                    const e = Event{ 
-                        .time = t_clock + offline_duration, 
-                        .type = .{ .session = .start }, 
-                        .user_id = current_uid, 
-                        .id = metrics.generated_events, 
-                        .session_gen = graph.users.items(.session_gen)[current_uid] 
-                    }; 
-                    try queue.add(gpa, e);
+                   
+                    const bored_start = eventSessionStart(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                    try queue.add(gpa, bored_start);
                     metrics.generated_events += 1;
                     // no need to nuke the timeline, it's already empty
+                    metrics.processed_events += 1;
                 }
             }
         }
@@ -528,6 +483,8 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
 
     const result = SimResults {
         .processed_events = metrics.processed_events,
+        .generated_events = metrics.generated_events,
+        .dropped_events = metrics.dropped_events,
         .duration = t_clock,
         .total_likes = metrics.likes,
         .total_reposts = metrics.reposts,

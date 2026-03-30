@@ -31,7 +31,7 @@ const ParsedUser = struct {
     id: Index,
     actions: []entities.Action,
     policy: []Precision,
-    max_posts: u32,
+    max_posts: ?u32,
 };
 
 const ParsedPost = struct {

@@ -72,7 +72,7 @@ pub const Topology = struct {
         for (parsed_network.followers) |edge| {
             const follower_id = edge.follower_id;
             const followed_id = edge.followed_id;
-            try tmp_followers[follower_id].append(gpa, followed_id);
+            try tmp_followers[followed_id].append(gpa, follower_id);
         }
 
         var acc: usize = 0;
