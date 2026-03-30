@@ -17,7 +17,7 @@ def generate_social_simulator_data(num_nodes=1000, m_edges=3, cc_prob=0.8):
             'id': i,
             'actions': ["ignore", "like", "repost" ],
             'policy': [0.5, 0.3, 0.2],
-            'max_posts': 10
+            'max_posts': None 
         })
 
     # --- 2. FOLLOWERS (Plain Python Graph Generator) ---
