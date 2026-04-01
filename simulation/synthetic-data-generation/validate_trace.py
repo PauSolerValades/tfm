@@ -296,6 +296,9 @@ def validate_topology(create_trace_path, action_trace_path, graph_export_path):
             if action_type == 'repost':
                 reposted_posts.add(post_id)
 
+            if action_type == 'quote':
+                reposted_posts.add(post_id)
+
     print("[✓] Topology Invariance Passed!")
     return True
 

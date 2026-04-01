@@ -2,7 +2,7 @@
 
 Actions:
 - validate Ratios per user and global.
-- Validate inter_action_duration -> okç
+- Validate inter_action_duration -> ok
 - Num of reposts/likes/nothing per post
 - Growth of reposts in a single post.
 - structural virality (merge it into a big project)
