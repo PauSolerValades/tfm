@@ -17,16 +17,19 @@ pub const Index: type = u32;
 pub const User = struct {
     id: Index,
     follower_start: Index,
-    follower_count: Index, 
+    follower_count: Index,
     policy: Categorical(Precision, Action),
     max_posts: ?u32,
 
+    // session stuff
     is_online: bool = false,
     session_start_time: f64 = 0.0,
     session_gen: u64 = 0,
     num_posts: u32 = 0,
-};
 
+    // notification stuff
+    pending: usize = 0,
+};
 
 /// Post of the simulation
 pub const Post = struct {
@@ -35,19 +38,32 @@ pub const Post = struct {
     parent_id: ?Index = null,
 };
 
-
 /// Actions performable over a post by a user in the simulation
 /// - ignore: nothing
 /// - like: adds one to interaction. No behaviour on the simu
 /// - repost: propagates to the followers of the user timelines
 /// - create: fetches a post from the simulation.
 pub const Action = enum { ignore, like, repost, quote };
+
 /// Session states
 /// - start: makes the user go back online, see posts and interact with them
 /// - end: makes the user go offline: should nuke it's timeline
 pub const Session = enum { start, end };
 
-// pub const Create = enum { new, quote };
+/// Create states
+pub const Create = union(enum) { new: void, quote: Index };
+
+/// Notification.
+/// - from_uid: user_id that acted over the original post, author of quote_pid
+/// - to_uid: user_id that receives the notification (author of quoted_pid)
+/// - quote_pid: id of the new post (the quote)
+/// - quoted_pid: which post generates the notification (the new post).
+pub const Notification = struct {
+    from_uid: Index,
+    to_uid: Index,
+    quote_pid: Index,
+    quoted_pid: Index,
+};
 
 /// For RCAPS and RCOPS. Having this is much better for code clarity
 /// and to not make weird stuff happen with the switch
@@ -55,20 +71,17 @@ pub const EventType = union(enum) {
     action: Action,
     session: Session,
     create: Create,
-};
-
-pub const Create = union(enum) {
-    new: void,
-    quote: Index
+    notification: Notification,
+    propagate: Index, // what post is getting propagated
 };
 
 /// Simulation Event for Reverse-Chronological Simulations
 pub const Event = struct {
-    time: f64,          // when will the action be due
-    type: EventType,    // 
-    user_id: Index,     // user id
-    session_gen: u64,   // in which session from the user_id does this event belong
-    id: u64,            // which action is it
+    time: f64, // when will the action be due
+    type: EventType, //
+    user_id: Index, // user id
+    session_gen: u64, // in which session from the user_id does this event belong
+    id: u64, // which action is it
 };
 
 /// Heap function to compare between events. It access the .time field
@@ -78,13 +91,12 @@ pub fn compareEvent(context: void, a: Event, b: Event) Order {
     return std.math.order(a.time, b.time);
 }
 
-/// Event to contain in the user own timeline. Contains the minimum information 
+/// Event to contain in the user own timeline. Contains the minimum information
 /// to get it transmitted everywhere
 pub const TimelineEvent = struct {
     time: f64,
     post_id: Index,
 };
-
 
 /// Heap comparison function for user timelines in Reverse-Chronological simulations
 pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) Order {
@@ -92,7 +104,7 @@ pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) O
     return std.math.order(b.time, a.time);
 }
 
-/// Auxiliar struct for trace writing. Contains all 
+/// Auxiliar struct for trace writing. Contains all
 /// the entities that need to be written on the trace
 pub const TraceAction = struct {
     time: f64,

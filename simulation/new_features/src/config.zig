@@ -22,27 +22,28 @@ pub const Precision = f32;
 pub const SimConfig = struct {
     seed: ?u64,
     // time marks
-    horizon: f64,                           // max duration of the simulation
-    duration: f64,                          // Duration of the simulation
-    warmup_time: f64,                       // time when warmup ends
+    horizon: f64, // max duration of the simulation
+    duration: f64, // Duration of the simulation
+    warmup_time: f64, // time when warmup ends
     // user related actions
-    user_policy: DiscDist(Precision, entities.Action),      // probability of available actions of the user
-    user_inter_action: ContDist(Precision),                 // time between a user two actions
+    user_policy: DiscDist(Precision, entities.Action), // probability of available actions of the user
+    user_inter_action: ContDist(Precision), // time between a user two actions
     // to init posts
-    warmup_post_inter_creation: ContDist(f64),           // time of the post created in the simulation 
+    warmup_post_inter_creation: ContDist(f64), // time of the post created in the simulation
     post_inter_creation: ContDist(f64),
     // delays on posts transmissions
-    propagation_delay: ContDist(f64),           // time between an action over a post and showing up followers timeline
-    interaction_delay: ContDist(f64),           // time between 
-    // session configuration                                        
-    offline_startup_ratio: Precision,             // which proportion of the users start on vacation
-    session_duration: ContDist(f64),           // duration of the current session
-    user_inter_session: ContDist(f64),         // duration of time between sessions
+    propagation_delay: ContDist(f64), // time between an action over a post and showing up followers timeline
+    interaction_delay: ContDist(f64), // time between
+    // session configuration
+    offline_startup_ratio: Precision, // which proportion of the users start on vacation
+    session_duration: ContDist(f64), // duration of the current session
+    user_inter_session: ContDist(f64), // duration of time between sessions
 
     creation_delay: ContDist(f64),
-    
+
+    attend_offline_notification: f64, // :while (k) {}
     // misc config
-    trace_to_file: bool,                        // true is trace is written to a file. False not
+    trace_to_file: bool, // true is trace is written to a file. False not
 
     pub fn isValid(self: @This()) bool {
         assert(self.horizon > 0);
@@ -50,7 +51,7 @@ pub const SimConfig = struct {
         assert(self.warmup_time > 0);
         assert(self.warmup_time + self.duration <= self.horizon);
 
-        // check that the Distribution picked to generate the posts is not able to 
+        // check that the Distribution picked to generate the posts is not able to
         // generate a post later than warmup_time
         return true;
     }
@@ -63,32 +64,30 @@ pub const SimConfig = struct {
         try writer.writeAll("+--------------------------+\n");
         try writer.print("| SIMULATION CONFIGURATION |\n", .{});
         try writer.writeAll("+--------------------------+\n");
-       
+
         try writer.writeAll("--- Warm up ---\n");
-        try writer.print("{s: <24}:  {f}\n", .{ "Time between post creation", self.warmup_post_inter_creation});
-        
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between post creation", self.warmup_post_inter_creation });
+
         try writer.writeAll("--- User Actions Config ---\n");
-        try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy});
-        try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action});
-        try writer.print("{s: <24}:  {f}\n", .{ "Time between post creation", self.post_inter_creation});
-       
-        
+        try writer.print("{s: <24}:  {f}\n", .{ "User policy", self.user_policy });
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between actions", self.user_inter_action });
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between post creation", self.post_inter_creation });
+
         try writer.writeAll("--- Post Propagation Delays ---\n");
-        try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay});
-        try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay});
-        try writer.print("{s: <24}:  {f}\n", .{ "Creation delay", self.creation_delay});
-        
+        try writer.print("{s: <24}:  {f}\n", .{ "Propagation delay", self.propagation_delay });
+        try writer.print("{s: <24}:  {f}\n", .{ "Interaction delay", self.interaction_delay });
+        try writer.print("{s: <24}:  {f}\n", .{ "Creation delay", self.creation_delay });
+
         try writer.writeAll("--- User Sessions (Vacations) ---\n");
-        try writer.print("{s: <24}:  {d}\n", .{ "% starting offline", self.offline_startup_ratio});
-        try writer.print("{s: <24}:  {f}\n", .{ "Online Duration", self.session_duration});
-        try writer.print("{s: <24}:  {f}\n", .{ "Time between Vacations", self.user_inter_session});
+        try writer.print("{s: <24}:  {d}\n", .{ "% starting offline", self.offline_startup_ratio });
+        try writer.print("{s: <24}:  {f}\n", .{ "Online Duration", self.session_duration });
+        try writer.print("{s: <24}:  {f}\n", .{ "Time between Vacations", self.user_inter_session });
         try writer.writeAll("---------------------------------\n");
-        try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Warm-up (Time)", self.warmup_time});
+        try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Warm-up (Time)", self.warmup_time });
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Duration", self.duration });
         try writer.print("{s: <24}:  {d: <23.2}\n", .{ "Horizon (Time)", self.horizon });
     }
 };
-
 
 pub const SimResults = struct {
     duration: f64,
@@ -98,37 +97,36 @@ pub const SimResults = struct {
 
     posts_at_warmup: f64,
 
-    total_impressions: u64,      // Every time a post is popped from a timeline
+    total_impressions: u64, // Every time a post is popped from a timeline
     total_likes: u64,
     total_reposts: u64,
-    total_interactions: u64,     // Sum of likes, replies, reposts, quotes
-    total_ignored: u64,          // Events where action was .nothing
+    total_interactions: u64, // Sum of likes, replies, reposts, quotes
+    total_ignored: u64, // Events where action was .nothing
 
     avg_impressions_per_user: f64,
-    engagement_rate: f64,        // interactions / impressions
-    avg_backlog: f64,            // How many unread posts remain in heaps at horizon
+    engagement_rate: f64, // interactions / impressions
+    avg_backlog: f64, // How many unread posts remain in heaps at horizon
     variance_backlog: f64,
     ci_backlog: f64,
-    
-    total_sessions: u64,         // number of sessions for all the users
-    avg_session_length: f64,     // mean length of sessionsa
-    avg_post_per_session: f64,  // mean posts per sessions
+
+    total_sessions: u64, // number of sessions for all the users
+    avg_session_length: f64, // mean length of sessionsa
+    avg_post_per_session: f64, // mean posts per sessions
     timeline_drain_ratio: f64,
-    
+
     pub fn format(
         self: @This(),
         writer: *std.Io.Writer,
     ) !void {
-        
         try writer.writeAll("\n+---------------------------------+\n");
         try writer.print("| SOCIAL NETWORK SIMULATION STATS |\n", .{});
         try writer.writeAll("+---------------------------------+\n");
         try writer.print("{s: <28}: {d:.4}\n", .{ "Simulation Duration (T)", self.duration });
         try writer.print("{s: <28}: {d}\n", .{ "Total Events Processed", self.processed_events });
-        try writer.print("{s: <28}: {d}\n", .{ "Total Events Generated", self.generated_events});
-        try writer.print("{s: <28}: {d}\n", .{ "Total Events Dropped", self.dropped_events});
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Generated", self.generated_events });
+        try writer.print("{s: <28}: {d}\n", .{ "Total Events Dropped", self.dropped_events });
         try writer.writeAll("------ Warmup -----\n");
-        try writer.print("{s: <28}: {d}\n", .{ "% of posts created", self.posts_at_warmup});
+        try writer.print("{s: <28}: {d}\n", .{ "% of posts created", self.posts_at_warmup });
         try writer.writeAll("------- Global Post Metrics -------\n");
         try writer.print("{s: <28}: {d}\n", .{ "Total Likes", self.total_likes });
         try writer.print("{s: <28}: {d}\n", .{ "Total Reposts", self.total_reposts });

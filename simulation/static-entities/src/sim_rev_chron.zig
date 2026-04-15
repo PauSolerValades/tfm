@@ -51,19 +51,76 @@ pub const SimMetrics = struct {
 };
 
 
-fn CreateRandomAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, user_session_gen: u64, event_id: u64) !Event {
+fn eventAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, user_session_gen: u64, generated_events: u64) Event {
+   
     const action: Action = simconf.user_policy.sample(rng);
+    
     const event_time = simconf.user_inter_action.sample(rng);
     const interaction_delay = simconf.interaction_delay.sample(rng);
+
     const event = Event{ 
         .time = t_clock + event_time + interaction_delay, 
         .type = .{ .action = action }, 
         .user_id = user_id, 
-        .id = event_id, 
+        .id = generated_events, 
         .session_gen = user_session_gen,
     };
     
     return event;
+}
+
+fn eventSessionStart(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+    // when will the user go online 
+    const offline_duration = simconf.user_inter_session.sample(rng);
+    const event_start = Event{ 
+        .time = t_clock + offline_duration, 
+        .type = .{ .session = .start }, 
+        .user_id = user_id, 
+        .id = generated_events, 
+        .session_gen = session_id,
+    }; 
+    return event_start;
+}
+
+fn eventSessionEnd(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+    // when will the user go offline
+    const duration = simconf.session_duration.sample(rng);
+    const event_end = Event{ 
+        .time = t_clock + duration, 
+        .type = .{ .session = .end }, 
+        .user_id = user_id, 
+        .id = generated_events, 
+        .session_gen = session_id, 
+    }; 
+    return event_end;
+}
+
+fn eventCreateWarmup(rng: Random, simconf: SimConfig, user_id: Index, post_id: Index, generated_events: u64) Event {
+    const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
+
+    const creation_delay = simconf.creation_delay.sample(rng);
+    return Event{
+        .time = t_creation_decision + creation_delay,
+        .type = .{ .create = post_id },
+        .user_id = user_id,
+        .id = generated_events,
+        .session_gen = 0,
+    };
+}
+
+fn eventCreatePost(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, post_id: Index, session_id: u64, generated_events: u64) Event {
+    // Schedule the next post creation for this user
+    const creation_delay = simconf.creation_delay.sample(rng);
+    const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
+    
+    const new_post = Event{
+        .time = t_clock + duration_between_creation + creation_delay,
+        .type = .{ .create = post_id },
+        .user_id = user_id,
+        .id = generated_events,
+        .session_gen = session_id,
+    };
+    return new_post;
 }
 
 const Unif = dist.Uniform(Precision);
@@ -109,43 +166,41 @@ fn stageOne(
     t_clock: *f64, 
 ) !void {
     
+    const total_posts = graph.users.len * simconf.max_post_per_user;
+    
     for (0..graph.users.len) |uid| {
-        const creation_delay = simconf.creation_delay.sample(rng);
-        const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
-        const create_post = Event{
-            .time = t_creation_decision + creation_delay,
-            .type = .{ .create = metrics.post_count },
-            .user_id = @intCast(uid),
-            .id = metrics.processed_events,
-            .session_gen = 0,
-        };
         
-        const total_posts = graph.users.len * simconf.max_post_per_user;
         const matrix_index = uid * total_posts + metrics.post_count;
         graph.user_seen_post.set(matrix_index);
-        
+       
+        const create_post = eventCreateWarmup(rng, simconf, @intCast(uid), metrics.post_count, metrics.generated_events);
         try queue.add(gpa, create_post); 
+        metrics.generated_events += 1;
         
         graph.users.items(.num_posts)[uid] += 1;
         
-        metrics.processed_events += 1;
         metrics.post_count += 1;
     }
 
     while (t_clock.* <= simconf.warmup_time and queue.items.len > 0) {
         const current_event = queue.remove();
-        
         t_clock.* = current_event.time;
 
         const current_uid = current_event.user_id;
+        const gen_id = current_event.id;
 
         switch (current_event.type) {
             .create => |pid| {
                 // Read from the dynamic user slice
-                if (graph.users.items(.num_posts)[current_uid] > simconf.max_post_per_user) {
+                const max_posts_reached: bool = if (simconf.max_post_per_user < graph.users.items(.num_posts)[current_id]);
+                    simconf.max_post_per_user <= graph.users.items(.num_posts)[current_uid]
+                else false;
+
+                if (max_posts_reached) {
+                    metrics.dropped_events += 1;
                     continue;
                 }
-                
+
                 try propagatePost(gpa, rng, graph, simconf, t_clock.*, current_uid, pid);
                 // metrics.post_count += 1;
                 

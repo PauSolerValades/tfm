@@ -52,5 +52,6 @@
       "mean": 120
     }
   },
+  "attend_offline_notification": 0.8,
   "trace_to_file": true
 }
