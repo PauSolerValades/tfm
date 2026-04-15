@@ -362,10 +362,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                         try graph.user_seen_post.ensureItemCapacity(gpa, new_post_id);
                         graph.user_seen_post.set(current_uid, new_post_id); // post is marked as seen by its creator
 
-                        // propagate both in a pack?
                         const propagate = eventPropagate(rng, simconf, t_clock, current_uid, new_post_id, metrics.generated_events);
-                        // const propagate = eventPropagate(gpa, rng, graph, simconf, t_clock, current_uid, parent_id);
-
                         try queue.add(gpa, propagate);
                         metrics.generated_events += 1;
 
@@ -467,18 +464,15 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                         .post_id = ntfc.quote_pid, // show the post
                     };
                     try graph.timelines[current_uid].add(gpa, quoted_post);
-
-                    // two cases:
-                    // 1. the post is quoting a user post => just show the quote.
-                    // 2. the post is quoting a non user post => show both, despite the quoted maybe been seen again
-
                 } else {
                     // chance if the user goes back online
                     if (simconf.attend_offline_notification < unif.sample(rng)) {
                         // append the notification into a buffer
                         const pending = graph.users.items(.pending)[current_uid];
-                        graph.notifications[current_uid][pending] = ntfc;
-                        graph.users.items(.pending)[current_uid] += 1;
+                        if (pending < 64) {
+                            graph.notifications[current_uid][pending] = ntfc;
+                            graph.users.items(.pending)[current_uid] += 1;
+                        }
                     } else {
                         // attend current notification (create the quoted_post and append it on the timeline)
                         const quoted_post = TimelineEvent{
@@ -486,7 +480,6 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                             .post_id = ntfc.quote_pid, // show the post quote
                         };
                         try graph.timelines[current_uid].add(gpa, quoted_post);
-                        //graph.users.items(.pending)[current_uid] -= 1;
 
                         // start a loop with events
                         const action = eventAction(rng, simconf, t_clock, current_uid, sessions_id[current_uid], metrics.generated_events);
@@ -498,40 +491,32 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
             .action => |act| {
                 const is_event_stale: bool = current_event.session_gen != graph.users.items(.session_gen)[current_uid];
                 const is_user_online: bool = graph.users.items(.is_online)[current_uid];
+
                 if (is_event_stale) {
                     metrics.dropped_events += 1;
                     continue;
                 }
-                const has_post_arrived = if (graph.timelines[current_uid].peek()) |post| post.time <= t_clock else false;
 
-                if (has_post_arrived) {
+                if (graph.timelines[current_uid].items.len > 0) {
                     const pending = graph.users.items(.pending)[current_uid];
 
-                    if (pending != 0) {
-                        const idx = pending - 1;
-                        // attend the notifications
-                        const quoted_post = TimelineEvent{
-                            .time = t_clock, // the post will appear in the timeline "now" to ensure is the first one the user checks
-                            .post_id = graph.notifications[current_uid][idx].quote_pid, // show the post quote
-                        };
-                        try graph.timelines[current_uid].add(gpa, quoted_post);
+                    const post_id: Index = if (pending > 0) blk: {
                         graph.users.items(.pending)[current_uid] -= 1;
+                        break :blk graph.notifications[current_uid][pending - 1].quote_pid;
+                    } else blk: {
+                        break :blk graph.timelines[current_uid].remove().post_id;
+                    };
+
+                    // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
+                    if (graph.user_seen_post.isSet(current_uid, post_id)) {
+                        std.debug.print("Is this correct?\n", .{});
+                        if (is_user_online or graph.users.items(.pending)[current_uid] > 0) {
+                            const next_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                            try queue.add(gpa, next_action);
+                            metrics.generated_events += 1;
+                        }
+                        continue;
                     }
-
-                    // now it's safe to pop it and use it
-                    const current_post = graph.timelines[current_uid].remove();
-                    const post_id: Index = current_post.post_id;
-
-                    // // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
-                    // if (graph.user_seen_post.isSet(current_uid, post_id)) {
-                    //     std.debug.print("Is this correct?\n", .{});
-                    //     if (is_user_online or graph.users.items(.pending)[current_uid] > 0) {
-                    //         const next_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
-                    //         try queue.add(gpa, next_action);
-                    //         metrics.generated_events += 1;
-                    //     }
-                    //     continue;
-                    // }
 
                     if (simconf.trace_to_file) {
                         const a = TraceAction{ .time = t_clock, .type = act, .user_id = current_uid, .post_id = post_id, .event_id = metrics.processed_events, .gen_id = gen_id };
