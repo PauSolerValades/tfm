@@ -1,3 +1,4 @@
+
 #let margins = (
   top: 3.5cm,
   bottom: 3cm,
@@ -6,11 +7,11 @@
 #let blue = rgb(43, 129, 173)
 #let grey = rgb(100, 100, 100)
 
-#set page(paper: "a4", margin: margins)
+#set page(paper: "a4", margin: margins, numbering: "1")
 
 #set text(size: 11pt, font: "New Computer Modern", lang: "en")
 
-#set par(spacing: 0.7em, leading: 0.7em, justify: true)
+#set par(spacing: 0.7em, leading: 0.7em, justify: true, first-line-indent: 1.5em,)
 
 #set heading(numbering: "1.")
 #show heading.where(level: 1): set text(
@@ -36,31 +37,49 @@
 
 #counter(page).update(1)
 
-= Abstract
-
+#set page(numbering: "i")
+#heading(outlined: false, numbering: none)[Abstract]
 #include "abstract.typ"
-
 
 #pagebreak()
 #outline()
 
+#set page(numbering: "1")
+#counter(page).update(1)
+
 #pagebreak()
 = Introduction
 
-#lorem(30)
+#include "introduction.typ"
 
-#lorem(10)
-- #lorem(30)
-- #lorem(5)
-- #lorem(50)
+#pagebreak()
+= Context
 
-== Sub Introduction
+#include "context.typ"
 
-#lorem(100)
+#pagebreak()
+= Model
+<sec-model>
+
+#include "model.typ"
+
+#pagebreak()
+= Methodology
+
+#include "methodology.typ"
+
+#pagebreak()
+= Design 
+<sec-design>
+
+#include "des.typ"
+
+#pagebreak()
+= Content approach: Embeddings
+
+#include "ml.typ"
 
 
-= Section
 
-#lorem(150)
 
-= Another Section
+
