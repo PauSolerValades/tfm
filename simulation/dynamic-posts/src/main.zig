@@ -249,6 +249,8 @@ pub fn main(init: std.process.Init) !void {
     try stdout.flush();
 }
 
+/// this probably could be much more prettier if I passed the Io.Writer/Io.Reader by parameter, and I
+/// could even reuse the buffers... but dunno, at least this is pretty efficient :D
 fn bytesToJsonl(io: Io, comptime T: type, read_file: []const u8, write_file: []const u8) !void {
     const n = @sizeOf(T);
 
@@ -280,4 +282,6 @@ fn bytesToJsonl(io: Io, comptime T: type, read_file: []const u8, write_file: []c
         },
         else => |e| return e, // don't continue; rather, bomb out
     }
+
+    try writer.flush();
 }
