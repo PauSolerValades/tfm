@@ -26,10 +26,6 @@ const TimelineEvent = simulation.TimelineEvent;
 
 const Arg = argz.Argument;
 const ParseErrors = argz.ParseErrors;
-const PostGeneration = enum {
-    all,
-    one,
-};
 
 const def = .{
     .name = "v3",
@@ -49,8 +45,8 @@ pub fn main(init: std.process.Init) !void {
     var stderr_writer = Io.File.stderr().writer(init.io, &bufferr);
     const stderr = &stderr_writer.interface;
 
-    // const gpa = init.gpa;
     const arena = init.arena.allocator();
+    const gpa = init.gpa;
     const cwd = Io.Dir.cwd();
 
     var iter = init.minimal.args.iterate();
@@ -72,22 +68,30 @@ pub fn main(init: std.process.Init) !void {
     const config = parsed_config.value;
     _ = config.isValid(); // not used for now
 
+    var arena_json: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    const data_alloc = arena_json.allocator();
+
     const startTimeLoadData = Io.Timestamp.now(init.io, .real);
     // const loaded_data = try loader.loadJson(arena, init.io, args.data, loader.NetworkJson);
-    const loaded_data = loader.loadJson(arena, init.io, args.data, loader.NetworkJson) catch |err| {
+    const loaded_data = loader.loadJson(data_alloc, init.io, args.data, loader.NetworkJson) catch |err| {
         try stderr.print("Error parsing data JSON: {any}", .{err});
         try stderr.flush();
         std.process.exit(0);
     };
-    defer loaded_data.deinit(); // this will free the json object and data
     const elapsedTimeLoadData = startTimeLoadData.untilNow(init.io, .real);
 
     try stdout.print("Time Elapsed Loading Data: {d} ms\n", .{elapsedTimeLoadData.toMilliseconds()});
     try stdout.flush();
 
     const startTimeWireData = Io.Timestamp.now(init.io, .real);
-    var graph: gn.Topology = try .create(arena, loaded_data.value);
+    var graph: gn.Topology = try .create(gpa, arena, loaded_data.value);
+    defer graph.delete(gpa, arena);
     const elapsedTimeWireData = startTimeWireData.untilNow(init.io, .real);
+
+    // the lifetime of this data ends here
+    var loaded_data_mut = loaded_data;
+    loaded_data_mut.deinit();
+    arena_json.deinit();
 
     try stdout.print("Time Elapsed Wiring Data: {d} ms\n", .{elapsedTimeWireData.toMilliseconds()});
     try stdout.flush();
@@ -223,6 +227,7 @@ pub fn main(init: std.process.Init) !void {
 
     const startTime = Io.Timestamp.now(init.io, .real);
     const results = try simulation.simulate(
+        gpa,
         arena,
         rng,
         config,

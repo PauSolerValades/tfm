@@ -19,8 +19,8 @@
   #v(2.8cm)
 
   #text(fill: blue, size: 25pt, weight: "bold")[
-    Design and Implementation of a Bluesky Simulator \ for Recommender Analysis
-  ]
+  Information Diffusion on Bluesky: \ Discrete Event Simulation of a  Queue-Based, Activity Driven \ Continuous-Time Cascade Model 
+ ]
   
   #v(0.3em)
   

@@ -1,0 +1,11 @@
+# Data and Traces
+data/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Data Compiler (Python)
+data-compiler/.venv/
+data-compiler/__pycache__/
+data-compiler/.pytest_cache/

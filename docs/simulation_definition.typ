@@ -674,7 +674,7 @@ TL;DR: it all cames down to this what is actually `action_inter_duration`
 #text(blue)[This section of the document is an AI dump of ideas]
 
 // This part of the document is an AI dump of ideas, 
-A fundamental limitation of utilizing public social media firehose data (such as the ATProto Jetstream) is the "dark matter" problem: the stream strictly broadcasts write-events (e.g., posts, likes, reposts) and completely obfuscates passive read-events (e.g., timeline scrolling, profile viewing). Consequently, explicit session boundaries cannot be directly observed. To calibrate the simulation's $time_"session_duration"$ and $time_"offline"$ parameters, we outline three viable methodologies for session estimation:
+A fundamental limitation of utilizing public social media firehose data (such as the ATProto Jetstream) is the "dark matter" problem: the stream strictly broadcasts write-events (e.g., posts, likes, reposts) and completely obfuscates passive read-events (e.g., timeline scrolling, profile viewing). Consequently, explicit session boundaries cannot be directly observed. To calibrate the simulation's $t_"session_duration"$ and $t_"offline"$ parameters, we outline three viable methodologies for session estimation:
 
 + *Heuristic Thresholding ($tau$) with Boundary Padding ($delta$):* This approach infers sessions from the densest possible set of write-events. Two consecutive actions by user $u$ at times $t_i$ and $t_{i+1}$ are grouped into the same session if the inter-action duration $Delta t <= tau$ (where $tau$ is a predefined inactivity threshold, typically 10-15 minutes). To account for the unobserved passive scrolling before the first action and after the last action, a padding variable $delta$ is introduced. The estimated session boundaries become $t_"start" = t_1 - delta_"start"$ and $t_"end" = t_n + delta_"end"$, yielding a wider, more realistic session distribution.
 
@@ -717,26 +717,88 @@ To account for this, we assign 0 as id when scheduled in the queue, but then it'
 
 #pagebreak()
 = Version 3: Unlimited Amount of Posts
+// this part of the text has been AI generated
+Despite being able to make `max_post_per_user` into a Poisson random variable to make the number of posts change according to the simulation, it is believed that users should not have a hard cap on posts by design. Therefore, v3 takes v2 and removes the post stability axiom. Users will not be created during simulation duration nor new follows added, but posts won't have an upper limit. We'll rename axiom 3 to Static Topology.
 
-Despite being able to make `max_post_per_user` into a Possion random variable to make the number of posts change according to the simulation, it is beleived that users should not have a hard cap on posts by design. Therefore, v3 takes v2 and removes the post stability axiom. Users will not be created during simulation duration nor new follows added, but posts won't have an upper limit. We'll rename axiom 3 to Static Topology.
+This will also allow us to add a _reply_ and _quote_ action, due to posts not being limited on creation, but those new two mechanics will be introduced on v4.
 
-This will also allow us to add a _reply_ and _quote_ action, due to posts not being limited on creation!
+This will just focus on the implementations strategy and its data structures, as the simulation behaves exactly the same as v2.
+
+== Hold the posts in memory: segmented list
+
+To store the posts indefinitely without incurring massive performance penalties, we implemented a `SegmentedMultiArrayList`. This structure manages memory conceptually using a "bookshelf" containing multiple "shelves". 
+
+Each shelf is a standard `MultiArrayList` initialized with a fixed capacity, defined strictly as a power of two $N = 2^n$ (or, if you speak computer `1 << n`). When a shelf reaches its capacity during post creation, the structure dynamically allocates a brand-new shelf and appends it to the bookshelf. This completely avoids the costly overhead of reallocating and copying existing items to a larger contiguous memory block as the list grows. 
+
+Item lookups remain virtually instantaneous. By utilizing the power-of-two constraint, finding a post relies purely on fast bitwise operations: a bitwise shift (`i >> n`) determines the correct shelf, and a bitwise AND (`i & (shelf_count - 1)`) grabs the exact post within that shelf.
+
+== Who has seen what: Paginated Bitset
+
+To track which users have seen which posts over an uncapped duration, we transitioned to a custom `PagedBitSet`. This structure models a 2D matrix where rows represent users and columns represent posts. 
+
+Because the number of users is a static topology but posts grow indefinitely, the matrix allocates memory in discrete "pages" comprising an `ArrayList` of `DynamicBitSet`s. Each page covers all users vertically but limits horizontal growth to a fixed chunk of posts (`1 << n` columns).
+
+When the simulation generates a new post ID that exceeds current capacity bounds, the `ensureItemCapacity` function provisions and appends new pages as needed. Checking or setting a boolean impression uses the same fast bitwise math as the segmented list to locate the correct page and the isolated bit offset.
+
+== Comparison with Previous Implementation
+
+Previously, tracking impressions relied on a single contiguous `DynamicBitset` statically allocated upfront using a strict `user * user * max_post` calculation, and the simulation lacked a dedicated data structure to hold posts.
+
+- *Memory Efficiency:* The v2 approach forced a massive upfront memory block based on a theoretical maximum limit, severely wasting space if users did not reach their hard cap. The `PagedBitSet` entirely resolves this by lazily allocating memory (pages) strictly when the simulation generates enough posts to warrant the space.
+- *Infinite Scaling:* By removing the hard cap, we no longer artificially bottleneck the simulation logic. The new structures scale naturally on-demand, allowing us to simulate highly active users without triggering out-of-bounds crashes.
+- *Data Retention:* Lacking a dedicated structure for posts meant post-specific metadata was impossible to retain. The `SegmentedMultiArrayList` persists post data logically---such as unique IDs and author indices---continuously through the run.
+
+== Structuring Post Contents: The Advantage of SoA for Embeddings
+
+As we expand the simulation (for instance, in v4 with replies and quotes), posts will likely require heavier metadata, such as dense float arrays representing content embeddings for NLP/algorithm checks. The `SegmentedMultiArrayList` is uniquely advantageous for this because its underlying "shelves" utilize Zig's `MultiArrayList`.
+
+A `MultiArrayList` manages memory using a Structure-of-Arrays (SoA) layout rather than an Array-of-Structs (AoS). If we embed heavy data like `[1536]f32` inside the `Post` struct, a traditional AoS list would interleave those massive arrays directly alongside lightweight integers like `author` and `id`. This destroys CPU cache locality when algorithms iterate strictly over basic timeline data. 
+
+Because `SegmentedMultiArrayList` inherits the SoA paradigm, the system stores all authors together, all IDs together, and all embeddings together in separate contiguous slices per shelf. We can query just the author of a post using the `accessField` function without dragging 6 kilobytes of irrelevant embedding data into the CPU cache. The embeddings remain neatly packed and isolated, ready to be retrieved entirely on-demand during active similarity calculations.
 
 
 #pagebreak()
+= Version 4: Quotes and Notifications 
 
-= Version 3: Notifications
+Version 4 implements the last two mechanics of the simulation, Notifications and Quoting, to take advantage of that.
 
+A user can decide to quote a post, which creates another post with the contents of the original post inside of it. When a user does one, they both get shown to followers of the user that quoted. This mechanic introduces non linearity of post spreading, and be refloated without need of contiguous reposts.
+
+Notifications are a way to see and react to posts while the user is offline, and to break linearity of the simulation if the user is online and receive the notification.
+
+== Quoting
+
+Let's define the quoting rules:
+- A quote instantiates a brand-new post containing a direct reference (`parent_id`) to the original post being discussed.
+- The new quote post is immediately marked as seen by its creator and propagated to all of their followers.
+- Unlike the standard warm-up and continuous creation loops, generating a quote does not automatically schedule another future post creation, as it is strictly a reactive event.
+- Timeline injection: When a follower encounters a quote post in their timeline, the system automatically retrieves the original parent post and injects it into their timeline at the exact same timestamp, ensuring they have the full context before reacting.
+- Every quote action actively generates a targeted Notification event aimed at the author of the original post, dispatched with a standard propagation delay.
+
+== Notifications
+
+Notifications act as an interruption and re-engagement mechanic, primarily driven by quotes:
+- *Online Delivery:* If the target user is currently online when the notification arrives, the system bypasses standard propagation and immediately drops the new quote post directly into their active timeline to be processed next.
+- *Offline Wakes:* If the target user is offline, the system rolls against an `attend_offline_notification` probability. If successful, the user "wakes up" out of schedule; the quote is injected into their timeline, and a new action event is immediately queued to simulate them logging on to check the interaction.
+- *Pending Buffer:* If the offline user does not wake up, the notification is caught and stored in a personal pending buffer, which holds up to a maximum of 64 unprocessed interactions. 
+- *Priority Processing:* When a user resumes activity (either by waking up naturally or being pulled online), the simulation forces them to clear their pending notifications first. The system will pop items from the pending buffer and present them to the user before it resumes pulling standard posts from their traditional timeline backlog.
 
 6. Notifications Mechanism: if $(u, j, "quote", t), (i,j, "quotes", t)$, user $v$ such as $i in cal(P) (u,t)$ can come back from vacation early. When a reply to a post is made, 
 
-== Known Calibration Problems:
+
+== Improvements to the notification system
+
+To make it as a discrete event simulation, we can add two mechanics: stamina and staleness
+- If a user have more than n notifications (possion distribution for example), let's ignore them all.
+- The users will attend m notifications (Geometrics) before getting bored and stopping. Remaining notifications will get discard.
+
+This should be implemented as `max_post_user`, which could be different according to the user, as the user homogeneity axiom will be taken down eventually.
+
+
+= Known Calibration Problems:
 + How do we obtain user sessions lenght?
 + How do we identify sessions started by a notification and sessions started by scheduling? are those independent events? (yes) but should a session started by a notification delete the scheduled session on start?
 + Action and creation variables are mesuared `_within_session` or they are independent from where the session does start/end?
-
-Problem with data :(
-
 
 
 #pagebreak()

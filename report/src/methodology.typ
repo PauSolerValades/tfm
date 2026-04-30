@@ -1,4 +1,34 @@
+#import "utils.typ": todo, comment
+
 This section covers ...
+
+== Models
+
+Why did we model the information diffusion as the Queue-Based, Activty Driven Continnuous-Time Cascade Model
+
+[TODO: el seguent paragraf no té cita perque estic introduint el que s'ha programat a la simulació.]
+
+This "one-shot" evaluation directly mimics the behavior of a user scrolling through a timeline. A user sees a post once, decides instantaneously to retweet it or ignore it, and then scrolls past it forever.
+
+An underlying assumption of the standard IC model is the discrete generations, assuming all nodes evaluate information instantly. In a real OSN, the network topology dictates the potential highways for information, but time dictates the traffic. To recreate observed structural virality accurately, the IC model must be extended with temporal constraints. Introducing temporal delays, session durations (when users log off), and interaction delays ensures that if a user receives a retweet but logs off before scrolling far enough to see it, that branch of the cascade dies. Incorporating these realistic temporal mechanics is needed for accurate simulations of platform-specific transmission (see [sec-results o sec-design]).
+
+== Activity-Driven Network Dynamics
+
+Standard static network models assume that nodes and edges are perpetually available for information transmission. However, empirical studies of social and technological systems reveal that human interactions are fundamentally bursty and temporally disconnected (Accessed: 2026-04-29). To capture this reality, the Activity-Driven modeling framework describes a time-varying network where the topological evolution is strictly governed by the intrinsic behavioral patterns of individual nodes (Accessed: 2026-04-29).
+
+In this paradigm, each user is characterized by an "activity" rate, defined as their propensity to engage with the network and form connections or interactions at a given time (Accessed: 2026-04-29). Consequently, nodes alternate between discrete online sessions and offline "vacation" periods. The continuous-time duration of these sessions, as well as the inter-session intervals, are sampled from distinct probability distributions, generating a heterogeneous temporal fabric where users are only susceptible to receiving or spreading information during active windows (Accessed: 2026-04-29). 
+
+Furthermore, the integration of "attractiveness"—the inherent propensity of a node to receive connections or attention—creates significant asymmetries in the spreading process. Heterogeneous distributions of attractiveness dynamically alter the contagion thresholds; highly attractive nodes may act as temporal hubs, deeply influencing the macroscopic spread of the cascade despite the network's transient connectivity (Accessed: 2026-04-29).
+
+== Queue-Based Processing and Divided Attention
+
+While the Activity-Driven framework dictates when users are present, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself (Accessed: 2026-04-29). Information does not instantly infect an active neighbor; instead, individual responses to exposure are mediated by visibility and divided attention (Accessed: 2026-04-29).
+
+To mathematically capture this cognitive bottleneck, information diffusion is modeled as a queueing process. When an active node transmits a piece of information, continuous-time delays—such as system propagation delays—postpone its arrival. Upon arrival, the information is deposited into the receiving user's timeline, which functions mathematically as a chronologically ordered priority queue (Accessed: 2026-04-29). 
+
+When a user initiates an online session, they do not evaluate all incoming connections simultaneously. Instead, they sequentially process the events pending in their timeline queue, governed by an inter-action time distribution that dictates the pace of their attention (Accessed: 2026-04-29). For each popped event, the user executes a discrete decision sampled from a categorical policy distribution—such as choosing to ignore, endorse (like), or transmit (repost) the content (Accessed: 2026-04-29).
+
+Crucially, the position of the exposing message within this queue strongly affects the likelihood of social contagion (Accessed: 2026-04-29). If a post is buried deep in the backlog or if the user's session ends before the queue is fully drained, the transmission opportunity is lost entirely. By coupling Activity-Driven session dynamics with Queue-Based timelines, the model naturally produces the long-tailed, asynchronous cascade patterns observed in real-world social media environments (Accessed: 2026-04-29).
 
 == Discrete Event Simulation
 
@@ -18,15 +48,6 @@ The first step in implementation is choosing the appropriate tools for the job. 
 
 Zig is a general-purpose programming language and toolchain designed for maintaining robust, optimal, and reusable software. By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (see [TODO: @ sec-des-hpc]), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
 
-
-
-== Technology Approach
-
-Discrete event simulations ---in contrast with Agent Based Modelling--- guarantee their results with two underlying assumptions: the simulation can run with enough entities to have an extrapolable result and the simulation will need to be ran a sufficient amount of times for the results to be statistically significant. This facts highight the need for having to be careful regarding implementation details, as a very suboptimal implementation might contradict both underliying assumptions to guarantee a successful process.
-
-The first step then is choosing the appropiate tools for the job. As we need scalability and performance, interpeted lanugages as R and Python are immedialtey discarded. Even with powerful machines, the implementations will not be nor performant nor scalable. Following the same train of tought, manual memory management is required to optimize performance and take advantage of caching, which discards garbage collected languages as Java or Go. Then, the requirements aim for the use of a language with manual memory management, so the election for Zig was clear.
-
-Zig [TODO: citar zig] is a is a general-purpose programming language and toolchain for maintaining robust, optimal and reusable software. Provides C like performance with modern quality-of-life improvements as well as much more guard ralining against common and painful C errors, such as segmentation faults and null pointer derreferences by design. Zig provides, given enought knowledge about optimization techinques, scalable implementations and the maximum performance that the computer can provide.
 
 == Random Number Generation
 
@@ -63,10 +84,9 @@ To sample from this distribution, we employ a standard inverse transform method:
  until a value satisfying $u <= text("acc")[i]$ is found, at which point the category at index $i$ is
  returned.
 
-While theoretically faster alternatives like the Alias Method [TODO: Cite alias method] exist --—capable of sampling in $O(1)$ time after an $O(k)$ setup—-- they introduce additional memory overhead and initialization complexity. For the context of this simulation, where $k$ is typically very small (e.g., modeling a handful of user action types), the performance difference is strictly negligible. Thus, we have opted for the linear search approach due to its simplicity and cache locality.
+While theoretically faster alternatives like the Alias Method #todo[Cite alias method] exist --—capable of sampling in $O(1)$ time after a linear $O(k)$ setup—-- they introduce additional memory overhead and initialization complexity. For the context of this simulation, where $k$ is typically very small (e.g., modeling a handful of user action types), the performance difference is strictly negligible. Thus, we have opted for the linear search approach due to its simplicity and cache locality.
 
-However, to optimize the performance of the linear search, a critical convention is enforced when
- constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
+However, to optimize the performance of the linear search, the following convention has been maintained when constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
 
 // === Erlang Distribution
 //

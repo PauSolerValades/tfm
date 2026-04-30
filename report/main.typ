@@ -59,7 +59,7 @@
 #include "src/context.typ"
 
 #pagebreak()
-= Model
+= Problem Formulation 
 <sec-model>
 
 #include "src/model.typ"
@@ -70,19 +70,35 @@
 #include "src/methodology.typ"
 
 #pagebreak()
-= Design 
+= Simulation Design 
 <sec-design>
 
 #include "src/des.typ"
 
 #pagebreak()
-= Content approach: Embeddings
+= Data Analysis and Calibration
 
-#include "src/ml.typ"
+#include "src/calibration.typ"
+
+
+#pagebreak()
+= Results
+
+// #include "src/results.typ"
+
+#pagebreak()
+= Conclusions
+
+// #include "src/conclusions.typ"
+
+#pagebreak()
+= Future Work
+
+// #include "src/ml.typ"
 
 
 #bibliography(
-  ("/bibliography/context.yml"),
+  ("refs/context.yml"),
   title: "References",
 )
 

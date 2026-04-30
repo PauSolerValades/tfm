@@ -7,6 +7,8 @@ pub fn build(b: *std.Build) !void {
     
     const options = b.addOptions();
     options.addOption([]const u8, "build", version);
+    const profile = b.option(bool, "profile", "Profile heap operations") orelse false;
+    options.addOption(bool, "profile", profile);
 
     const exe = b.addExecutable(.{
         .name = b.fmt("bskysim-{s}", .{version}),

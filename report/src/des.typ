@@ -1,4 +1,5 @@
 #import "@preview/lovelace:0.3.0": *
+#import "utils.typ": todo, comment
 
 This section covers the design of the simulation program and implementation.
 
@@ -30,7 +31,7 @@ $ (u, i, a_1, t_1) in E quad "and" quad (u, i, a_2, t_2) in E arrow.r.double a_1
 
 == Mechanics
 
-This section stablishes which main components are in play.
+This section establishes which main components are in play.
 
 === User Decision Policy
 
@@ -57,11 +58,29 @@ To realistically model information propagation without dragging down computation
 - *Avoidance of Continuous Time Management*: Instead of "ticking" the simulation or actively polling for state changes, delays are mathematically added to the global clock $t_c$ exactly when the event is formulated. The resultant absolute timestamps are pushed straight into the global Priority Queue, side-stepping the need to manually track "time left until execution."
 
 == Data Structures
+<sec-design-datastructures>
 
 Essentially, as the axiom of stability remains unchanged, the graph topology structures remain static. 
 
+*Calendar Queue*
+The main queue of the simulation is implemented with a Calendar Queue. #text(blue)[Todo: això s'ha d'explicar bé]
+
+
 *User Timeline (Max Heap)*
 To satisfy the reverse-chronological consumption constraint, the timeline associated to every user is modeled as a Max Heap. This ensures that the element with the largest timestamp is always returned first. This structure must be carefully managed to prevent unbound memory growth, which is why timelines are explicitly cleared when a user logs off.
+
+*MultiArrayList*
+What is exactly this as a data structure and how does it implement the concept on Data Oriented Design basics (see @sec-desgin-dodbasics)
+
+
+*Compressed Sparse Row (CSP)*
+The followers of the graph are represented as a CSR.
+
+*BitSet*
+TO be removed with the modelization changes
+
+*Paged/Segmented Paradigmns*
+SegmentedList, Segmented MultiArrayList and 
 
 == Pseudocode
 
@@ -170,13 +189,88 @@ The simulation relies on four main routines to govern the discrete event generat
 This section addresses steps taken in the design to ensure optimal performance and scalability. That is, mention that scalability is important and must be ensured at all costs. Connect with the methodology sections.
 
 === Data Oriented Design Basics
+<sec-desgin-dodbasics>
 
 This implementation strictly adheres to Data-Oriented Design (DOD) principles to maximize throughput and harness modern CPU architecture.
 - *Structure of Arrays (SoA)*: Instead of declaring an Array of Structs (AoS) where user properties are bundled together, Zig's `MultiArrayList` separates fields into disjoint arrays. This means boolean flags like `.is_online` are packed contiguously in memory independently of `id`s.
 - *Cache Line Locality*: When the simulation iterates over millions of users to check their online status, the CPU fetches entire cache lines (typically 64 bytes). Because `.is_online` flags are tightly packed natively in the SoA, a single memory fetch loads data for 64 users simultaneously, drastically minimizing cache misses.
 - *Binary Shifting and Masking*: CPU architectures evaluate bitwise operations in single clock cycles. Advanced structures in the simulation (like the segmented lists and paginated bitsets) strictly enforce power-of-two capacities, allowing the codebase to calculate boundaries using highly optimized bitwise arithmetic (`>>` and `&`) rather than costly mathematical modulo or division instructions.
+- Memory allocation strategies.
 
-=== Dynamic Dispatch of Distributions via JSON
+=== Future Event Set
+#todo[Revisar que això no peti per tot arreu]
+
+The main bottleneck of all DES is the Future (or pending) event set, which tracks the events the simulation has already scheduled to happen, which implies the need for them to be stored somewhere and be easitly retrieved.
+
+The naive (excluding the sorting the list every time approach) implementation of the Future Event Set is the use of a Heap (see @sec-design-datastructures) as well as the Timeline object is actually implemented as.
+
+The binary tree based heap implementation has both a $O(log n)$ cost when inserting or retrieving the least element given a single key, as it sifts up and down all the elements to keep a very fast access into the smallest key element [TODO: cita del llibre del MIT sobre algorismes]. Unfortunately, as the simulation needs to scale user wise, this structure is going to became a bottleneck eventually.
+
+From the simulation design can be observed that a user has at most three events in the queue: an action, a creation and the end of the session. Let's assume, following the worse case scenario typical of the complexity analysis, that every user has three elements. Then, given $N$ different users, we'll have $3N$ elements in the simulation. If $N=10^7$ as the objective is, it will cost to access the heap $log_2(3·10^7) approx 25$, which is theoretically a very good computational cost. The problem is, in this case, the hardware (see [sec-evaluation-heapvscalendar])
+
+The heap implementation used (see [@ solervalades-dsrepo]) is a flattened binary tree, which is the standard heap implementation, which is awfull for cache locality: to load one leaf of the tree, as the data is not continguosly stored, to also load the potential next leafs to keep searching, resulting in cache misses and the CPU stalling and waiting for the data.
+
+Additionally, the simulation design requires from two to four operations to the heap, which make the actual cost twice or four times the logarithm we expected, and as it's impossible to batch add elements into a heap, there is no space for a reduction there.
+
+The solution to the main bottleneck of the simulation is to use an Calendar Queue [TODO: Cite original paper m8 (it's in my downloads)] with a good heuristic to avoid resizing to the minimum and keep the number of events per bucket as consistant as possible.
+
+*Heuristic design*
+
+The standard Calendar Queue implementation relies on dynamic resizing to maintain its $O(1)$ amortized time complexity. However, by leveraging the specific constraints of our simulation, we can design a static heuristic to determine the optimal Calendar Queue parameters upfront, bypassing the computational overhead of resizing operations entirely. 
+
+This heuristic depends on three simulation characteristics known a priori:
+- The static number of users ($N$) and the maximum bounded events per user (yielding a maximum queue size of $3N$).
+- The available memory budget, which dictates the maximum number of buckets $B_max$.
+- The weighted average delay of generated events ($T_("mean_delay")$), derived from the probability distributions of the simulation configuration.
+
+The design requires finding the optimal time width for a single bucket ($b$). A bucket represents a specific time slice $[t, t+b)$, and the time width must be chosen to ensure an optimal average number of events ($k$) land in each bucket. 
+
+First, we determine our target density $k$ by dividing the maximum queue size by our fixed memory budget $B_max$:
+
+$ k = frac(3N, B_max) $
+
+In the absence of strict memory constraints, $B$ can simply be defined as the smallest power-of-two capable of fitting all simultaneous events:
+
+$ B = 2^ceil(log_2(3N)) $
+
+Once $k$ is established, we calculate the bucket width $b$. By dividing the weighted average delay of all events $T_("mean_delay")$ by the total events $3N$, we find the average time gap between any two events in the queue. Multiplying this gap by our target density $k$ yields the optimal bucket time width:
+
+$ b = k dot frac(T_("mean_delay"), 3N) $
+
+Notably, if we substitute the definition of $k$ directly into the equation for $b$, the $3N$ terms cancel out, revealing a highly simplified relationship:
+
+$ b = (frac(3N, B_max)) dot frac(T_("mean_delay"), 3N) = frac(T_("mean_delay"), B_max) $
+
+This demonstrates that the optimal time-slice $b$ is entirely independent of the number of users, dictated strictly by the chosen bucket array size and the simulation's overall event frequency. By configuring the Calendar Queue with a statically allocated array of $B_max$ pointers and a bucket width of $b$, the queue achieves stable $O(1)$ performance without ever requiring an array reallocation or bucket width recalculation.
+
+
+To illustrate the heuristic, we assume the weighted average delay of the simulation events is calculated as $T_("mean_delay") = 11.92$ time units. #text(blue)[TODO: recorda recalcular tot això quan tinguis la calibració feta]
+
+*Example 1: Unconstrained Memory (Target $N = 10^7$)*
+With $10$ million users, the maximum queue capacity is $30,000,000$ events. If memory is unconstrained, we find the next power-of-two for $B$:
+$ B = 2^ceil(log_2(30000000)) = 2^25 = 33554432 "buckets" $
+The resulting density $k$ and bucket width $b$ are:
+$ k = frac(30000000, 2^25) approx 0.89 "events per bucket" $
+$ b = frac(T_("mean_delay"), B) = frac(11.92, 33554432) approx 3.55 times 10^(-7) "time units" $
+This configuration requires approximately 268 MB of RAM for the bucket pointers. Because $k < 1$, the vast majority of buckets will contain a single event, guaranteeing absolute $O(1)$ retrieval without list traversal.
+
+*Example 2: Limited Memory (Target $N = 10^6$, Max 2MB RAM)*
+With $1$ million users, the queue holds up to $3·10^6$ events. The unconstrained $B$ would be $2^22$ (~33 MB). If the system is strictly limited to 2 MB for the queue array, we cap $B_max$ at $2^18$ (yielding 262,144 buckets):
+$ B_max = 2^18 = 262144 "buckets" $
+$ k = frac(3000000, 262144) approx 11.44 "events per bucket" $
+$ b = frac(11.92, 262144) approx 4.54 times 10^(-5) "time units" $
+By restricting the memory, the density $k$ increases to ~11 elements per bucket. While this incurs a small $O(k)$ penalty during insertion as the algorithm scans the short linked list, the performance remains exceptionally fast while strictly adhering to hardware constraints.
+
+*Example 3: Massive Scale (Target $N = 10^9$)*
+When scaling to $1$ billion users, the queue capacity reaches $3·10^9$ events. Applying the unconstrained formula yields:
+$ B = 2^ceil(log_2(3000000000)) = 2^32 = 4294967296 "buckets" $
+While mathematically optimal for time complexity, allocating an array of $4.29$ billion 8-byte pointers requires $34.3$ GB of RAM exclusively for the Calendar Queue's root array structure. At this massive scale, utilizing a $B_max$ constraint becomes virtually mandatory to trade a surplus of RAM for a slightly denser $k$ parameter.
+
+=== Runtime Dynamic Dispatch of Distributions
+
+#text(blue)[
+  Aquesta secció serà una tocada de collons màxima. Primer, explicar la diferència entre "run-time" i "compile-time", després explicar què és el polimorfisme, i després explicar què és el "dynamic dispatch". Per acabar, explicar que el que passa és que en temps d'execució, les distribucions de la configuració (runtime) son les que el programa utilitza (dispatch) encara que canviin per execució (dynamic).
+]
 
 Because the simulation configures statistical models dynamically at runtime, a system is required to parse distinct probability functions seamlessly.
 - A custom `loadJson` function processes the JSON config and maps JSON distribution strings directly into `ContDist` and `DiscDist` wrapper types.
@@ -214,6 +308,19 @@ The static follower connections forming the network topology are encoded using a
 - To iterate over user $u$'s followers, the code simply slices the global array: `followers[follower_start .. follower_start + follower_count]`. This ensures maximum cache hit rates during massive post propagation storms.
 
 === Memory Allocation Strategies
+
+Information fetching from RAM is the main bottleneck in modern computing. The simulations uses three different strategies to optimize memory, according to the needs of the simulation.
+
++ General Puropose Allocator (or `malloc`): reserves memory in a linear and contigous fashion. Requires an interruption of the program execution for the kernel to provide the memory addresses. Can be resized perfectly if there is memory around the simulation.
++ Arena Allocator: reserves a large pool of memory, and controls which one is used by just index increments. As the whole memory is already allocated for the program, no need for interruptions.
++ Memory Pool: a very similar concept to the Arena, but while the arena allows use of chuncks of memory without size restriction of those, a memory pool just allows to fetch memory in a certain chunck size, perfect for fetching memory for a single struct. The main advantage is that memory reusablity is now extremely easy: if a new element is asked but some elements have already been freed, past memory is going to be reused. While this is possible in arenas, the non uniformity in size of the elements makes it very difficult in practice.
+
+Let us discuss the use of these three memory strategies in specific examples of the simulation.
+
+Loading static non-changning at runtime data is done with an Arena allocation. In the simulation, the json reading topology data and the actual graph data (see [sec-graph-data-representation]) is used. As the data is large, the use of the arena avoids interrupting the execution of the program if it were by the use of the General Puropose Allocator, and as it does not change during the execution, the arena will not have problems copying the memory from one place to another within the same arena.
+
+All the Data Structures that require dynamic change are used with a General Purpose Allocator, mainly the heaps (timeline) and the Queue (NOTE: this is the main bottleneck, let's just use the Calendar queue)
+
 
 
 == Additional Mechanics: Quoting, Notifications and Replies

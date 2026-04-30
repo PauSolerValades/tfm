@@ -113,7 +113,7 @@ fn eventCreateWarmup(rng: Random, simconf: SimConfig, user_id: Index, generated_
 fn eventCreatePost(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
     // Schedule the next post creation for this user
     const creation_delay = simconf.creation_delay.sample(rng);
-    const duration_between_creation = simconf.warmup_post_inter_creation.sample(rng);
+    const duration_between_creation = simconf.post_inter_creation.sample(rng);
 
     const new_post = Event{
         .time = t_clock + duration_between_creation + creation_delay,
@@ -157,6 +157,7 @@ fn propagatePost(gpa: Allocator, graph: *Topology, t_clock: f64, user_id: Index,
 
 fn stageOne(
     gpa: Allocator,
+    arena: Allocator,
     rng: Random,
     simconf: SimConfig,
     graph: *Topology,
@@ -168,7 +169,7 @@ fn stageOne(
 ) !void {
 
     // there will be at least one post per user, so we ensure this capacity at the beginng
-    try graph.user_seen_post.ensureItemCapacity(gpa, graph.users.len);
+    try graph.user_seen_post.ensureItemCapacity(arena, graph.users.len);
     for (0..graph.users.len) |uid| {
         graph.user_seen_post.set(uid, metrics.post_count);
 
@@ -177,7 +178,7 @@ fn stageOne(
         metrics.generated_events += 1;
 
         graph.users.items(.num_posts)[uid] += 1;
-        try graph.posts.append(gpa, Post{ .id = metrics.post_count, .author = @intCast(uid) });
+        try graph.posts.append(arena, Post{ .id = metrics.post_count, .author = @intCast(uid) });
     }
 
     while (t_clock.* <= simconf.warmup_time and queue.items.len > 0) {
@@ -202,8 +203,8 @@ fn stageOne(
 
                 const new_post_id = metrics.post_count;
 
-                try graph.posts.append(gpa, .{ .id = new_post_id, .author = current_uid });
-                try graph.user_seen_post.ensureItemCapacity(gpa, new_post_id);
+                try graph.posts.append(arena, .{ .id = new_post_id, .author = current_uid });
+                try graph.user_seen_post.ensureItemCapacity(arena, new_post_id);
                 graph.user_seen_post.set(current_uid, new_post_id); // this user has seen this post
 
                 const propagate = eventPropagate(rng, simconf, t_clock.*, current_uid, new_post_id, metrics.generated_events);
@@ -279,7 +280,7 @@ pub fn initSessions(
     }
 }
 
-pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topology, action_trace: *Io.Writer, session_trace: *Io.Writer, create_trace: *Io.Writer, propagate_trace: *Io.Writer) !SimResults {
+pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfig, graph: *Topology, action_trace: *Io.Writer, session_trace: *Io.Writer, create_trace: *Io.Writer, propagate_trace: *Io.Writer) !SimResults {
     var t_clock: f64 = 0.0;
 
     var metrics = SimMetrics{};
@@ -288,7 +289,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
     defer queue.deinit(gpa);
 
     // Post generation on init
-    try stageOne(gpa, rng, simconf, graph, &queue, &metrics, &t_clock, create_trace, propagate_trace);
+    try stageOne(gpa, arena, rng, simconf, graph, &queue, &metrics, &t_clock, create_trace, propagate_trace);
     // queue.clearRetainingCapacity();
 
     // decide which users start online or not
@@ -333,7 +334,7 @@ pub fn simulate(gpa: Allocator, rng: Random, simconf: SimConfig, graph: *Topolog
                 const new_post_id = metrics.post_count;
 
                 graph.users.items(.num_posts)[current_uid] += 1;
-                try graph.user_seen_post.ensureItemCapacity(gpa, new_post_id);
+                try graph.user_seen_post.ensureItemCapacity(arena, new_post_id);
                 graph.user_seen_post.set(current_uid, new_post_id); // post is marked as seen by its creator
 
                 const propagate = eventPropagate(rng, simconf, t_clock, current_uid, new_post_id, metrics.generated_events);
