@@ -1,0 +1,152 @@
+ross2006simulation:
+  type: Chapter
+  title: "Discrete-Event Simulation"
+  author: Ross, Sheldon M.
+  date: 2006
+  chapter: 6
+  edition: 4th Edition
+  parent:
+    type: Book
+    title: Simulation
+    publisher: Academic Press
+
+fishman2001des:
+  type: Chapter
+  author: Fishman, George S.
+  date: 2001
+  note: Section 2.3
+  parent:
+    type: Book
+    title: Discrete Event Simulation
+    publisher: Springer
+    parent:
+      type: Periodical
+      title: Springer Series in Operations Research
+
+fishman2002simulation:
+  type: Book
+  title: "Discrete-event Simulation: Modeling, Programming, and Analysis"
+  author: Fishman, George
+  date: 2002-01
+  serial-number:
+    isbn: "9781441928924"
+    doi: "10.1007/978-1-4757-3552-9"
+
+soler2025distributions:
+  type: Repository
+  title: distributions
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/distributions
+    date: 2026-05-08
+  parent:
+    title: GitHub
+
+marsaglia2000ziggurat:
+  type: Article
+  title: "The Ziggurat Method for Generating Random Variables"
+  author:
+    - Marsaglia, George
+    - Tsang, Wai Wan
+  date: 2000
+  serial-number:
+    doi: "10.18637/jss.v005.i08"
+  parent:
+    type: Periodical
+    title: Journal of Statistical Software
+    volume: 5
+    issue: 8
+
+ieee2019floating:
+  type: Misc
+  title: "IEEE Standard for Floating-Point Arithmetic"
+  author: IEEE
+  date: 2019
+  serial-number:
+    doi: "10.1109/IEEESTD.2019.8766229"
+
+walker1977alias:
+  type: Article
+  title: "An Efficient Method for Generating Discrete Random Variables with General Distributions"
+  author: Walker, Alastair J.
+  date: 1977-09
+  serial-number:
+    doi: "10.1145/355744.355749"
+  parent:
+    type: Periodical
+    title: ACM Transactions on Mathematical Software
+    volume: 3
+    issue: 3
+    page-range: 253-256
+
+goldberg1991floating:
+  type: Article
+  title: "What Every Computer Scientist Should Know About Floating-Point Arithmetic"
+  author: Goldberg, David
+  date: 1991-03
+  serial-number:
+    doi: "10.1145/103162.103163"
+  parent:
+    type: Periodical
+    title: ACM Computing Surveys
+    volume: 23
+    issue: 1
+    page-range: 5-48
+
+maidstone2012discrete:
+  type: Article
+  title: "Discrete Event Simulation, System Dynamics and Agent Based Simulation: Discussion and Comparison"
+  author: Maidstone, Robert
+  date: 2012-03-07
+  url:
+    value: https://www.researchgate.net/publication/342073153_Discrete_Event_Simulation_System_Dynamics_and_Agent_Based_Simulation_Discussion_and_Comparison
+
+siebers2010discrete:
+  type: Article
+  title: "Discrete-event simulation is dead, long live agent-based simulation!"
+  author:
+    - Siebers, Peer-Olaf
+    - Macal, Charles M.
+    - Garnett, Jeremy
+    - Buxton, David
+    - Pidd, Michael
+  date: 2010-09
+  serial-number:
+    doi: "10.1057/jos.2010.14"
+  parent:
+    type: Periodical
+    title: Journal of Simulation
+    volume: 4
+    issue: 3
+    page-range: 204-210
+
+bonabeau2002agent:
+  type: Article
+  title: "Agent-based modeling: Methods and techniques for simulating human systems"
+  author: Bonabeau, Eric
+  date: 2002-05-14
+  serial-number:
+    doi: "10.1073/pnas.082080899"
+  parent:
+    type: Periodical
+    title: "Proceedings of the National Academy of Sciences (PNAS)"
+    volume: 99
+    issue: 3
+    page-range: 7280-7287
+
+barabási2005bursts:
+    type: Article
+    title: The origin of bursts and heavy tails in human dynamics
+    author: Barabási, Albert-László
+    date: 2005-05-01
+    page-range: 207-211
+    abstract: "What determines the timing of human actions? A big question, but the science of human dynamics is here to tackle it. And its predictions are of practical value: for example, when ISPs decide what bandwidth an institution needs, they use a model of the likely timing and activity level of the individuals. Current models assume that an individual has a well defined probability of engaging in a specific action at a given moment, but evidence that the timing of human actions does not follow this pattern (of Poisson statistics) is emerging. Instead the delay between two consecutive events is best described by a heavy-tailed (power law) distribution. Albert-László Barabási proposes an explanation for the prevalence of this behaviour. The ‘bursty’ nature of human dynamics, he finds, is a fundamental consequence of decision making."
+    serial-number:
+        doi: "10.1038/nature03459"
+        issn: "1476-4687"
+    url: https://doi.org/10.1038/nature03459
+    parent:
+        type: Periodical
+        title: Nature
+        volume: 435
+        issue: 7039

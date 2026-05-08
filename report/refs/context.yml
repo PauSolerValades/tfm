@@ -22,6 +22,27 @@ wiki-social-network:
     title: Wikipedia, The Free Encyclopedia
     publisher: Wikimedia Foundation
 
+duan2009informational:
+  type: Article
+  title: "Informational Cascades and Software Adoption on the Internet: An Empirical Investigation"
+  author:
+    - Duan, Wenjing
+    - Gu, Bin
+    - Whinston, Andrew B.
+  date: 2009-03
+  page-range: 23-48
+  serial-number:
+    doi: "10.2307/20650277"
+    jstor: "20650277"
+  parent:
+    type: Periodical
+    title: MIS Quarterly
+    volume: 33
+    issue: 1
+    publisher:
+      name: Management Information Systems Research Center, University of Minnesota
+      location: Rochester, NY
+
 choudhary2023impact:
   type: Article
   title: "Impact of Graph Theory on Social Media Analytics: A Review"
@@ -421,6 +442,121 @@ wiki-complex-contagion:
   url:
     value: https://en.wikipedia.org/wiki/Complex_contagion
     date: 2026-04-28
+  parent:
+    type: Web
+    title: Wikipedia, The Free Encyclopedia
+    publisher: Wikimedia Foundation
+
+pozzana2017epidemic:
+  type: Article
+  title: Epidemic Spreading on Activity-Driven Networks with Attractiveness
+  author:
+    - Pozzana, Iacopo
+    - Sun, Kaiyuan
+    - Perra, Nicola
+  date: 2017-09-12
+  serial-number:
+    arxiv: "1703.02482"
+  parent:
+    type: Repository
+    title: arXiv
+    genre: Preprint
+
+hodas2014simple:
+  type: Article
+  title: The Simple Rules of Social Contagion
+  author:
+    - Hodas, Nathan O.
+    - Lerman, Kristina
+  date: 2014-03-11
+  organization: USC Information Sciences Institute
+  serial-number:
+    doi: "10.1038/srep04343"
+  parent:
+    type: Periodical
+    title: Scientific Reports
+    volume: 4
+    issue: 4343
+    publisher:
+      name: Nature Publishing Group
+
+gomezrodriguez2011uncovering:
+  type: Article
+  title: Uncovering the Temporal Dynamics of Diffusion Networks
+  author:
+    - Gomez-Rodriguez, Manuel
+    - Balduzzi, David
+    - Schölkopf, Bernhard
+  date: 2011-05-03
+  serial-number:
+    arxiv: "1105.0697"
+  parent:
+    type: Repository
+    title: arXiv
+    genre: Preprint
+
+gomezrodriguez2012inferring:
+  type: Article
+  title: Inferring Networks of Diffusion and Influence
+  author:
+    - Gomez-Rodriguez, Manuel
+    - Leskovec, Jure
+    - Krause, Andreas
+  date: 2012
+  serial-number:
+    doi: "10.1145/2396761.2396779"
+  parent:
+    type: Periodical
+    title: ACM Transactions on Knowledge Discovery from Data (TKDD)
+    volume: 5
+    issue: 4
+    publisher:
+      name: Association for Computing Machinery
+      location: New York, NY, USA
+
+atproto-overview:
+  type: Web
+  title: Protocol Overview
+  author: Bluesky Social PBC
+  date: 2026
+  url:
+    value: https://atproto.com/guides/overview
+    date: 2026-05-04
+  parent:
+    type: Reference
+    title: AT Protocol Documentation
+    publisher: Bluesky Social PBC
+
+wiki-bluesky:
+  type: Entry
+  title: Bluesky
+  author: "Wikipedia contributors"
+  url:
+    value: https://en.wikipedia.org/wiki/Bluesky
+    date: 2026-03-09
+  parent:
+    type: Reference
+    title: Wikipedia, The Free Encyclopedia
+
+atproto-repo:
+  type: Repository
+  title: "atproto: The AT Protocol"
+  author: "Bluesky Team"
+  url:
+    value: https://github.com/bluesky-social/atproto
+    date: 2026-03-09
+  organization: Bluesky PBLLC
+  parent:
+    title: GitHub
+
+mastodon-social-network:
+  type: Web
+  title: Mastodon (social network)
+  author: Wikipedia contributors
+  date: 2026-05-04
+  url:
+    value: http://en.wikipedia.org/wiki/Mastodon_(social_network)
+    date: 2026-05-04
   parent:
     type: Web
     title: Wikipedia, The Free Encyclopedia

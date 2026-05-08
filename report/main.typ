@@ -54,9 +54,9 @@
 #include "src/introduction.typ"
 
 #pagebreak()
-= Context & Background
+= Social Networks State of the Art
 
-#include "src/context.typ"
+#include "src/sota.typ"
 
 #pagebreak()
 = Problem Formulation 
@@ -77,6 +77,7 @@
 
 #pagebreak()
 = Data Analysis and Calibration
+<sec-data>
 
 #include "src/calibration.typ"
 
@@ -93,12 +94,13 @@
 
 #pagebreak()
 = Future Work
+<sec-future>
 
-// #include "src/ml.typ"
+#include "src/futurework.typ"
 
-
+#pagebreak()
 #bibliography(
-  ("refs/context.yml"),
+  ("refs/context.yml", "refs/methodology.yml"),
   title: "References",
 )
 

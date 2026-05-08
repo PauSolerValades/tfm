@@ -6,8 +6,3 @@
 
 #lorem(200)
 
-*Spanish*
-
-#lorem(200)
-
-

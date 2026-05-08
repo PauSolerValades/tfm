@@ -9,4 +9,10 @@
   [#body]
 }
 
-
+#let def(body, name: "") = {
+  if name == "" {
+    [*Definition*: #body]
+  } else {
+    [*Definition* (#name): #body]
+  }
+}
