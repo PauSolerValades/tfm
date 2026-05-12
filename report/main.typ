@@ -73,7 +73,7 @@
 = Simulation Design 
 <sec-design>
 
-#include "src/des.typ"
+#include "src/design.typ"
 
 #pagebreak()
 = Data Analysis and Calibration
@@ -100,7 +100,7 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml"),
+  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml"),
   title: "References",
 )
 

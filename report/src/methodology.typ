@@ -1,6 +1,6 @@
 #import "utils.typ": *
 
-This chapter justifies and explains several methodology choices, such as the model chosed to simulate (see @sec-method-model), why the use of a discrete-event simulation methodology (see @sec-method-des) and not an agent based model (see @sec-method-abm), finishing with the random number generation has been used and implemented (see @sec-method-rng).
+This chapter justifies and explains several methodology choices, such as the model chosed to simulate (see @sec-method-model), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
 
 == Diffusion Model 
 <sec-method-model>
@@ -22,13 +22,13 @@ By modeling the system as a chronological sequence of discrete events—such as 
 
 #comment[I am grately surprised this models adapts so well to the original design knowing nothing about this, its very beautiful :)]
 
-In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-design-assumptions for context), so the transmission rate is uniform across all network edges, such that:
+In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate is uniform across all network edges, such that:
 
 $ alpha_(i,j) = alpha quad forall i, j in V $
 
 where $V$ is the set of all users in the network. This universal rate, $alpha$, represents the global `propagation_delay` of the network an platform: the continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline.
 
-This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see #todo[traces? val la pena?]). Also, this conveys a implicit and very noticeable computational advantage. 
+This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see #todo[traces? is it worth it?]). Also, this conveys a implicit and very noticeable computational advantage. 
 
 === Activity-Driven Network Dynamics
 <sec-method-activity>
@@ -50,7 +50,7 @@ In OSNs, these activity states are usually called sessions: a user starts a sess
 
 While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself #todo[Cite cognitive limits/attention economy paper]. 
 
-#comment[Això que ve ara és bastant intuitiu de dir però pateixo de com ho he modelitzat, si us plau esteve fes-li un cop d'ull atent]
+#comment[What follows is quite intuitive to say but I'm struggling with how I've modeled it, please Esteve give it a careful look]
 
 To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-method-model, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
 
@@ -70,9 +70,9 @@ These components behave strictly according to the LIFO (Last-In, First-Out) natu
 
 This reverse-chronological dynamic introduces a somewhat survival mechanism for the posts, perfectly mirroring the hazard functions of the CTIC model. If a post arrives early in a long offline period, a massive volume of newer posts will pile on top of it. When the user logs in, the required $Delta_"scroll"$ to reach the post will be exceptionally high. 
 
-If the user's active session duration $Delta_k$ is shorter than the time required to scroll past the newer content ($Delta_"scroll" > Delta_k$), the transmission opportunity is lost entirely. In our simulation, timelines are purged upon session termination, meaning buried, unread posts fail to propagate ($tau -> oo$). Because $X$ dynamically depends on the instantaneous influx of competing posts and overlapping temporal session boundaries, it is mathematically intractable to solve via closed-form equations #todo[jo he escrit això molt segur, i crec que realment ho és, així, però vaja], which justifies the use of a Discrete Event Simulation (DES), which allows us to natively resolve $X$ by simulating reverse-chronological consumption step-by-step.
+If the user's active session duration $Delta_k$ is shorter than the time required to scroll past the newer content ($Delta_"scroll" > Delta_k$), the transmission opportunity is lost entirely. In our simulation, timelines are purged upon session termination, meaning buried, unread posts fail to propagate ($tau -> oo$). Because $X$ dynamically depends on the instantaneous influx of competing posts and overlapping temporal session boundaries, it is mathematically intractable to solve via closed-form equations #todo[I am quite sure I wrote this, and I think it really is the case, but well], which justifies the use of a Discrete Event Simulation (DES), which allows us to natively resolve $X$ by simulating reverse-chronological consumption step-by-step.
 
-#comment[Continuació del TODO del paragraf anterior: el que vull dir aquí és que si intentessim modelitzar aquest model analíticament és super complicat de resoldre, no que no existeixi una solució analítica (que no ho sé, això) però només pensar de formalitzar-ho analticament em marejo, aquesta és la inteció. Tangencialment, això jutifica l'ús del DES super super bé!
+#comment[Continuation of the TODO from the previous paragraph: what I mean here is that if we tried to model this model analytically it is super complicated to solve, not that an analytical solution does not exist (I don't know that) but just thinking about formalizing it analytically makes me dizzy, that is the intention. Tangentially, this justifies the use of DES super super well!
 ]
 
 === Post Lifetime Analysis
@@ -87,21 +87,21 @@ If post $i$ arrives at time $t_a$ while the user is offline, it will sit idle un
 
 To find the exact probability of the post being seen, we must consider the processing time of every single newer post. Let $D_"action"^((m))$ be the random variable representing the time taken by user $v$ to process the $m$-th newer post. For post $i$ to be successfully seen, the cumulative time required to evaluate the $N_"newer"$ posts positioned above it must be strictly less than the user's active session duration $Delta_k$. The exact survival probability is therefore:
 
-$ P("seen") = P( sum_(m=1)^(N_"newer") D_"action"^((m)) < Delta_k ) $
+$ PP ("seen") = PP  ( sum_(m=1)^(N_"newer") D_"action"^((m)) < Delta_k ) $
 
 Evaluating this strict probability analytically requires convolving the distributions of the arrival process ($N_"newer"$), the individual reading times ($D_"action"^((m))$), and the session durations ($Delta_k$). Because this is a very complex system, finding a closed-form solution is computationally intractable. This intractability fundamentally justifies the reliance on the Discrete Event Simulation (DES) (see @sec-method-des) to natively resolve these reverse-chronological interactions.
 
 However, to establish an intuitive macroscopic understanding of the system's core mechanism, we can apply a first-order mean-value approximation. The expected number of newer posts positioned above post $i$ when the user finally logs in can be approximated by:
 
-$ EE(N_"newer") approx mu_v dot Delta_"idle" = mu_v dot (t_k - t_a) $
+$ EE[N_"newer"] approx mu_v dot Delta_"idle" = mu_v dot (t_k - t_a) $
 
-Let $EE(D_"action")$ denote the expected inter-action delay (the average time user $v$ spends processing a single post). Applying Wald's Equation, the expected continuous time required to scroll past the newer backlog is:
+Let $EE[D_"action"]$ denote the expected inter-action delay (the average time user $v$ spends processing a single post). Applying Wald's Equation, the expected continuous time required to scroll past the newer backlog is:
 
-$ EE(Delta_"scroll") approx EE(N_"newer") dot EE(D_"action") = mu_v dot (t_k - t_a) dot EE(D_"action") $
+$ EE[Delta_"scroll"] approx EE[N_"newer"] dot EE[D_"action"] = mu_v dot (t_k - t_a) dot EE[D_"action"] $
 
 In this deterministic mean-value framework, the condition for a post to likely survive is that the expected scrolling time must be bounded by the user's active session duration:
 
-$ EE(Delta_"scroll") < Delta_k $
+$ EE[Delta_"scroll"] < Delta_k $
 
 Together, the theoretical probability and its mean-value approximation define the core mechanism of the simulation: the likelihood of a post surviving the queue is *inversely proportional* to both the timeline influx rate $mu_v$ and the elapsed idle time.
 
@@ -115,11 +115,12 @@ Discrete-event simulation usually share a set of key elements, which relate to c
 
 Information diffusion (see @sec-sota-diffusionmodels) models information cascades, which are created by the repost of a post in a specific instant of time. This is, as already discussed when justifying the Continuous-Time Independent Cascade model (see @sec-method-ctic), a discrete-event dynamical system: the events are creation and propagation of a post, which can be reconstructed into the so called information cascades.
 
-=== Description of the Simulation
+=== Description and Mechanics
+<sec-method-des-mechanics>
 
 The main mechanic of the simulation is the content propagation. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
 
-$ "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $
+$ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $
 
 There are three distinct actions that a user can do in the simulation, which are three different types of entities that can be simultaneously queues at the same time.
 1. Create post: creates a new post $j$ and adds it to the simulation. This propagates the created post $j$
@@ -132,9 +133,14 @@ There are three distinct actions that a user can do in the simulation, which are
 
 As every user acts as an independent entity, it is convenient to make them act independently from one another; the queue $Q$ always contains an event of each type per user always preescheduled #todo[@ sec-design-heurisic]
 
+
 To comply with the Continuous-Time Independent Cascade, we have to allow reexposition to a content the user has already ignored but coming from another edge (another of it's followees). It is considered then an interaction as a like or a post, so a user can propagate or not propagate a post but interact with it. A user cannot interact nor see again their own posts.
 
+Therefore, we can give a more abstract expression of an event ---which is an element of the queue $Q$--- such as the tuple of $(u, e, t)$, where user $u$ at time $t$ has the event $e$, which can be either "create", "action", "go_online" or "go_offline".
+
+
 === Assumptions
+<sec-method-des-assumptions>
 
 To simplify both implementation and evaluation of the simulation, we assume the following simplifications in respect of how a real online social networks behaves to adapt to the scope of the project.
 
@@ -146,24 +152,99 @@ $ pi(a | i) = pi(a | j) = pi(a) quad forall i, j in cal(I), forall a in cal(R)'_
 
 3. *Action Independence (Markovian Behavior):* A user's choice to interact with a post $i$ at time $t$ depends strictly on the static policy $pi$ and is independent of their historical impression history $cal(H)_u^"act"$. 
 
-$ PP ( rho((u, i, a), t) = 1  mid(|) cal(H)^"act"_u(t) ) = pi(a) $
+$ PP ( (u, i, a) in E  mid(|) cal(H)^"act"_u(t) ) = pi(a) $
 
+#todo[This condition is with the past formulation, we have to change it]
 
 As it's been discussed until now, the proposed model is a dynamical system in which its solution cannot be found analytically due to it's complexity. In a DES implementation, the system's state only changes at discrete points in time when a specific event occurs, allowing the simulation engine to jump efficiently from one event to the next without calculating the time in between. 
 
-== Why not Agent-Based Modeling?
-<sec-method-abm>
+=== Parameters
 
-Agent-Based Modeling (ABM) is a bottom-up simulation paradigm in which a system is modeled as a collection of autonomous, self-directed agents that follow individual behavioral rules, perceive their environment, and interact with one another @bonabeau2002agent. Unlike DES, where entities are passive and their behavior is dictated by the system's process logic, agents in ABM are "active"---each maintains its own state and decision-making autonomy @siebers2010discrete. This natural one-to-one mapping between individual users and autonomous agents has led to ABM being widely adopted in the study of online social networks, where agent-centric modeling of user behavior is conceptually appealing.
+The main parameters that define the simulation, once the simplificating assumptions are in place (see @sec-method-des-assumptions).
+1. How often does a user sees a post: this is modeled as the time between every post.
+2. Actions: the probability associated to every action the user can do when sees a post.
+3. Sessions: how often does a user connect (time between sessions) and the session duration of the user. Additionally, from the whole user population, we start with a fraction of the user offline, which is a controlable parameters.
+4. Propagation delay: time it takes for a post to be reposted or created and then be propagated.
+5. Interaction and Creation delay: when a user decides which decision takes, the delay on realizing the action is implemented into the simulation. Additionally, there is a bigger delay when the user decides to create a post, which simulates the actual writing of the post.
 
-Despite this conceptual fit, ABM carries a substantial computational cost when applied at scale. Whether an ABM uses fixed time-stepping or event-driven scheduling, each agent's state must still be individually evaluated whenever the simulation requires it to act, react, or remain idle. In a microblogging platform with hundreds of thousands of users, the overwhelming majority are offline at any given instant---no decision is being made, no content is being consumed, and no propagation can occur. Yet under an agent-based paradigm, the simulator must still account for every user's presence, maintain their individual state, and check whether they are eligible to participate @maidstone2012discrete. The result is that computational effort scales with the number of users $N$ regardless of how few are actually active, making the approach increasingly wasteful as the network grows.
+#todo[Create a figure of all the delays]
 
-Discrete-Event Simulation avoids this overhead through its fundamental operational principle: the simulator does not advance time in uniform steps, nor does it poll entities that have nothing to do. Instead, it maintains a chronologically ordered event queue and jumps directly from one scheduled event to the next, bypassing idle intervals entirely. Processing an event---such as a post creation or a user session initialization---may involve work proportional to the local network degree (iterating over a poster's followers, scheduling follow-up events), but no work is performed for the vast silent majority of users who are offline. Because human activity in microblogging is highly bursty and intermittent @barabási2005bursts, with prolonged gaps of inactivity between short engagement sessions, this event-driven design naturally exploits the system's intrinsic sparsity.
+To see the parameter calibration and results, see #todo[@ sec-data-cal]
 
-Beyond runtime performance, ABM also demands substantially more development effort. Specifying perception, individual decision-making, and inter-agent communication for every user introduces considerable model complexity @bonabeau2002agent. Maidstone @maidstone2012discrete observes that ABS models tend to take significantly more time to develop than their DES counterparts, and that this added complexity is difficult to justify when the research question concerns aggregate diffusion dynamics rather than heterogeneous individual cognition. In DES, by contrast, the system is modeled top-down through a network of processes and queues: entities flow through the system according to probability distributions and predefined routing rules @fishman2002simulation, yielding a leaner model that remains expressive enough to capture population-level propagation behavior.
+=== Evaluation Metrics
 
-In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
+To evaluate the simulation, the following metrics are going to be obtained from the simulation traces:
 
+*Reposts Power-law* 
+
+According to the CTIC model, the number of reposts of a post should follow a power law, with $gamma in [2,3]$. That is, the log-log plot of the most to least sorted repost different post has should be drawn as a line. This is the same concept introduced in @sec-sota-topo-scalefree.
+
+
+*Post Lifetime*
+
+This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptely decrease as time goes on.
+
+*Gini Coefficient*
+
+Inequality ---defined as --- in a social system can be quantified using the Gini index @kwak2017centrality. Given a vector $X in RR^n$ of some wealth attribute (e.g., a node centrality), let $Y$ be $X$ sorted in increasing order. The Lorenz curve $L : [0,1] -> [0,1]$ is defined as the piecewise linear function connecting $(x(k), l(k))$ for $0 <= k <= n$, where
+
+$ x(k) = k / n, quad l(k) = sum_(i=1)^k Y_i / sum_(i=1)^n Y_i $
+
+The Gini index is then the area between the perfectly equal line ($y = x$) and the Lorenz curve:
+
+$ GG(X) = 1 - 2 integral_0^1 L(x) - x $
+
+A value of $0$ indicates perfect equality (all individuals are equal), while a value approaching $1$ indicates extreme inequality (the resource is centralized in a single metric). Unlike the power-law exponent, the Gini index requires no parametric assumptions about the underlying distribution, making it applicable to any network structure @kwak2017centrality.
+
+In Online Social Networks, the Gini index can be applied to different node centralities to measure structural inequality from distinct perspectives @kwak2017centrality, and in this project it will be used to measure inequality in how much information a node directly receives from its neighbors. High degree-Gini indicates that a small set of users dominates the inflow of information, a typical signature of power-law follower distributions on platforms like Twitter or Bluesky.
+
+*Structural Virality*
+
+Virality is a concept that is more nuanced than it first appears. While content is said to have "gone viral" when it rapidly becomes popular through person-to-person contagion, popularity alone does not imply virality: a piece of content may reach a large audience through a single broadcast event (e.g., a post by a celebrity with millions of followers) just as easily as through multi-generational peer-to-peer propagation @goel2016structural. Distinguishing between these two mechanisms requires examining the fine-grained structure of the diffusion cascade itself, not just its aggregate size.
+
+#todo[replicate figure 1 of the paper showing broadcast vs viral cascade structures]
+
+Intuitively, the shape of the cascade matters: a "broadcast" cascade reaches many users but remains extremely shallow (all adoptions occur within one hop from the source), whereas a genuinely "viral" cascade propagates through multiple generations, with each individual responsible for only a fraction of the total adoptions. However, simple metrics like cascade depth are fragile---a single long chain in an otherwise flat broadcast can inflate the depth without indicating true viral spread @goel2016structural.
+
+#todo[add the picture of broadcast vs viral cascade]
+
+To address these shortcomings, Goel et al. @goel2016structural propose a formal measure of structural virality based on the Wiener index, a classical graph invariant from mathematical chemistry @wiener1947structural. For a cascade represented as a tree $T$ with $n > 1$ nodes, the structural virality $nu(T)$ is defined as the average distance between all pairs of nodes:
+
+$ nu(T) = frac(1, n(n-1)) sum_(i=1)^n sum_(j=1)^n d_(i j) $
+
+where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Equivalently, $nu(T)$ is the average depth of nodes, averaged over all nodes in turn acting as root @goel2016structural. The measure satisfies three desirable criteria:
+
+1. For a fixed cascade size, structural virality is minimized on the star graph (pure broadcast), where $nu(T) approx 2$, and increases with the branching factor of the structure.
+2. For a fixed branching factor, structural virality increases with the number of generations (depth) of the cascade.
+3. In the extreme case of a pure broadcast, structural virality remains approximately independent of size, meaning larger broadcasts are not falsely classified as more viral.
+
+#def(name: "Structural Virality")[
+  A continuous measure of how "viral" a cascade is, defined as the average distance between all pairs of nodes in the cascade tree. Higher values indicate that adopters are, on average, farther apart, suggesting a multi-generational diffusion process rather than a single broadcast event. @goel2016structural
+]
+
+
+#comment[I could add here another section called “Why not agent-based modeling” but idk how
+interesting is, if in the SotA i don’t introduce the OASIS paper or the big LLM things. Or
+maybe not event the LLM stuff, but traditional ABM modeling in Social Networks
+I got a draft of it, which it should convey the following information:
+ABM tend to be computationally more complex (is that even true????) due to the agents
+being “active” instead of passive. That means the main loop has to evaluate users that are offline
+to discard they are even active. DES just jumps over that, as the event “go back online” just
+needs to be processed when it’s attended. Also, ABMs, if they discrete the time into Δ𝑡 chunks]
+
+// == Why not Agent-Based Modeling?
+// <sec-method-abm>
+//
+// Agent-Based Modeling (ABM) is a bottom-up simulation paradigm in which a system is modeled as a collection of autonomous, self-directed agents that follow individual behavioral rules, perceive their environment, and interact with one another @bonabeau2002agent. Unlike DES, where entities are passive and their behavior is dictated by the system's process logic, agents in ABM are "active"---each maintains its own state and decision-making autonomy @siebers2010discrete. This natural one-to-one mapping between individual users and autonomous agents has led to ABM being widely adopted in the study of online social networks, where agent-centric modeling of user behavior is conceptually appealing.
+//
+// Despite this conceptual fit, ABM carries a substantial computational cost when applied at scale. Whether an ABM uses fixed time-stepping or event-driven scheduling, each agent's state must still be individually evaluated whenever the simulation requires it to act, react, or remain idle. In a microblogging platform with hundreds of thousands of users, the overwhelming majority are offline at any given instant---no decision is being made, no content is being consumed, and no propagation can occur. Yet under an agent-based paradigm, the simulator must still account for every user's presence, maintain their individual state, and check whether they are eligible to participate @maidstone2012discrete. The result is that computational effort scales with the number of users $N$ regardless of how few are actually active, making the approach increasingly wasteful as the network grows.
+//
+// Discrete-Event Simulation avoids this overhead through its fundamental operational principle: the simulator does not advance time in uniform steps, nor does it poll entities that have nothing to do. Instead, it maintains a chronologically ordered event queue and jumps directly from one scheduled event to the next, bypassing idle intervals entirely. Processing an event---such as a post creation or a user session initialization---may involve work proportional to the local network degree (iterating over a poster's followers, scheduling follow-up events), but no work is performed for the vast silent majority of users who are offline. Because human activity in microblogging is highly bursty and intermittent @barabási2005bursts, with prolonged gaps of inactivity between short engagement sessions, this event-driven design naturally exploits the system's intrinsic sparsity.
+//
+// Beyond runtime performance, ABM also demands substantially more development effort. Specifying perception, individual decision-making, and inter-agent communication for every user introduces considerable model complexity @bonabeau2002agent. Maidstone @maidstone2012discrete observes that ABS models tend to take significantly more time to develop than their DES counterparts, and that this added complexity is difficult to justify when the research question concerns aggregate diffusion dynamics rather than heterogeneous individual cognition. In DES, by contrast, the system is modeled top-down through a network of processes and queues: entities flow through the system according to probability distributions and predefined routing rules @fishman2002simulation, yielding a leaner model that remains expressive enough to capture population-level propagation behavior.
+//
+// In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
+//
 
 == Random Number Generation
 <sec-method-rng>
@@ -178,7 +259,7 @@ Our implementation in Zig heavily leverages compile-time evaluation (`comptime`)
 
 From this single random word, two values are extracted with zero PRNG overhead:
 1. The lowest 8 bits are masked (`bits & 0xff`) to uniformly select the index $i$ of one of the 256 precomputed rectangles.
-2. The remaining 52 bits are shifted and directly utilized as the mantissa of an IEEE 754 floating-point number [@ieee2019floating; @goldberg1991floating].
+2. The remaining 52 bits are shifted and directly utilized as the mantissa of an IEEE 754 floating-point number @ieee2019floating, @goldberg1991floating.
 
 To construct the uniform floating-point value efficiently, the integer mantissa is bitwise OR-ed with a predefined exponent mask. For symmetric distributions like the Normal, the exponent is chosen such that the resulting float falls into the interval $[2, 3)$. Subtracting 3 then shifts the domain to $[-1, 1)$. For asymmetric distributions like the Exponential, the exponent mask places the float in $[1, 2)$, and subtracting an offset near 1 yields a uniform variate in $[0, 1)$.
 
@@ -189,7 +270,8 @@ When a candidate falls outside the fast-path core, two edge cases are handled:
 - *Tail Cases:* If $i = 0$, the sample lies in the infinite tail of the distribution. A specialized `zeroCase` function handles this tail recursively. For the Exponential distribution, it evaluates the inverse transform shifted by the rightmost boundary $R$, yielding $R - \ln(U)$. For the Normal distribution, it implements Marsaglia's tail generation, looping to draw values until $-2y < x^2$ is satisfied, and appropriately shifting the result by $R$.
 
 === Categorical Distribution
- 
+<sec-method-rng-categorical>
+
 The categorical distribution models discrete random variables that can take on one of $k$ possible
  categories, each with a specific probability. In our Zig implementation, a categorical distribution is
  initialized with an array of distinct items (`data`) and their corresponding probabilities (`weights`).
@@ -221,7 +303,7 @@ However, to optimize the performance of the linear search, the following convent
 == Time-Variyng Heterogeneous Graphs
 <sec-method-graph>
 
-#comment[Esteve, no acabo d'entendre exactament què haig d'escriure aquí. Osigui perquè he necessitat un time heterogeneous graph per modelizar el problema? Esque senzillament el problema és així]
+#comment[Esteve, I don't fully understand what I need to write here. Like, why did I need a time heterogeneous graph to model the problem? Because the problem is simply like this]
 
 Revise the articles from the beginning. This is not about the data (users and relationships) and data, but the model of the data.
 

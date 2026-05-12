@@ -135,18 +135,53 @@ bonabeau2002agent:
     page-range: 7280-7287
 
 barabási2005bursts:
-    type: Article
-    title: The origin of bursts and heavy tails in human dynamics
-    author: Barabási, Albert-László
-    date: 2005-05-01
-    page-range: 207-211
-    abstract: "What determines the timing of human actions? A big question, but the science of human dynamics is here to tackle it. And its predictions are of practical value: for example, when ISPs decide what bandwidth an institution needs, they use a model of the likely timing and activity level of the individuals. Current models assume that an individual has a well defined probability of engaging in a specific action at a given moment, but evidence that the timing of human actions does not follow this pattern (of Poisson statistics) is emerging. Instead the delay between two consecutive events is best described by a heavy-tailed (power law) distribution. Albert-László Barabási proposes an explanation for the prevalence of this behaviour. The ‘bursty’ nature of human dynamics, he finds, is a fundamental consequence of decision making."
-    serial-number:
-        doi: "10.1038/nature03459"
-        issn: "1476-4687"
-    url: https://doi.org/10.1038/nature03459
-    parent:
-        type: Periodical
-        title: Nature
-        volume: 435
-        issue: 7039
+  type: Article
+  title: The origin of bursts and heavy tails in human dynamics
+  author: Barabási, Albert-László
+  date: 2005-05-01
+  page-range: 207-211
+  abstract: "What determines the timing of human actions? A big question, but the science of human dynamics is here to tackle it. And its predictions are of practical value: for example, when ISPs decide what bandwidth an institution needs, they use a model of the likely timing and activity level of the individuals. Current models assume that an individual has a well defined probability of engaging in a specific action at a given moment, but evidence that the timing of human actions does not follow this pattern (of Poisson statistics) is emerging. Instead the delay between two consecutive events is best described by a heavy-tailed (power law) distribution. Albert-László Barabási proposes an explanation for the prevalence of this behaviour. The ‘bursty’ nature of human dynamics, he finds, is a fundamental consequence of decision making."
+  serial-number:
+      doi: "10.1038/nature03459"
+      issn: "1476-4687"
+  url: https://doi.org/10.1038/nature03459
+  parent:
+      type: Periodical
+      title: Nature
+      volume: 435
+      issue: 7039
+
+wiener1947structural:
+  type: Article
+  title: "Structural determination of paraffin boiling points"
+  author: Wiener, Harry
+  date: 1947
+  page-range: 17-20
+  serial-number:
+    doi: "10.1021/ja01193a005"
+    pmid: "20291038"
+  parent:
+    type: Periodical
+    title: Journal of the American Chemical Society
+    volume: 69
+    issue: 1
+
+kwak2017centrality:
+  type: Article
+  title: "Centrality Fairness: Measuring and Analyzing Structural Inequality of Online Social Networks"
+  author:
+    - Kwak, Heeyoung
+    - Kim, Joonyoung
+    - Lim, Yongsub
+    - Han, Shin-Kap
+    - Jung, Kyomin
+  date: 2017
+  serial-number:
+    doi: "10.6138/JIT.2017.18.7.20150408"
+  parent:
+    type: Periodical
+    title: Journal of Internet Technology
+    volume: 18
+    issue: 7
+    pages: "1515-1524"
+    publisher: "Taiwan Academic Network"

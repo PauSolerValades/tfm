@@ -38,7 +38,8 @@ pub const Topology = struct {
     followers: []Index, // Compressed Sparse Row, aka Static Adjacency Array
     timelines: []TimelineHeap, // Timelines for every user. Optimaly, we should use FixedBufferAllocator
     posts: SMAList(Post, 16), // uwu
-    user_seen_post: PagedBitSet(16), // N-to-M user seen post matrix as a 2D bitset, amazingly fast
+    user_seen_post: PagedBitSet(16), // N-to-M matrix: user was exposed to post (diagnostic, counts all impressions)
+    user_interacted_post: PagedBitSet(16), // N-to-M matrix: user interacted with post (like/repost/own) — desensitization gate
 
     pub fn create(gpa: Allocator, arena: Allocator, parsed_network: NetworkJson) !Topology {
         // Converteix les coses de la network json en Static Network Graph
@@ -93,14 +94,16 @@ pub const Topology = struct {
 
         const posts: SMAList(Post, 16) = .empty;
         // User Homogeneity, max_post is the same per every user
-        const matrix: PagedBitSet(16) = try .initPages(arena, parsed_network.users.len, 16);
+        const seen_matrix: PagedBitSet(16) = try .initPages(arena, parsed_network.users.len, 16);
+        const interacted_matrix: PagedBitSet(16) = try .initPages(arena, parsed_network.users.len, 16);
 
         return .{
             .users = users,
             .followers = followers,
             .timelines = timelines,
             .posts = posts,
-            .user_seen_post = matrix,
+            .user_seen_post = seen_matrix,
+            .user_interacted_post = interacted_matrix,
         };
     }
 
@@ -114,6 +117,7 @@ pub const Topology = struct {
         gpa.free(self.timelines);
 
         self.user_seen_post.deinit(arena);
+        self.user_interacted_post.deinit(arena);
         self.posts.deinit(arena);
     }
 
@@ -209,6 +213,7 @@ pub const Topology = struct {
             .followers = followers,
             .timelines = timelines,
             .user_seen_post = matrix,
+            .user_interacted_post = .empty,
         };
     }
 };

@@ -170,8 +170,11 @@ fn stageOne(
 
     // there will be at least one post per user, so we ensure this capacity at the beginng
     try graph.user_seen_post.ensureItemCapacity(arena, graph.users.len);
+    try graph.user_interacted_post.ensureItemCapacity(arena, graph.users.len);
     for (0..graph.users.len) |uid| {
+        // creator has seen and implicitly interacted with their own post (no self-interaction allowed)
         graph.user_seen_post.set(uid, metrics.post_count);
+        graph.user_interacted_post.set(uid, metrics.post_count);
 
         const create_post = eventCreateWarmup(rng, simconf, @intCast(uid), metrics.generated_events);
         try queue.add(gpa, create_post);
@@ -205,7 +208,10 @@ fn stageOne(
 
                 try graph.posts.append(arena, .{ .id = new_post_id, .author = current_uid });
                 try graph.user_seen_post.ensureItemCapacity(arena, new_post_id);
-                graph.user_seen_post.set(current_uid, new_post_id); // this user has seen this post
+                try graph.user_interacted_post.ensureItemCapacity(arena, new_post_id);
+                // creator has seen and implicitly interacted with their own post
+                graph.user_seen_post.set(current_uid, new_post_id);
+                graph.user_interacted_post.set(current_uid, new_post_id);
 
                 const propagate = eventPropagate(rng, simconf, t_clock.*, current_uid, new_post_id, metrics.generated_events);
                 try queue.add(gpa, propagate);
@@ -335,7 +341,10 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfi
 
                 graph.users.items(.num_posts)[current_uid] += 1;
                 try graph.user_seen_post.ensureItemCapacity(arena, new_post_id);
-                graph.user_seen_post.set(current_uid, new_post_id); // post is marked as seen by its creator
+                try graph.user_interacted_post.ensureItemCapacity(arena, new_post_id);
+                // creator has seen and implicitly interacted with their own post
+                graph.user_seen_post.set(current_uid, new_post_id);
+                graph.user_interacted_post.set(current_uid, new_post_id);
 
                 const propagate = eventPropagate(rng, simconf, t_clock, current_uid, new_post_id, metrics.generated_events);
                 try queue.add(gpa, propagate);
@@ -420,8 +429,9 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfi
                     const current_post = graph.timelines[current_uid].remove();
                     const post_id: Index = current_post.post_id;
 
-                    // user CANNOT see previous posts. Shouldn't happen here anyway. this is a _safeguard_
-                    if (graph.user_seen_post.isSet(current_uid, post_id)) {
+                    // user already interacted with this post (liked or reposted). Skip it.
+                    // Posts that were only ignored can still be re-exposed via another propagation.
+                    if (graph.user_interacted_post.isSet(current_uid, post_id)) {
                         const next_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                         try queue.add(gpa, next_action);
                         metrics.generated_events += 1;
@@ -435,18 +445,30 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfi
                         try action_trace.writeAll(bytes);
                     }
 
+                    // Always mark as seen (diagnostic: counts every exposure)
                     graph.user_seen_post.set(current_uid, post_id);
                     metrics.impressions += 1;
 
                     switch (act) {
                         .repost => {
+                            // desensitized: user propagated, can't interact with this post again
+                            graph.user_interacted_post.set(current_uid, post_id);
+
                             const propagate = eventPropagate(rng, simconf, t_clock, current_uid, post_id, metrics.generated_events);
                             try queue.add(gpa, propagate);
                             metrics.generated_events += 1;
                             metrics.reposts += 1;
                         },
-                        .like => metrics.likes += 1,
-                        .ignore => metrics.ignored += 1,
+                        .like => {
+                            // desensitized: user consumed and acknowledged (platform prevents double-liking)
+                            graph.user_interacted_post.set(current_uid, post_id);
+                            metrics.likes += 1;
+                        },
+                        .ignore => {
+                            // NOT desensitized: user can be re-exposed to this post via another propagation
+                            // (aligned with Independent Cascade model: exposure ≠ adoption)
+                            metrics.ignored += 1;
+                        },
                     }
                     metrics.processed_events += 1;
 
@@ -531,7 +553,7 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfi
         .avg_session_length = metrics.total_online_time / @as(f64, @floatFromInt(metrics.total_sessions)),
         .avg_post_per_session = @as(f64, @floatFromInt(metrics.impressions)) / @as(f64, @floatFromInt(metrics.total_sessions)),
         .timeline_drain_ratio = @as(f64, @floatFromInt(metrics.empty_timeline_ends)) / @as(f64, @floatFromInt(metrics.total_sessions)),
-        .posts_at_warmup = @as(f64, @floatFromInt(metrics.post_count)) / @as(f64, @floatFromInt(graph.user_seen_post.len)),
+        .posts_at_warmup = @as(f64, @floatFromInt(metrics.post_count)) / @as(f64, @floatFromInt(graph.user_interacted_post.len)),
     };
 
     return result;
