@@ -23,7 +23,7 @@ pub const User = struct {
 
     is_online: bool = false,
     session_start_time: f64 = 0.0,
-    session_gen: u64 = 0,
+    session_gen: u32 = 0,
     num_posts: u32 = 0,
 };
 
@@ -58,7 +58,7 @@ pub const Event = struct {
     time: f64, // when will the action be due
     type: EventType, //
     user_id: Index, // user id
-    session_gen: u64, // in which session from the user_id does this event belong
+    session_gen: u32, // in which session from the user_id does this event belong
     id: u64, // which action is it
 };
 
@@ -86,33 +86,33 @@ pub fn compareTimelineEvent(context: void, a: TimelineEvent, b: TimelineEvent) O
 /// the entities that need to be written on the trace
 pub const TraceAction = struct {
     time: f64,
-    type: Action,
-    user_id: Index,
-    post_id: Index,
     event_id: u64,
     gen_id: u64,
+    user_id: Index,
+    post_id: Index,
+    type: Action,
 };
 
 pub const TraceCreate = struct {
     time: f64,
-    post_id: Index,
-    user_id: Index,
     event_id: u64,
     gen_id: u64,
+    user_id: Index,
+    post_id: Index,
 };
 
 pub const TraceSession = struct {
     time: f64,
-    type: Session,
-    user_id: Index,
     event_id: u64,
     gen_id: u64,
+    user_id: Index,
+    type: Session,
 };
 
 pub const TracePropagation = struct {
     time: f64,
-    type: Index,
-    user_id: Index,
     event_id: u64,
     gen_id: u64,
+    user_id: Index,
+    type: Index,
 };

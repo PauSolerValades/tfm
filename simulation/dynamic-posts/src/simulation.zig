@@ -54,7 +54,7 @@ pub const SimMetrics = struct {
     max_duration_ends: u64 = 0,
 };
 
-fn eventAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, user_session_gen: u64, generated_events: u64) Event {
+fn eventAction(rng: Random, simconf: *const SimConfig, t_clock: f64, user_id: Index, user_session_gen: u32, generated_events: u64) Event {
     const action: Action = simconf.user_policy.sample(rng);
 
     const event_time = simconf.user_inter_action.sample(rng);
@@ -71,7 +71,7 @@ fn eventAction(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, us
     return event;
 }
 
-fn eventSessionStart(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+fn eventSessionStart(rng: Random, simconf: *const SimConfig, t_clock: f64, user_id: Index, session_id: u32, generated_events: u64) Event {
     // when will the user go online
     const offline_duration = simconf.user_inter_session.sample(rng);
     const event_start = Event{
@@ -84,7 +84,7 @@ fn eventSessionStart(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Ind
     return event_start;
 }
 
-fn eventSessionEnd(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+fn eventSessionEnd(rng: Random, simconf: *const SimConfig, t_clock: f64, user_id: Index, session_id: u32, generated_events: u64) Event {
     // when will the user go offline
     const duration = simconf.session_duration.sample(rng);
     const event_end = Event{
@@ -97,7 +97,7 @@ fn eventSessionEnd(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index
     return event_end;
 }
 
-fn eventCreateWarmup(rng: Random, simconf: SimConfig, user_id: Index, generated_events: u64) Event {
+fn eventCreateWarmup(rng: Random, simconf: *const SimConfig, user_id: Index, generated_events: u64) Event {
     const t_creation_decision = simconf.warmup_post_inter_creation.sample(rng);
 
     const creation_delay = simconf.creation_delay.sample(rng);
@@ -110,7 +110,7 @@ fn eventCreateWarmup(rng: Random, simconf: SimConfig, user_id: Index, generated_
     };
 }
 
-fn eventCreatePost(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index, session_id: u64, generated_events: u64) Event {
+fn eventCreatePost(rng: Random, simconf: *const SimConfig, t_clock: f64, user_id: Index, session_id: u32, generated_events: u64) Event {
     // Schedule the next post creation for this user
     const creation_delay = simconf.creation_delay.sample(rng);
     const duration_between_creation = simconf.post_inter_creation.sample(rng);
@@ -125,7 +125,7 @@ fn eventCreatePost(rng: Random, simconf: SimConfig, t_clock: f64, user_id: Index
     return new_post;
 }
 
-pub fn eventPropagate(rng: Random, simconf: SimConfig, t_clock: f64, current_uid: Index, post_id: Index, generated_events: u64) Event {
+pub fn eventPropagate(rng: Random, simconf: *const SimConfig, t_clock: f64, current_uid: Index, post_id: Index, generated_events: u64) Event {
     // Sample the delay ONCE for the broadcast
     const delay = simconf.propagation_delay.sample(rng);
 
@@ -159,7 +159,7 @@ fn stageOne(
     gpa: Allocator,
     arena: Allocator,
     rng: Random,
-    simconf: SimConfig,
+    simconf: *const SimConfig,
     graph: *Topology,
     queue: *EventQueue,
     metrics: *SimMetrics,
@@ -245,7 +245,7 @@ fn stageOne(
 pub fn initSessions(
     gpa: Allocator,
     rng: Random,
-    simconf: SimConfig,
+    simconf: *const SimConfig,
     graph: *Topology,
     queue: *EventQueue,
     metrics: *SimMetrics,
@@ -286,7 +286,7 @@ pub fn initSessions(
     }
 }
 
-pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: SimConfig, graph: *Topology, action_trace: *Io.Writer, session_trace: *Io.Writer, create_trace: *Io.Writer, propagate_trace: *Io.Writer) !SimResults {
+pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const SimConfig, graph: *Topology, action_trace: *Io.Writer, session_trace: *Io.Writer, create_trace: *Io.Writer, propagate_trace: *Io.Writer) !SimResults {
     var t_clock: f64 = 0.0;
 
     var metrics = SimMetrics{};

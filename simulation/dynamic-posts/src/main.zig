@@ -230,7 +230,7 @@ pub fn main(init: std.process.Init) !void {
         gpa,
         arena,
         rng,
-        config,
+        &config,
         &graph,
         action_writer,
         session_writer,
