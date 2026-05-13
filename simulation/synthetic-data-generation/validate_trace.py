@@ -121,7 +121,7 @@ def validate_action_trace(filepath):
                 continue
             data = json.loads(line)
 
-            if data["type"] in ("repost", "quote"):
+            if data["type"] == "repost":
                 user_id = data["user_id"]
                 post_id = data["post_id"]
                 pair = (user_id, post_id)
@@ -217,8 +217,7 @@ def validate_causality(create_trace_path, action_trace_path, session_trace_path)
                     "type": data["type"],
                 }
             )
-
-    events.sort(key=lambda x: x["time"])
+    events.sort(key=lambda x: (x["time"], 0 if x["event_type"] == "session" else 1))
 
     for event in events:
         user_id = event["user_id"]
