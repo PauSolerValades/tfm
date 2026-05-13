@@ -168,20 +168,14 @@ fn stageOne(
     propagate_trace: *Io.Writer,
 ) !void {
 
-    // there will be at least one post per user, so we ensure this capacity at the beginng
+    // We create an event per user to kickstart the user posts.
     try graph.user_seen_post.ensureItemCapacity(arena, graph.users.len);
     try graph.user_interacted_post.ensureItemCapacity(arena, graph.users.len);
     for (0..graph.users.len) |uid| {
-        // creator has seen and implicitly interacted with their own post (no self-interaction allowed)
-        graph.user_seen_post.set(uid, metrics.post_count);
-        graph.user_interacted_post.set(uid, metrics.post_count);
-
+        // we create a creation event
         const create_post = eventCreateWarmup(rng, simconf, @intCast(uid), metrics.generated_events);
         try queue.add(gpa, create_post);
         metrics.generated_events += 1;
-
-        graph.users.items(.num_posts)[uid] += 1;
-        try graph.posts.append(arena, Post{ .id = metrics.post_count, .author = @intCast(uid) });
     }
 
     while (t_clock.* <= simconf.warmup_time and queue.items.len > 0) {
