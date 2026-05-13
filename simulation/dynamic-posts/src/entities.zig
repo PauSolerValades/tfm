@@ -66,7 +66,9 @@ pub const Event = struct {
 /// found on both events. This is used in the global queue.
 pub fn compareEvent(context: void, a: Event, b: Event) Order {
     _ = context;
-    return std.math.order(a.time, b.time);
+    const time_order = std.math.order(a.time, b.time);
+    if (time_order != .eq) return time_order;
+    return std.math.order(a.id, b.id);
 }
 
 /// Event to contain in the user own timeline. Contains the minimum information
