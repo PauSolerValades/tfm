@@ -151,6 +151,9 @@ fn propagatePost(gpa: Allocator, graph: *Topology, t_clock: f64, user_id: Index,
     };
 
     for (followers) |fid| {
+        // Skip if follower already interacted with this post (liked/reposted).
+        // This avoids useless heap insertions for posts that would be skipped later.
+        if (graph.user_interacted_post.isSet(fid, post_id)) continue;
         try graph.timelines[fid].add(gpa, tl_event);
     }
 }
@@ -419,43 +422,41 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                 }
 
                 if (graph.timelines[current_uid].items.len != 0) {
-                    // now it's safe to pop it and use it
-                    const current_post = graph.timelines[current_uid].remove();
-                    const post_id: Index = current_post.post_id;
-
-                    // user already interacted with this post (liked or reposted). Skip it.
-                    // Posts that were only ignored can still be re-exposed via another propagation.
-                    if (graph.user_interacted_post.isSet(current_uid, post_id)) {
-                        const next_action = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
-                        try queue.add(gpa, next_action);
-                        metrics.generated_events += 1;
-                        //metrics.processed_events += 1;
-                        continue;
+                    // Drain already-interacted posts inline to avoid bouncing
+                    // through the global event queue for each skipped post.
+                    var post_id: ?Index = null;
+                    while (graph.timelines[current_uid].items.len != 0) {
+                        const p = graph.timelines[current_uid].remove();
+                        if (!graph.user_interacted_post.isSet(current_uid, p.post_id)) {
+                            post_id = p.post_id;
+                            break;
+                        }
                     }
 
+                    if (post_id) |pid| {
                     if (simconf.trace_to_file) {
-                        const a = TraceAction{ .time = t_clock, .type = act, .user_id = current_uid, .post_id = post_id, .event_id = metrics.processed_events, .gen_id = gen_id };
+                        const a = TraceAction{ .time = t_clock, .type = act, .user_id = current_uid, .post_id = pid, .event_id = metrics.processed_events, .gen_id = gen_id };
                         const bytes = std.mem.asBytes(&a);
                         try action_trace.writeAll(bytes);
                     }
 
                     // Always mark as seen (diagnostic: counts every exposure)
-                    graph.user_seen_post.set(current_uid, post_id);
+                    graph.user_seen_post.set(current_uid, pid);
                     metrics.impressions += 1;
 
                     switch (act) {
                         .repost => {
                             // desensitized: user propagated, can't interact with this post again
-                            graph.user_interacted_post.set(current_uid, post_id);
+                            graph.user_interacted_post.set(current_uid, pid);
 
-                            const propagate = eventPropagate(rng, simconf, t_clock, current_uid, post_id, metrics.generated_events);
+                            const propagate = eventPropagate(rng, simconf, t_clock, current_uid, pid, metrics.generated_events);
                             try queue.add(gpa, propagate);
                             metrics.generated_events += 1;
                             metrics.reposts += 1;
                         },
                         .like => {
                             // desensitized: user consumed and acknowledged (platform prevents double-liking)
-                            graph.user_interacted_post.set(current_uid, post_id);
+                            graph.user_interacted_post.set(current_uid, pid);
                             metrics.likes += 1;
                         },
                         .ignore => {
@@ -469,7 +470,7 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                     const event = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                     try queue.add(gpa, event);
                     metrics.generated_events += 1;
-                } else {
+                    } else {
                     graph.users.items(.is_online)[current_uid] = false;
 
                     metrics.total_online_time += (t_clock - graph.users.items(.session_start_time)[current_uid]);
@@ -488,6 +489,7 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                     // no need to nuke the timeline, it's already empty
                     metrics.processed_events += 1;
                 }
+            }
             },
 
             .propagate => |post_id| {

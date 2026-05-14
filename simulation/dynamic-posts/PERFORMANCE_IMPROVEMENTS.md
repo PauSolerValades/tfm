@@ -6,28 +6,27 @@ Items marked ~~strikethrough~~ have already been addressed.
 
 ---
 
-### 1. 🚨 Routing Already-Interacted Posts through the Global Event Queue
-**File:** `src/simulation.zig` (`.action` branch)  
-**The Issue:** Inside the `.action` branch, when a user pops a post from their timeline, the code checks `graph.user_interacted_post.isSet(current_uid, post_id)`. If the post was already interacted with (liked or reposted), the loop skips it but **schedules a new `.action` event and pushes it into the global event queue.** Only a single post is popped per event iteration. If a user has 1,000 already-interacted posts stacked at the top of their timeline, they will make 1,000 expensive round-trips through the $O(\log N)$ global priority queue just to drain them.  
-**The Fix:** Use a `while` loop to drain the timeline inline until an *unseen, un-interacted* post is found, and only then schedule the next action event:
-```zig
-var found_post: ?Index = null;
-while (graph.timelines[current_uid].items.len != 0) {
-    const p = graph.timelines[current_uid].remove();
-    if (!graph.user_interacted_post.isSet(current_uid, p.post_id)) {
-        found_post = p.post_id;
-        break;
-    }
-}
-// process found_post or handle empty timeline
-```
+### ~~1. 🚨 Routing Already-Interacted Posts through the Global Event Queue~~ ✅ FIXED
+**File:** `src/simulation.zig` (`.action` branch + `propagatePost`)
+
+Implemented as a **two-layer defense:**
+
+**Layer 1 — `propagatePost` guard:** A post is never inserted into a follower's timeline if that follower already interacted with it (`user_interacted_post.isSet(fid, post_id)`). This avoids useless heap insertions and potential allocations for posts that would be skipped later during `.action` processing.
+
+**Layer 2 — `.action` inline drain:** When a user processes their timeline, already-interacted posts are drained in a `while` loop at the same timestamp instead of bouncing through the global event queue one post at a time. Only once an un-interacted post is found (or the timeline empties) is the next action event scheduled.
+
+*Note: `user_seen_post` cannot be used as a gate in `propagatePost` — it would prevent legitimate re-exposure of ignored posts, breaking the Independent Cascade model (exposure ≠ adoption).*
+
+Original issue: each already-interacted post caused two O(log N) global queue operations (remove + add) plus random delay sampling. With 1,000 such posts, that was ~50,000 cache-missing heap hops for no semantic effect.
+
+---
 
 ### 2. 🚨 O(Degree) Push Propagation Bottleneck
 **File:** `src/simulation.zig` (`propagatePost`)  
-**The Issue:** When a post propagates, the code iterates over every single follower and pushes the event into their individual `TimelineHeap`. For a "celebrity" node with 1,000,000 followers, one propagation event triggers 1,000,000 $O(\log T)$ heap insertions and potential dynamic memory allocations. This is a classic HPC graph bottleneck.  
+**The Issue:** When a post propagates, the code iterates over every single follower and pushes the event into their individual `TimelineHeap`. For a "celebrity" node with 1,000,000 followers, one propagation event triggers 1,000,000 O(log T) heap insertions and potential dynamic memory allocations. This is a classic HPC graph bottleneck.  
 **The Fix:** 
 - **Short term:** Do not use `Heap` for timelines. Pushing to a flat `ArrayList` and using `std.sort` *only when the user comes online* is often much faster due to sequential memory access and vectorized sorting.
-- **Long term:** Shift to a "Pull" or "Hybrid" model where users dynamically pull from their followees' outboxes when they come online, completely eliminating the $O(N)$ push.
+- **Long term:** Shift to a "Pull" or "Hybrid" model where users dynamically pull from their followees' outboxes when they come online, completely eliminating the O(N) push.
 
 ### ~~3. Passing Large Structs by Value on the Hot Path~~ ✅ FIXED
 **File:** `src/simulation.zig` (`eventAction`, `eventSessionStart`, etc.)  

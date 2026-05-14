@@ -22,11 +22,11 @@ def check_general_constraints(filepath):
     Validates general constraints applicable to ALL trace files:
     1. time is always increasing (non-decreasing).
     2. event_id is never repeated.
-    3. gen_id is never repeated.
+    3. Collects gen_ids for global uniqueness check (done in main).
     """
     last_time = -1.0
     seen_event_ids = set()
-    seen_gen_ids = set()
+    gen_ids = set()
 
     try:
         with open(filepath, "r") as f:
@@ -42,7 +42,7 @@ def check_general_constraints(filepath):
                     print(
                         f"[x] [General Error] {filepath} line {line_num}: Time went backwards ({current_time} < {last_time})."
                     )
-                    return False
+                    return (False, None)
                 last_time = current_time
 
                 # Rule: event_id not repeated
@@ -51,29 +51,25 @@ def check_general_constraints(filepath):
                     print(
                         f"[x] [General Error] {filepath} line {line_num}: Repeated event_id {event_id}."
                     )
-                    return False
+                    return (False, None)
                 seen_event_ids.add(event_id)
 
-                # Rule: gen_id not repeated
+                # Collect gen_id for global cross-file check
                 gen_id = data["gen_id"]
-                if gen_id in seen_gen_ids:
-                    print(
-                        f"[x] [General Error] {filepath} line {line_num}: Repeated gen_id {gen_id}."
-                    )
-                    return False
-                seen_gen_ids.add(gen_id)
+                gen_ids.add(gen_id)
 
     except FileNotFoundError:
         print(f"File not found: {filepath}")
-        return False
+        return (False, None)
 
-    return True
+    return (True, gen_ids)
 
 
 def validate_create_trace(filepath, max_posts_per_user):
     print(f"Analyzing Create Trace: {filepath}...")
-    if not check_general_constraints(filepath):
-        return False
+    valid, gen_ids = check_general_constraints(filepath)
+    if not valid:
+        return (False, None)
 
     seen_post_ids = set()
     user_post_counts = defaultdict(int)
@@ -105,13 +101,14 @@ def validate_create_trace(filepath, max_posts_per_user):
                 return False
 
     print("[✓] Create Trace Passed!")
-    return True
+    return (True, gen_ids)
 
 
 def validate_action_trace(filepath):
     print(f"Analyzing Action Trace: {filepath}...")
-    if not check_general_constraints(filepath):
-        return False
+    valid, gen_ids = check_general_constraints(filepath)
+    if not valid:
+        return (False, None)
 
     seen_reposts = set()
 
@@ -134,13 +131,14 @@ def validate_action_trace(filepath):
                 seen_reposts.add(pair)
 
     print("[✓] Action Trace Passed!")
-    return True
+    return (True, gen_ids)
 
 
 def validate_session_trace(filepath):
     print(f"Analyzing Session Trace: {filepath}...")
-    if not check_general_constraints(filepath):
-        return False
+    valid, gen_ids = check_general_constraints(filepath)
+    if not valid:
+        return (False, None)
 
     user_session_state = {}
 
@@ -163,15 +161,16 @@ def validate_session_trace(filepath):
             user_session_state[user_id] = session_type
 
     print("[✓] Session Trace Passed!")
-    return True
+    return (True, gen_ids)
 
 
 def validate_propagate_trace(filepath):
     print(f"Analyzing Propagate Trace: {filepath}...")
-    if not check_general_constraints(filepath):
-        return False
+    valid, gen_ids = check_general_constraints(filepath)
+    if not valid:
+        return (False, None)
     print("[✓] Propagate Trace Passed!")
-    return True
+    return (True, gen_ids)
 
 
 def validate_causality(create_trace_path, action_trace_path, session_trace_path):
@@ -326,22 +325,27 @@ def validate_topology(
         elif event["event_type"] == "action":
             valid_source = False
 
-            # Safeguard: The author is always allowed to see their own post
-            if user_id == post_authors.get(post_id):
-                valid_source = True
-            else:
-                # User MUST follow at least one person who has already propagated this post
-                for propagator in active_propagators[post_id]:
-                    if user_id in graph.get(propagator, []):
-                        valid_source = True
-                        break
+            # A user MUST follow at least one person who has already propagated this post.
+            # Note: the author can act on their own post ONLY if they follow a propagator
+            # (which in practice means via a repost from a follower). Direct self-action is
+            # impossible in the sim (author is desensitized) and is rejected here.
+            for propagator in active_propagators[post_id]:
+                if user_id in graph.get(propagator, []):
+                    valid_source = True
+                    break
 
             if not valid_source:
+                author = post_authors.get(post_id)
                 print(
                     f"[x] [Topology Error] User {user_id} acted on post {post_id} at time {event['time']}."
                 )
-                print(f"    -> They do not follow any valid propagator.")
-                print(f"    -> Author of this post: {post_authors.get(post_id)}")
+                if user_id == author:
+                    print(
+                        f"    -> Self-action detected! Users cannot act on their own posts."
+                    )
+                else:
+                    print(f"    -> They do not follow any valid propagator.")
+                print(f"    -> Author of this post: {author}")
                 print(
                     f"    -> Active propagators so far: {list(active_propagators[post_id])}"
                 )
@@ -376,10 +380,32 @@ def main():
         max_posts_per_user = config["max_posts_per_user"]
 
     # Run Baseline Validations
-    create_valid = validate_create_trace(args.create, max_posts_per_user)
-    action_valid = validate_action_trace(args.action)
-    session_valid = validate_session_trace(args.session)
-    propagate_valid = validate_propagate_trace(args.propagate)
+    create_valid, create_gen = validate_create_trace(args.create, max_posts_per_user)
+    action_valid, action_gen = validate_action_trace(args.action)
+    session_valid, session_gen = validate_session_trace(args.session)
+    propagate_valid, propagate_gen = validate_propagate_trace(args.propagate)
+
+    # Global gen_id uniqueness check across all trace files
+    gen_id_valid = True
+    if all([create_valid, action_valid, session_valid, propagate_valid]):
+        all_gen_sets = [
+            ("create", create_gen),
+            ("action", action_gen),
+            ("session", session_gen),
+            ("propagate", propagate_gen),
+        ]
+        seen = {}
+        for name, gen_set in all_gen_sets:
+            for gid in gen_set:
+                if gid in seen:
+                    print(
+                        f"[x] [Global gen_id Error] gen_id {gid} appears in both {seen[gid]} trace and {name} trace."
+                    )
+                    gen_id_valid = False
+                    break
+                seen[gid] = name
+            if not gen_id_valid:
+                break
 
     causality_valid = validate_causality(args.create, args.action, args.session)
 
@@ -394,6 +420,7 @@ def main():
             action_valid,
             session_valid,
             propagate_valid,
+            gen_id_valid,
             causality_valid,
             topology_valid,
         ]
