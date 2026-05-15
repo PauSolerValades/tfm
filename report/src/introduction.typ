@@ -5,31 +5,36 @@
 #comment[So right now its contents accurate, format inaccurate]
 
 
-
 *Context*: 
-- what is the state of the art in OSN simulations. Mainly, LLM AMB.
+- Introduce what a OSN is, and make the following distinction about content diffusion. Factors that affect the content diffusion:
+ - User behaviour: posting frequencies, session lenghts...
+ - Technical setup: (affordances): what does the platform do for the user to see content, such as recommender algorithms, notifications and stuff.
+ - User-content interaction: a user is more likely to engage with similar content to him.
+- what is the state of the art in OSN simulations, which are AMB. (note, LLM are just too new and far away from this, lets just ingnore them)
 - Why the different approach (DES) is and will be useful with the extension of the work
 
 *Justification*:
 - study information diffusion on social networks is necessary as they exerce a strong influence on lots of people in several aspects of life.
+- Same as DeSiRe @lasser2025desire project: democracies need functioning civic discourse to enable its citizends to act on the same topic at the same time. They get their main info from social media, therefore, it is very important to understand how the discourse actually works.
 
 
 *Objectives*
-- Define a model that resembles a subset of the characterisitcs of an microblogging social network.
+- Define a model that resembles the main subset of the característics of an microblogging social network.
 - Implement a simulation according to the model. Verify it's correctness on four key metrics.
-- Find out which characteristics of the post makes it travel further away
-#comment[How should I frame this now that we are dropping the embedding? should I change the objectives or frame it as a small step to a bigger stone.]
+- How does information diffuses with content aware posts in a real topology network? This is the first stepping stone in having a more realistic simulation with content-aware posts and non users homogeneity.
+
 
 *Hypothesis*
-A discrete event simulation is a good model for a real social network 
-There are some post characteristics of the content of the posts that they make them much more likely to be shared.
-#comment[all hypothesis were regarding content, now what?]
+How accurate and good a social network simulation with not taking into account the third one, as the third is out of scope and future work? So what we show is not necessarily #comment[adapt this exact wording to results] (realistic) behaviour but isolates the contribution of (simple) user behaviour and platform affordances to information spread.
 
 *Research Question*
 - Is a DES a good way to model a microblogging social network?
 - How can we introduce a meaningful way to detect similarities of posts and users?
 - Which are appropiate mechanism to make user behaviour (when seeing a post) change according to the contents of the post?
 - Are some post contents influential to how far is the post going to travel? 
+- what are user action frequencies on BlueSky, such as creation, reposting, liking and session lengths?
+- what information diffusion patterns do we observe under realistic user action frequencies and social-graph based content recommendation?
+#comment[I have to come back here when results is done to actually ask the proper quesitons, or at least have them be much more accurate]
 
 *Report structure*
 - Chapter 1: This chapter, introduction.

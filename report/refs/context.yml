@@ -562,3 +562,24 @@ mastodon-social-network:
     title: Wikipedia, The Free Encyclopedia
     publisher: Wikimedia Foundation
 
+lasser2025desire:
+  type: Article
+  title: "Designing Social Media Content Recommendation Algorithms for Societal Good"
+  author:
+    - Lasser, Jana
+    - Poechhacker, Nikolaus
+  date: 2025-05-05
+  language: en
+  serial-number:
+    doi: "10.1111/nyas.15359"
+  url:
+    value: https://www.researchgate.net/publication/391454757_Designing_social_media_content_recommendation_algorithms_for_societal_good
+    date: 2026-05-15
+  parent:
+    type: Periodical
+    title: "Annals of the New York Academy of Sciences"
+    volume: 1548
+    issue: 1
+    page-range: 20-28
+    publisher: Wiley
+

@@ -10,7 +10,7 @@ This section aims to provide with basic definitions and understanding of the Soc
 
 #def(name: "Social Network")[a Social Network is a social structure consisting of a set of social actors (such as individuals or organizations) and social interactions between actors @wiki-social-network. They are studied by the SNA (Social Network Analysis field) which examines the structure of the relationships within those entities.]
 
-According to the definition then, any network that models any relationship between humans, groups or humans or human-made-organizations is classified as a social network.
+According to the definition then, any network that models any relationship between humans, groups of humans or human-made-organizations is classified as a social network.
 
 Online social newtorks (OSN) are a specific case of Social Networks, where the entities are users and posts, and the relationships are follow, followee, mute, block, create, repost, like, comment, quote, reply...
 
@@ -31,15 +31,16 @@ This section aims to characterize the topology of social networks according to t
 
 While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is:
 
+#todo[Think how (and if) a figure explaing this could work]
 *Definition* (Multilayer Network @kivela2014multilayer): A multilayer network is a quadruplet $M = (V_M, E_M, V, L)$, where:
 - $V$ is the set of all nodes in the system
-- $bold(L) = {L_a}_(a=1)^d$ is a sequence of sets of possible layers, where $d$ represents the number of distinct aspects (dimensions) of the network
+- $L = {L_a}_(a=1)^d$ is a sequence of sets of possible layers, where $d$ represents the number of distinct aspects (dimensions) of the network
 - $V_M subset.eq V times product_(a=1)^d L_a$ is the set of node-layer tuples, representing exactly which node exists in which layer
 - $E_M subset.eq V_M times V_M$ is the multilayer edge set connecting these tuples
 
 In an online social network environment, we can define two primary aspects ($d=2$): node types (users, posts, ...) and interaction types (follows, likes, reposts...). The point of this definition is that $G_M = (V_M, E_M)$ is a graph, so a Multilayer Network can be interpreted as a graph with specific labelings over the nodes and edges.
 
-We can also partition the edges into _intra-layer edges_ $E_A = {((u, bold(alpha), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))}$ and the _inter-layer edges_ as E_C = E_M - E_A.
+We can also partition the edges into _intra-layer edges_ $E_A = {((u, bold(alpha)), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))}$ and the _inter-layer edges_ as $E_C = E_M - E_A$.
 
 The adjacency matrix for a fully interconnected multilayer network can be represented by an order-$2(d+1)$ adjacency tensor $cal(A)$. The tensor elements $cal(A)_(u v bold(alpha) bold(beta))$ have a value of $1$ if there is an edge between node $u$ in layer $bold(alpha)$ and node $v$ in layer $bold(beta)$, and $0$ otherwise.
 
@@ -50,7 +51,7 @@ cal(A)_(u v bold(alpha) bold(beta)) = cases(
 )
 $
 
-To isolate the topological properties of specific subsystems (or, more intuitively, to "slice" the adjacency tensor), we can apply structural constraints. If we restrict our analysis to interactions occurring strictly within the same layer (disallowing inter-layer edges), the network possesses only diagonal couplings. With this restriction, we can express the relevant subsystem as an intra-layer adjacency tensor with elements $cal(A)_(u v bold(alpha)) = cal(A)_(u v bold(alpha) bold(alpha))$. 
+To isolate the topological properties of specific subsystems (or, more intuitively, to "slice" the adjacency tensor), we can apply structural constraints. If we restrict our analysis to interactions occurring strictly within the same layer (disallowing inter-layer edges), the network possesses only diagonal couplings. With this restriction, we can express the relevant subsystem as an intra-layer adjacency tensor with elements $cal(A)_(u v bold(alpha)) = cal(A)_(u v bold(alpha) bold(beta))$. 
 
 In other words, instead of analyzing the entire complex tensor $cal(A)$ simultaneously, we can fix the layer index $bold(alpha)$ to isolate a specific relationship. This extracts a standard 2D adjacency matrix $A^(bold(alpha))$ representing a single "slice" of the original tensor. This extraction process will be implicitly used in the following sections when describing the macroscopic topological properties of a single entity type and a single relationship.
 
@@ -59,81 +60,66 @@ In other words, instead of analyzing the entire complex tensor $cal(A)$ simultan
 
 Social networks properties can be classified in three distinct levels of magnification: the micro-scale, the macro-scale, and the meso-scale @wiki-social-network.
 
-- *Micro-scale* analysis focuses on the individual building blocks of the network: a single node and its immediate edges. Metrics at this level include a user's individual degree, their specific centrality, or the clustering coefficient of their immediate friends. 
-- *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. 
-- *Macro-scale* analysis of the global properties of the entire system. This includes the overarching scale-free degree distribution or the small-world average path length of the whole platform. Macro-scale metrics treat the network as a single, unified entity.
+- *Micro-scale* analysis focuses on the individual building blocks of the network: a single node and its immediate edges. Metrics at this level include a user's individual degree, their specific centrality.  
+- *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. All the homophily based process affect
+- *Macro-scale* analysis of the global properties of the entire system. This includes the overarching scale-free degree distribution or the small-world average path length of the whole platform, such as structural virality. Macro-scale metrics treat the network as a single, unified entity.
 
-Because online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties are the meso and macro-scale of the network, which usually combine metrics from the micro level to explain the bigger phenomena.
-
+Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties rellevant to societal metrics ---an therefore rellevant for our case study--- are the meso and macro-scale of the network.
 
 === Scale-Free Distribution
 <sec-sota-topo-scalefree>
 
 Let $k$ be the degree of a node $i in V$. Then, the probability $PP$ of a random node to be $k$ follows a power law.
 
-$ PP(k) ~ k^(-gamma) $
-
-where $gamma in [2,3]$, depending of the metric. Equivalently, it can also be expressed as: 
-
 $ PP(k = "deg(i)") = k^(-gamma) $
+
+where $gamma in [2,3]$, depending of the metric.
 
 The value of $gamma$ is obtained from the actual data, and will change according to which "slice" of $M$ we pick. That means that both the degree of a user for the followers relationship and the degree of a post with the repost relationship will follow powerlaws, with different $gamma$ in every case.
 
 Networks which follow this specific power law are called scale-free networks @wiki-scale-free-network @easley2010powerlaws.
+
+Specifically, in the multilayer network, both the entity user with relationship follower and the entity post with the total number of reposts are going to follow power laws with different gamma values.
 
 === Small-World Phenomena
 <sec-sota-topo-smallworld>
 
 Let's consider now the graph $G$ induced by the tensor which slice $A = cal(A)_(bold(alpha))$ by users and followers. That is, $G$ is an homogeneous graph with one type of directed edge: users and followers.
 
-Social Networks tend to organize themselves with clusters or friends or known people, with enough links between clusters (_weak links_) which make the distrance between two nodes very small @easley2010smallworld. This is formalized with the small-world network concept @wiki-small-world-network.
+Social Networks tend to organize themselves with clusters or friends or known people, with enough links between clusters (_weak links_) which make the distance between two nodes very small @easley2010smallworld. 
 
-#def(name: "Small-World Network")[A small-world network is a graph characterized by a high clustering coefficient and a low average path lengths.]
-
-There are several ways to measure clustering, but the small-world property refers to local clustering coefficient.
+There are several ways to measure clustering, as for example the local clustering coefficient.
 
 #def(name: "Clustering Coefficient")[the local clustering coefficient $C_i$ for a vertex $v_i$ is the proportion of the number of links that could possibly exist within them.]
 
-$ C_i = frac(|{e_(j k): v_j, v_k in N_i, e_(j k) in E}|, k_i(k_i-1)) $
+$ C_i = frac(|{e_(j k): v_j, v_k in N_i, e_(j k) in E}|, k_i (k_i-1)) $
 
-The global clustering coefficient associated to the whole graph G is the average of the locals $C = |V|^(-1) sum_(i=1)^(|V|) C_i$
+where $N_i$ is the neighborhood of the vertex $v_i$. The global clustering coefficient associated to the whole graph $G$ is the average of the locals $C = |V|^(-1) sum_(i=1)^(|V|) C_i$
 
-In a Small-World network, the average distance between two random nodes $L$ has to be proportional to the number of nodes of the network as in 
+Now, the small-world concept can be properly defined. @wiki-small-world-network.
+
+#def(name: "Small-World Network")[A small-world network is a graph characterized by a high clustering coefficient and a low average path length.]
+
+In a Small-World network, the average distance $L$ between two random nodes has to be proportional to the number of nodes of the network as in 
 
 $ L prop log |V| $
 
-Lastly, we will highlight a difference between the types of edges in a small-world network, concepts that explain the famous theory of six-degree-separation. 
-1. Strong Ties: friends or family members which form the thigtly couppled clusters on the network.
-2. Weak Ties: casual acquintances or work collegues form edges within the clusters, shortcuts between two potentially very different clusters.
+In a small-world network, the edges can be classified into two types, according if they are edge inter-clustering or intra-clustering:
+1. Strong Ties: edges that connect people with simililarity or strong connections, such as local communities or familiy members.
+2. Weak Ties: casual acquaintances or work collogues form edges within the clusters, shortcuts between two potentially very different clusters.
 
-The six-degree-separation theory is absolutely based on the existance of weak ties, as allows to move from a familiar homogeneous people to another cluster with very different individuals @centola2007complex.
+The six-degree-separation theory is explained by this differentation. The theory states that any two individuals in a social network are, at most, separated by six other individuals. This fact is consequence of the existence of weak ties, as allows to move from a familiar homogeneous people to another cluster with very different individuals @centola2007complex.
 
 === Homophily Dynamics
 <sec-sota-topo-homophily>
 
-Humans tend to associate themselves with similar people. This concept is known as Homophily. @easley2010contexts
+Humans tend to associate themselves with similar people, and this factor undelies all the connections within a social network. @easley2010contexts
 
 #def(name: "Homophily")[homophily (or assortativity) is the core sociological principle wherein human actors preferentially attach to others who possess similar attributes. @wiki-assortativity]
 
-Homophily will be split for categorization purposes according to the slices of $M$ which can be computed.
-- *Structural similarity*: Just users and follows: the only similitude applicable is the degree of the nodes. In this context homophily can directly be interpreted as "well-connected users should follow other very well-connected users".
-- *Categorical attributes*: if the multilayer network contains plains of categorical information about a node ---such as age, nationality, gender, location, political affiliation--- they can be used to compute homophily with a meaning regarding as the user nature; it can be interpreted as "similar users will be connected to also similar users"
-- *Semantic Similarity*: we could consider similar users regarding the content of the posts the user post and similarity of the users post content with other users. This could be interpreted as "a user follows users with similar output content and interest as himself", which could be used to explain content related phenomena.
+Homophily can be understood at different levels. At a structural network level can be interpreted as a user will generally follow users with a similar amount of followers, such as a popularity index, which stems from the topology of the network. 
 
-
-=== Structural Holes
-<sec-sota-topo-holes>
-
-The small-world effect (see @sec-sota-topo-smallworld) defines the network as a merge of clusters with weak ties connecting different clusters; the other side, the empty topological spaces between these dense communities, are equally vital to the analysis of information flow. 
-
-Structural holes refer to the explicit absence of ties between two alters who are both independently connected to an ego (Burt et al @burt1992structural). These structural deficits act as absolute insulators in network information flows, preventing redundant circulation.
-
-The severity of structural holes is quantified mathematically by the network constraint index $C_i$. This index measures the extent to which an ego's network time and social capital are concentrated in a single, highly redundant cluster. The dyadic constraint $c_(i j)$ that a specific contact $j$ exerts on node $i$ is calculated by integrating both the direct investments and the indirect dependencies flowing through mutual third-party contacts $q$.
-
-
-A high constraint score severely limits an actor's access to heterogeneous information, trapping the ego in an echo chamber. Conversely, a low constraint score signifies a radial, spanning network topology crossing numerous structural holes, allowing the actor to exploit non-redundant information cascades.
-
-The obtention of $C_i$ is computationally very expensive, and its an active topic on data mining and computer science @lou2013mining.
+There are other factors much more affected by homophily, such as user attributes ---a user will follow other users with similar age, gender, political affiliation--- and its the main explanation of same interests following, as in users who like the same topics, will tend to aggregate together and produce similar content about those topics. For more information on, see @sec-future.
 
 === Community Structure 
 <sec-sota-topo-community>
@@ -177,7 +163,7 @@ Traditionally, diffusion models are classified into three distinct mathematical 
 Epidemic models focus on the macroscopic diffusion of information, and they are primary modeled using classic compartmental models adapted from epidemiology. Despite lots of flavours for epidemic models being available (SIR, SIS, SIRS and Competitive Influence Diffusion), this section explains the SIR model to be able to properly contextualize them in the social networks field.
 
 An individual can be in three states
-+ Susceptible (S): can be infected by the virus (content).
++ Susceptible (S): can be infected by the virus.
 + Infectious (I): are actively transmitting the virus to non infected nor recovered neighbors.
 + Recovered (R): have gained immunity and cannot contract the infection again.
 
@@ -185,7 +171,7 @@ And the individual must go through them in the following specific order:
 
 $ S --> I --> R $
 
-Now, if we aknowledge that all the individuals in the system can be in one of the states, we can define, at a given instant $t$ that $V(t) = S(t) union I(t) union R(t)$ and if we choose to model the amount of individuals of each group, this can be easily written as the following dynamical system:
+Now, if we acknowledge that all the individuals in the system can be in one of the states, we can define, at a given instant $t$ that $V(t) = S(t) union I(t) union R(t)$ and if we choose to model the amount of individuals of each group, this can be easily written as the following dynamical system:
 
 $ 
 frac(d S(t), d t) = - beta S(t) I(t) \
@@ -204,18 +190,18 @@ The two other alternatives covered in the next sections reject the differential 
 === Cascade Models
 <sec-sota-diffusion-cascade>
 
-The Cascade model is an stochastic process that describes the flow of information with discrete events at a time $t$. It makes has the following rules:
+The Cascade model is an stochastic process that describes the flow of information with discrete events at a time $t$. It has the following rules:
 + States: at a time $t$ a node can be inactive (not spreading the information) or active (spreading the information).
-+ Monotonicity: Once a node $v$ becames active, it cannot go back to inactive.
++ Monotonicity: Once a node $v$ activates, it cannot go back to inactive.
 + One shot: every node can attempt the change of it's neighbors state once per edge.
 + Probability: every edge has a probability $p_(u,v)$ for $u$ to successfully activate $v$.
 + Independence: given a node $u$, multiple attempts to change node $u$ from their neigbours do not affect the probability of $u$ changing state.
 
-The process then goes as follows. For each active node $v$ at step $t$, it attempts to change state of every inactive neighbors $u$ with probability $p_(u,v)$. If the attempt succeeds, $u$ will be active and transmit the information at time $t+1$. Regardless of the result of that operation, the edge gets discarded from future information spread.
+The process then goes as follows: for every active node $v$ at step $t$, it attempts to change state of every inactive neighbors $u$ with probability $p_(u,v)$. If the attempt succeeds, $u$ will be active and transmit the information at time $t+1$. Regardless of the result of that operation, the edge gets discarded from future information spread.
 
 According how the probability is defined, we will have different cascade models. The most simple one, is the _Independent Cascade Model_, where the probability of $v$ activating $u$ at time $t$ $p_u (v)$ is constant, independent of the history of the history process so far. Another characteristic feature of the IC model is its order independence: the final integrated probability of a node being activated remains strictly invariant regardless of the temporal sequence in which its neighbors attempt transmission @zhang2014chapter1, or in other words, what matters is not the order of activations, but the amount of them.
 
-Crucially, regardless of whether the neighbor adopts the information, the original node can never attempt to activate that neighbor with that specific post again. This permanent refractory state perfectly encapsulates a simple contagion (see ), where a single exposure is entirely sufficient to trigger adoption @centola2007complex.
+Crucially, regardless of whether the neighbor adopts the information, the original node can never attempt to activate that neighbor with that specific post again. This permanent refractory state perfectly encapsulates a simple contagion (see #todo[future work]), where a single exposure is entirely sufficient to trigger adoption @centola2007complex.
 
 
 === Continuous-Time Independent Cascade Model
