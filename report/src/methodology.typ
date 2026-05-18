@@ -120,7 +120,7 @@ Information diffusion (see @sec-sota-diffusionmodels) models information cascade
 
 The main mechanic of the simulation is the content propagation. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
 
-$ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $
+$ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $ <eq-proc-propagate>
 
 There are three distinct actions that a user can do in the simulation, which are three different types of entities that can be simultaneously queues at the same time.
 1. Create post: creates a new post $j$ and adds it to the simulation. This propagates the created post $j$

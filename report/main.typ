@@ -33,6 +33,8 @@
   #block(above: 1.5em, below: 1em, it)
 ]
 
+#set math.equation(numbering: "(1)")
+
 // ----------------------------------------------------------
 #include "src/cover.typ"
 

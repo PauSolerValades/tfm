@@ -11,8 +11,8 @@
 
 #let def(body, name: "") = {
   if name == "" {
-    [*Definition*: #body]
+    block(above: 1.3em, below: 1.3em)[_*Definition*_ : #body ]
   } else {
-    [*Definition* (#name): #body]
+    block(above: 1.3em, below: 1.3em)[_ *Definition* - #name _: #body ]
   }
 }

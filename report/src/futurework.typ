@@ -43,7 +43,7 @@ The (LT) model focuses on modeling the activation according to the neighbours of
 
 $ sum_(j in cal(N)(i)) w_(j i) >= theta_i $
  
-Because it strictly requires simultaneous or accumulated exposures, the LT model very accurately meso-scale properties of a social network: information spreading process easily saturates dense communities (clusters of the network, see @sec-sota-topo-community e.g. forming echo chambers) but frequently fails to cross structural holes (see @sec-sota-topo-holes), as the information struggles to propagate through weak ties between communities due to it's inherent nature @centola2007complex.
+Because it strictly requires simultaneous or accumulated exposures, the LT model very accurately meso-scale properties of a social network: information spreading process easily saturates dense communities (clusters of the network, see @sec-sota-topo-community e.g. forming echo chambers) as the information struggles to propagate through weak ties between communities due to it's inherent nature @centola2007complex.
 
 
 While the standard IC model dictates a "single-chance" refractory state suited for simple contagions, the diffusion of opinions often operates under complex logic. Meng et al. explicitly quantify this dynamic, demonstrating that the probability of a user adopting or retweeting information scales dynamically with the number of exposures from different neighbors @meng2025spreading. A user might ignore a topic upon its first appearance in their feed, but multiple exposures from disjoint clusters in their network significantly lower the threshold for interaction.

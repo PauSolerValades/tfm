@@ -9,57 +9,63 @@ This chapter covers the design decisions and implementation sensibilities to bui
 
 This section aims to give a general description of why the simulation is built the way it is, and how it has been build this way.
 
+=== Experiential Interpretation of the Simulation 
+<sec-design-experiential>
+
+The goal of this section is to map the real-world phenomena the simulation attempts to replicate directly to its mechanics, showcasing exactly what the implementation is translating into computational behavior.
+
+In essence, the experience that the simulation models is the behavior of several users checking a social network application to interact with the content on their timelines. To accurately resemble reality, not all users are online at the same time, and they can choose to not engage with content if they decide to do so. All the users in the simulation can choose between two primary actions when checking the timeline: either to create a post (which will be seen by their followers) or to interact with the existing timeline via reposts (which will also propagate to their followers) or likes.
+
+The main two factors to understand about the design of the simulation are also its main mechanics regarding how reality is resembled.
+
+Despite the model covering $N$ different users, an individual user's perspective is entirely isolated from the macroscopic scale of the social network---that is, from the other users. Regardless of the number of users, the subjective experience of scrolling a timeline remains identical. Therefore, any event that the simulation generates and processes is tied to a single user. 
+
+While a larger user base generates a significantly higher volume of global content, the individual's capacity to process and interact with that content remains strictly localized and bounded by human limitations. A good analogy would be that every user is running their own isolated micro-simulation, but they are all merged together globally to allow content to propagate in the network.
+
+The other important mechanic is the decoupling of the users' intent from the content on their timelines. The timeline operates as an independent, autonomous entity that aggregates posts curated by the broader network. When a user decides to open the application and scroll, this underlying intent is completely distinct from the specific posts they will encounter.
+
+In real life, a user logs onto a social platform and decides to engage. However, the specific piece of information they interact with depends entirely on what the network has autonomously surfaced to the top of their feed at that exact moment. They react to this presented content---based on their behavioral policy $pi$--- without prior knowledge of what the content would be. If a user exhausts the available posts in their feed, their session naturally concludes. 
+
+
 === Aims and Objectives
 
-The primary objective of this computational architecture is to overcome the severe scalability limits inherent in general-purpose Discrete-Event Simulation (DES) packages. While off-the-shelf simulation software is highly effective for localized queuing networks, evaluating the Continuous-Time Independent Cascade (CTIC) model across a microblogging topology requires simulating millions of highly interconnected nodes over continuous time. To achieve statistical convergence and properly explore the parameter space, the model must be replicated hundreds of times.
+The objective is to build a highly performant Discrete-Event Simulation which guarantees some degree of scalability while keeping itself in a reasonable time-frame execution. While off-the-shelf simulation software ---such as #todo[ask pau fontseca]--- is highly effective for localized queuing networks, evaluating the Continuous-Time Independent Cascade (CTIC) model across a microblogging topology requires simulating millions of highly interconnected nodes over continuous time. To achieve statistical convergence and properly explore the parameter space, the model must be replicated hundreds of times.
 
-Under these constraints, relying on traditional, object-heavy simulation tools would result in computationally intractable wall-clock execution times. Therefore, a custom, highly optimized simulation engine was developed from the ground up. The engine is implemented in Zig @zig, a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (see @sec-design-overview-techology and @ sec-design-implementation). By explicitly controlling memory layout and enforcing CPU cache locality, the architecture minimizes the overhead of stochastic event generation and state evaluation, reducing the computational bottleneck of simulating a 10-million-user network to a practically executable timeframe.
+Under these constraints, relying on traditional, object-heavy simulation tools would result in computationally intractable wall-clock execution times #todo[idk if this claim is true, but it defnitely feels true], as well as the author of this work lack of experience with said softwares. Therefore, a custom, highly optimized simulation engine was developed from the ground up. To reduce the computational bottleneck of simulating a 1-million-user network to a practically executable timeframe, this custom architecture must explicitly control memory layout and enforce CPU cache locality, minimizing the overhead of stochastic event generation and state evaluation.
 
-=== Architecture 
-<sec-design-architecture>
+=== Technology Approach 
+<sec-design-techology>
 
-The simulation engine operates as a centralized Discrete-Event Simulation, where the global flow of continuous time is strictly dictated by a centralized priority queue $Q$. To fully grasp how the theoretical model (see @sec-method-model) is operationalized, it is necessary to understand the holistic lifecycle of the program from initialization to termination.
+#comment[Check this section once the results section is actually finished]
 
-A single execution of the simulation follows a strict three-phase lifecycle (see @sec-design-lifecycle for a more extensive description): 1) loads the topological graph of the social network into memory, in a format adequate for the simulation to check which users follows who. Then, 2) the simulation runs a warm-up phase to fill user timelines deactivating all other events, as it does not produce degenerate behaviour on starting. Lastly 3) the main event loop starts, where the engine extracts the event with the smallest temporal timestamp from the future event set ($"pop"(Q)$), advanced the clock of the simulation to that instant, processes the state transition, and schedules future events of the same time. This loop runs until the event horizon is exhausted.  
+Because the validity of any simulation can relay on sheer computational volume and repeated runs to achieve statistical significance, a suboptimal implementation can easily contradict the underlying assumptions needed to guarantee a successful process. Execution speed, deterministic behavior, and the tightly optimized computational loops mentioned above are paramount. 
 
-The simulation emulates a user seeing their timeline, which is translated with the following two facts:
-1. independence of users within the event loop.
-2. independence of the actions 
+The first step in achieving this explicit memory control is choosing the appropriate tools for the job. Interpreted languages like Python #todo[cite] and R #todo[cite] are immediately discarded; even on powerful hardware, the overhead of interpretation introduces unacceptable latency for massive, CPU-bound simulation loops and they do not offer control over memory allocation ---reason why the excel·lent performant Julia is also discarded--- the most critical performance killer as any garbage collector memory strategy will affect performant greatly. Following this logic, manual memory management becomes necessary to deeply optimize performance and take full advantage of CPU caching. With requirements pointing strictly toward a systems language with manual memory management, the engine was implemented in Zig @zig.
 
-A worth remarking architectural distinction within the event loop is the strict independence of the user actors and the abstraction of their actions. In the theoretical model, a user interacts with a specific post. However, within the simulation engine, an `action` event scheduled in $Q$ is entirely "blind" to the content. 
+Zig is a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (#todo[see] @ sec-design-implementation). By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (#todo[see] @ sec-des-hpc), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
 
-When an `action` event fires for user $u$, it merely signals the user's cognitive availability to consume information. The engine then inspects the user's independent, localized timeline queue. If the timeline is populated, the user extracts the most recent post and applies their reactive behavioral policy ($pi_"act"$)—choosing to ignore, like, or repost it. 
-
-This decoupled design tries to mimics human behavior on microblogging platforms: a user logs online and decides to scroll (the event), but what they actually interact with is entirely dependent on what the network has autonomously deposited at the top of their feed at that specific millisecond. If the timeline is empty when the `action` event fires, the user ends their session, as all the content it can see has been consumed.
-
-=== Technology Approach
-<sec-design-overview-techology>
-Because the validity of a DES relies entirely on sheer computational volume and repeated runs to achieve statistical significance, a suboptimal implementation can easily contradict the underlying assumptions needed to guarantee a successful process. Execution speed, deterministic behavior, and tightly optimized computational loops are paramount. 
-
-The first step in implementation is choosing the appropriate tools for the job. Interpreted languages like Python and R are immediately discarded; even on powerful hardware, the overhead of interpretation introduces unacceptable latency for massive, CPU-bound simulation loops. Following this logic, manual memory management becomes necessary to deeply optimize performance and take full advantage of CPU caching. This requirement effectively rules out garbage-collected languages such as Java or Go, which cannot guarantee the deterministic, low-latency execution and exact memory layout control required here. With requirements pointing strictly toward a systems language with manual memory management, the choice of Zig was clear.
-
-Zig is a general-purpose programming language and toolchain designed for maintaining robust, optimal, and reusable software. By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (see [TODO: @ sec-des-hpc]), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
 
 == Data Model
 <sec-design-entities>
 
-In this section we describe all the entities needed to define the data model of the program, and characterize it.
+This section describes the entities needed to define the data model of the simulation to properly characterize it.
 
-The aim of this data model is to translate the mathematical rules of the described model with the Time-Varying Heterogeneous Graph (see @sec-model) and the CTIC (see @sec-method-model) into concrete logical entities. In a Discrete-Event Simulation, these entities must encapsulate all necessary state variables to evaluate the Activity-Driven dynamics and continuous-time delays at any arbitrary simulation tick.
+The aim of this data model is to translate the mathematical rules of the described model with the Time-Varying Heterogeneous Graph (see @sec-model) and the CTIC based model (see @sec-method-model) into concrete logical entities. In a Discrete-Event Simulation, these entities must encapsulate all necessary state variables to evaluate the Activity-Driven dynamics and continuous-time delays at any arbitrary simulation tick.
 
-We define the core stateful entities as follows:
+== Event & Timeline Event
+<sec-design-event>
 
-- *Event*: The fundamental unit of temporal state transition, representing the elements residing in the global priority queue $Q$. An Event is a composite structure containing the scheduled execution time ($t$), the targeted user, a session validation tracker, and the specific payload (`EventType`) dictating the transition: a state-change (`session`), a generative action (`create`), a reactive action (`action`), or a delayed network diffusion (`propagate`).
-- *Timeline Event*: A highly specialized, minimalist tuple linking a continuous timestamp to a `post_id`. This is the exclusive entity stored within a user's localized Max-Heap timeline, stripping away all global event metadata to strictly represent the chronological arrival $t_a$ required to resolve the reverse-chronological queueing delay.
+The fundamental entity of the simulation is the *Event*. It represents a unit of temporal state transition with the elements residing in the global priority queue $Q$. An Event is a composite structure containing the scheduled execution time ($t$), the targeted user, a session validation tracker, and the specific payload (`EventType`) dictating the transition. The type of an event can be a user state-change (`session`), a post creation (`create`), an interaction with a post (`action`), or a information propagation (`propagate`).  #todo[check if a citation to a posterior document is needed. If it is, remove the next paragraph]
 
+This are the same event types described in @sec-method-des-mechanics, but with the extra `propagate`. The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$ (#todo[see] @ sec-design-sources-propagate).
+
+The simulation need to differentiate between what is an event that changes state ---such as the Event entity also described in this section--- and a smaller event to represent the contents of the timelines of a user, the *Timeline Event*. Its a highly specialized, minimalist tuple linking a continuous timestamp $t$ (when did the post arrive) with the `post_id` of the event the user sees. These events are stored in every user timeline $cal(T)_t (u)$, and are treated as the reverse-chronological storage: when a "pop" operation is performed, the event with the maximum time $t$ will be returned; this is the oppostite of the main queue $Q$, where a "pop" will return the event with the minium timestamp.
 
 === Users & Posts
 
-Users and Posts are the fundamental entities of the simulation, as they are the main actors of it.
+Users and Posts are the protagonist entities of the simulation, as they are the main actors of it.
 
-*User*
-
-The logical representation of a node $u in cal(U)$. The User entity tracks the dynamic variables necessary to evaluate activity and cognitive bottlenecks, which are
+A *User* is the logical represntation of a node $u in cal(U)$. The entity tracks the dynamic variables necessary to evaluate activity and cognitive bottlenecks, which are
 - `id`: to identify itself from other users.
 - `followers`: list of `id`s of other users that the user follows.
 - `policy`: the categorical distribution for choosing an action (see #todo[categorical]). Despite the homogeneity of users assumption for simplification pourposes (@sec-method-des-assumptions), every user still has it's policy defines, but it's the same for everyone.
@@ -68,36 +74,190 @@ The logical representation of a node $u in cal(U)$. The User entity tracks the d
 - `online_status`: if it's online or offline.
 - `session_gen`: in which session is the user in. See #todo[section about activity driven far in the future] to see why this is needed.
 - `timeline`: contains which posts are in the user timeline at time $t$ #todo[citar la secció on parlo de la timeline?]
-*Post* 
 
-The logical representation of an item $i in cal(I)$. As an immutable information commodity, the Post is deliberately simple, requiring only a unique, monotonically increasing identifier `id` and a pointer to its author's `author`.
+The *Post* is the logical representation of an item $i in cal(I)$. It requires only a unique, monotonically increasing identifier `id` and a pointer to its author's `author`. This entity remains highly open to new characteristics and features (see @sec-future)
+
+=== Relationships between Entities 
+
+Once all the entities have been described, the data model can be defined by the relationships that link them together. #todo[THE FIGURE] @ fig-design-relationships summarizes these structural links; the following paragraphs walk through each one in detail.
+
+A *User* *authors* a *Post*. The relationship is tracked through the `author` field stored in every post, linking it back to exactly one user. A user may author zero or more posts over their lifetime, but every post has a single author.
+
+A *User* *owns a timeline* composed of *TimelineEvents*. Each user carries a reverse-chronological heap that stores every post arrival scheduled for that user. The timeline is emptied when the user goes offline and repopulated as propagations arrive.
+
+A *TimelineEvent* *references* a *Post* via its `post_id`. A single post may appear in many timelines simultaneously ---one per follower who received it--- each entry tagged with its own arrival timestamp. The reference is unidirectional: a post does not know which timelines contain it.
+
+*Events* are *contained* in the global priority queue $Q$ and carry a `user_id` targeting the *User* whose state will be mutated when the event is extracted. Beyond this containment and the user target, events hold no further structural relationship with the other entities ---the effect of each event is dictated by its `EventType` payload and belongs to the processing logic (see @sec-design-mechanics), not to the data model.
+
+These relationships are entirely static. The data model describes what can be stored and how it connects, not when or why those connections are created. The dynamics — who sees a post, when a session starts, what action a user takes — belong to the event processing logic (see @sec-design-mechanics) and are not part of the data model itself.
+
+#todo[Here we need a figure like so bad]
+
+== Event Sources 
+<sec-design-mechanics> 
+
+This section describes the implementation strategies of the different sources of the simulation provided in @sec-design-event, and which logic follows the simulation when an event gets processed.
 
 
-=== Events & EventType
+=== Propagate
 
-The second most important entity in the simulation are the events, which are the ones on the queue $Q$. An *Event* contains
-- `time` of creation of the event.
-- `type` of the event, described in the lower paragraph.
-- `user_id` which this event applies.
-- `session_gen` in which the event has been generated.
-- `id` of the event, which is the order in which the events are created.
+The first event we must cover is the only event that does not correspond to any physical event: the `propagate` event.
 
-The `type` of the event have been described in @sec-method-des-mechanics, but not exhaustively if we take the implementation as the reference. Specifically, there is another event called `propagate` when a post has to be propagated, it will always need to be done in the future. The following list describes the types according to the information they hold inside the `Event`
-- `create`: it contains no payload, will just generate a post with a non used id (`id = id_last_post + 1`).
-- `session`: contains the payload `start` or `end` enum, according to what user session has to do.
-- `action`: contains the payload `nothing`, `like` or `repost` enum, knowing which action should the user make with next post.
-- `propagate`: contains the `post_id` to be propagated as payload.
+Refreshing the CTIC model (see @sec-sota-diffusion-ctic and @sec-method-model), there is a strong enphasis in the incubation time for the infection:
 
-The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$.
+ cite [the delay between a node $j$ becoming infected at time $t_j$ and subjecquently infecting an unifected neighor $i$ at time $t_i > t_j$]
 
-=== Timelines
+which not only serves the purpose of modeling realty, but that delay helps the model not being degenerated.
 
-To satisfy the reverse-chronological consumption constraint, the timeline associated to every user is modeled as a Max Heap. This ensures that the element with the largest timestamp is always returned first. This structure must be carefully managed to prevent unbound memory growth, which is why timelines are explicitly cleared when a user logs off.
+*Example*
 
+Consider a minimal microblogging network of three users forming a directed cycle:
+
+ #todo[we would need another pic here]
+
+$ cal(U) = {A, B, C} $
+
+$ cal(N)_"out" (A) = {B}, quad cal(N)_"out" (B) = {C}, quad cal(N)_"out" (C) = {A} $
+
+Thus the follower (in-neighbor) sets ---the targets of propagation--- are:
+
+$ cal(N)_"in" (A) = {C}, quad cal(N)_"in" (B) = {A}, quad cal(N)_"in" (C) = {B} $
+
+Assume all three users are permanently online ($cal(O)(u) = T quad forall u in cal(U)$), and let user $A$ start a cascade by creating a post $p_0$ at $t = 0$. We trace the simulation under two regimes.
+
+*Without propagation delay ($Delta_p = 0$).* At creation time, the post is delivered directly to the creator's followers at the same timestamp:
+
+1. $t = 0: quad Q = [(A, "create", 0)]$ Pop: $A$ creates $p_0$. Propagation fires over $cal(N)_"in" (A) = {C}$, scheduling an action event for $C$ at $t=0$:
+
+$ Q = [(C, "action", 0)] $
+
+2. $t = 0: quad$ Pop $(C, "action", 0)$. $C$ inspects $p_0$ in $cal(T)_0 (C)$ and, per policy $pi$, reposts. Propagation fires over $cal(N)_"in" (C) = {B}$:
+
+$ Q = [(B, "action", 0)] $
+
+3. $t = 0: quad$ Pop $(B, "action", 0)$. $B$ reposts $p_0$. Propagation over $cal(N)_"in" (B) = {A}$:
+
+$ Q = [(A, "action", 0)] $
+
+In a single instant $t=0$, three cascading actions have taken place. The post traverses the entire network without any notion of temporal distance: creation has the same timestamp as the last cascaded action. This degeneracy collapses any incremental diffusion process into an instantaneous event, and renders the queue $Q$ useless as a scheduling mechanism.
+
+*With propagation delay ($Delta_p > 0$).* Rather than delivering posts directly, the creation event pushes a propagate event into the future for each follower, at $t_c + Delta_p$:
+
+1. $t = 0: quad Q = [(A, "create", 0)]$ Pop: $A$ creates $p_0$. For each $v in cal(N)_"in"(A) = {C}$, schedule propagation at $0 + Delta_p$:
+
+$ Q = [(C, "propagate", Delta_p)] $
+
+2. $t = Delta_p: quad$ Pop $(C, "propagate", Delta_p)$. $p_0$ arrives in $cal(T)_(Delta_p)(C)$. $C$ inspects it and reposts. Propagation for $C$'s followers at $Delta_p + Delta_p$:
+
+$ Q = [(B, "propagate", 2Delta_p)] $
+
+3. $t = 2Delta_p: quad$ Pop $(B, "propagate", 2Delta_p)$. $p_0$ appears in $cal(T)_(2Delta_p)(B)$. $B$ reposts:
+
+$ Q = [(A, "propagate", 3Delta_p)] $
+
+4. $t = 3Delta_p: quad$ Pop $(A, "propagate", 3Delta_p)$. $p_0$ lands in $A$'s timeline. Since $A$ created $p_0$, the already-interacted check $(A, p_0) in cal(H)_(3Delta_p)(A)$ prevents re-exposure. The cascade ends.
+
+Each hop now costs $Delta_p$ units of time. The cascade unfolds as a genuine temporal process, with every user action tied to a distinct timestamp. The queue $Q$ regains its role as a proper temporal scheduler, and the resulting cascade graph reflects the incubation time that is central to the CTIC model (see @sec-sota-diffusion-ctic).
+
+
+As it can be seen in the example, a delay is not a commodity, but a necessity for the model to not degenerate. Following DES best practices, instead of modifiying the timelines of the user directly with the added delay, we create a `propagate` event, which will make the posts appear to the users timelines at $t + Delta_p$, when it's properly popped from the queue $Q$ and processed as an actual event.
+
+The `propagate` event therefore contains two critical pieces of information:
+- `post_id`: which post has to be propagated.
+- `user_id`: the id of the user that created or reposted the post with `post_id`.
+
+The @proc-propagate showcases the implementation of the propagation, which is the same than the described in @eq-proc-propagate at section the description of the DES simulation (see @sec-method-des-mechanics).
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Procedure of propagation of a post")[
+  #pseudocode-list[
+    + *procedure* $"PropagatePost"(u: cal(U), i: cal(I), t_c: T)$
+      + *for* $v in cal(N)_"in" (u)$
+        + *if* $(v, i) in.not cal(H)_(t_c) (v)$ *then*
+          + $"push"(cal(T)(v), "TimelineEvent"{t_c, i})$
+        + *end*
+      + *end*
+    + *end*
+  ] 
+]<proc-propagate>
+
+When a propagate event reaches the head of $Q$, the main event loop dispatches it to the handler below, as can be seen in @proc-propagate-switch. Unlike creation or action events, the propagate handler performs no validation checks (the event is always valid by construction) and directly delivers the post to all eligible followers.
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Propagate event dispatch in the main simulation loop")[
+  #pseudocode-list[
+    + *procedure* $"HandlePropagate"(t: T, u: cal(U), p: cal(I))$
+      + $"pop"(Q) arrow.r (t, u, "propagate"(p))$
+      + $"PropagatePost"(u, p, t)$
+      + $"processed_events" arrow.l "processed_events" + 1$
+    + *end*
+  ]
+]<proc-propagate-switch>
+
+=== Sessions
+
+To implement an activity based behaviour, the concept of session had to be introduced in the model (see @sec-model-sessions), and while being very natural to implement, there are some potential contradictions with how the events are scheduled.
+
+In @sec-method-des-mechanics it is explicitly stated that there are four types of events, and the session of a user $u$ is managed by an event $(u, t_1, "go_offline")$ and $(u, t_2, "go_online")$. Let's showcase the potential problem with the following example.
+
+Lets assume a simulation with $Q$ in the following state at $t_c=0$ 
+
+$ Q = {(u, 2, "create"), (u, 5, "go_offline")} $
+
+When the first event is processed with $"pop"(Q)$, a post gets created, and the delay
+
+
+The introduction of sessions introduces several operational challenges to the discrete event simulation, specifically regarding the interruption of stochastic processes. Time between actions and creations are measured *within a session* rather than globally. 
+
+Because DES relies on uninterrupted renewal processes to sample probability distributions correctly, pausing a user's activity when they go offline can mathematically invalidate the process. When a session ends mid-renewal, events that were scheduled to occur at a future time (sampled from, e.g., the inter-action distribution) remain in the queue—yet the user's timeline has been cleared and the session context destroyed. If those orphaned events were allowed to execute in a later session, the inter-action times would no longer follow the intended distribution: some would be effectively truncated by the offline interval, others would be shifted across session boundaries. A goodness-of-fit test would therefore fail, as the process would no longer be an uninterrupted renewal.
+
+To make this concrete, consider a scenario where the inter-session interval is inadequately short relative to the inter-action time. Let user $u$ start online at $t = 0$. The simulation queues three events for this session: an action $e_"act"$ at $t = 8$ (sampled from a long-tailed inter-action distribution), a session end at $t = 3$ (the session duration being, by configuration, far shorter than the typical action gap), and a post creation at $t = 12$.
+
+At $t = 3$, the session end fires: $u$ goes offline, $cal(T)(u)$ is cleared, and a session start is scheduled at $t = 5$—the offline interval lasts only 2 time units, a short draw from the inter-session distribution. At $t = 5$, the session start fires: a fresh batch of events is generated (a new action at $t = 13$, a new session end at $t = 7$, a creation at $t = 15$, etc.). 
+
+At $t = 8$, the original action $e_"act"$—still sitting in $Q$—pops from the queue. The simulation blindly processes it: $u$ is online, so it attempts to act upon $cal(T)(u)$. However, the timeline was nuked at $t = 3$ and the posts it contained belonged to a previous session that is now gone. If $cal(T)(u)$ is empty, the simulation crashes or forces an early log-off. If posts happen to have accumulated from the new session, $u$ acts on them—but the inter-action time that was sampled as part of session 0's renewal process is now attributed to session 1, silently corrupting the calibrated distribution.
+
+This is the core problem: events from a finished session survive in the queue and leak into future sessions, breaking the renewal process. To circumvent this, the simulation associates a `session_gen` identifier to each user. Whenever a user goes offline and starts a new session, their `session_gen` counter increments. Every event scheduled during a session is stamped with the `session_gen` value active at scheduling time.
+
+When the simulation pops an event from the central queue, it first checks whether the session in which the event was generated is different from the one the user is currently in (`event.session_gen != user.session_gen`). If this condition holds true, the event is considered *stale* (originating from a previous session that was interrupted) and is safely discarded.
+
+Revisiting the example with the `session_gen` guard in place: at $t = 0$ user $u$ starts with $"session_gen" = 0$, and all scheduled events carry this stamp. At $t = 5$, when the session start fires, $"session_gen" (u)$ increments to $1$. At $t = 8$, when $e_"act"$ pops, its stamp ($0$) no longer matches $u$'s counter ($1$). The mismatch is detected immediately and the stale event is discarded—the renewal process in session 1 remains pristine.
+
+=== Create
+
+The `create` event creates a post entity simulation. When the post gets created, it augments by one the index of the last created post, and gets appended to the global post list.
+
+Whenever a `create` post 
+
+
+When a create event gets processed on the simu
+The create event contains no special payload, as it 
+A new id is generated, gets appended in the paginated bit set and the library array (cite the data structures sections)
+
+=== Actions
+
+To simulate the user decision making, a Categorical (or a generalized Bernoulli) distribution $pi$, with parameters $k=3, p_1, p_2, p_3$ event probabilities and support $x in {"nothing", "repost", "like"}$, with pdf $PP(x=i) = p_i$. The values of $p_i$ are obtained with calibration (see #todo[@ sec-data-cal]).
+
+The implementation of this distribution can be found in the `distributions` @soler2025distributions library, and the algorithm has been discussed already in @sec-method-rng-categorical.
 === Traces
 
-=== Data Model
-=== SimConfig & Metrics
+Traces are the main objective for the result study of the simulation. Every action performed during the simulation is serialized into structured records ---trace events--- that are written to disk for posterior analysis. Each trace event is a flat tuple of scalars uniquely identifying the simulation tick, the user who performed the action, the post involved (if any), and the kind of transition executed. There are four distinct trace event types, one for each `EventType` variant described in @sec-design-event, plus the propagation event. All trace events share a common metadata preamble:
+
+- `time`: the continuous simulation timestamp $t$ at which the event was processed.
+- `event_id`: a monotonically increasing, global identifier assigned to every event popped from $Q$.
+- `gen_id`: the random seed generation identifier used for stochastic decisions in the simulation run.
+- `user_id`: the identifier of the user that triggered the action.
+
+Beyond these common fields, each trace variant carries type-specific payload:
+
+- *TraceAction*: Logs an interaction with a post. It records the `post_id` of the post that the user saw in their timeline, along with the `type` of action chosen from the categorical distribution (ignore, like, or repost). This is the most frequent trace event, as it captures the core stochastic decision of the model: given a post in the timeline, what does the user do with it?
+
+- *TraceCreate*: Logs the authorship of a new post. It records the `post_id` assigned to the newly created post. Unlike action events, the creation does not require an action type, as the only outcome is the post entering the system. This trace is emitted whenever a `create` event is popped from $Q$ during a user's online session.
+
+- *TraceSession*:  Logs a change in the user's connectivity state. The `type` field encodes whether the session is starting (user comes online) or ending (user goes offline). These events delimit the activity windows of each user and are essential for reconstructing the timeline visibility windows during analysis.
+
+- *TracePropagation*: Logs the redistribution of a post to the followers of the reposting user. The `type` field stores the `post_id` being propagated, making this trace structurally identical to `TraceCreate` in its payload but semantically distinct: it represents the delayed diffusion step that occurs when a repost action is processed and the propagation delay $tau$ elapses. The separation between action and propagation is what preserves time causality in the simulation (see @sec-design-mechanics).
+
+By recording every state-transition in this structured format, the trace files provide a complete, auditable log of the simulation's execution. This enables offline reconstruction of user timelines, validation of the CTIC cascades (see #todo[section trace validation]), and statistical analysis of the emergent macro-level dynamics without re-running the simulation.
+
 
 == Simulation Lifecycle
 <sec-design-lifecycle>
@@ -200,61 +360,6 @@ The simulation relies on four main routines to govern the discrete event generat
 + *end*
 ]
 
-== Event Mechanics
-<sec-design-mechanics> 
-
-This section describes the implementation strategies of the different mechanics of the simulation provided in @sec-method-des-mechanics.
-
-=== Create
-
-A new id is generated, gets appended in the paginated bit set and the library array (cite the data structures sections)
-
-=== Sessions
-
-To implement an activity based behaviour, the concept of session had to be introduced in the model (see @sec-model-sessions), and while being very natural to implement, there are some potential contradictions with how the events are scheduled.
-
-In @sec-method-des-mechanics it is explicitly stated that there are four types of events, and the session of a user $u$ is managed by an event $(u, t_1, "go_offline")$ and $(u, t_2, "go_online")$. Let's showcase the potential problem with the following example.
-
-Lets assume a simulation with $Q$ in the following state at $t_c=0$ 
-
-$ Q = {(u, 2, "create"), (u, 5, "go_offline")} $
-
-When the first event is processed with $"pop"(Q)$, a post gets created, and the delay
-
-
-The introduction of sessions introduces several operational challenges to the discrete event simulation, specifically regarding the interruption of stochastic processes. Time between actions and creations are measured *within a session* rather than globally. 
-
-Because DES relies on uninterrupted renewal processes to sample probability distributions correctly, pausing a user's activity when they go offline can mathematically invalidate the process. When a session ends mid-renewal, events that were scheduled to occur at a future time (sampled from, e.g., the inter-action distribution) remain in the queue—yet the user's timeline has been cleared and the session context destroyed. If those orphaned events were allowed to execute in a later session, the inter-action times would no longer follow the intended distribution: some would be effectively truncated by the offline interval, others would be shifted across session boundaries. A goodness-of-fit test would therefore fail, as the process would no longer be an uninterrupted renewal.
-
-To make this concrete, consider a scenario where the inter-session interval is inadequately short relative to the inter-action time. Let user $u$ start online at $t = 0$. The simulation queues three events for this session: an action $e_"act"$ at $t = 8$ (sampled from a long-tailed inter-action distribution), a session end at $t = 3$ (the session duration being, by configuration, far shorter than the typical action gap), and a post creation at $t = 12$.
-
-At $t = 3$, the session end fires: $u$ goes offline, $cal(T)(u)$ is cleared, and a session start is scheduled at $t = 5$—the offline interval lasts only 2 time units, a short draw from the inter-session distribution. At $t = 5$, the session start fires: a fresh batch of events is generated (a new action at $t = 13$, a new session end at $t = 7$, a creation at $t = 15$, etc.). 
-
-At $t = 8$, the original action $e_"act"$—still sitting in $Q$—pops from the queue. The simulation blindly processes it: $u$ is online, so it attempts to act upon $cal(T)(u)$. However, the timeline was nuked at $t = 3$ and the posts it contained belonged to a previous session that is now gone. If $cal(T)(u)$ is empty, the simulation crashes or forces an early log-off. If posts happen to have accumulated from the new session, $u$ acts on them—but the inter-action time that was sampled as part of session 0's renewal process is now attributed to session 1, silently corrupting the calibrated distribution.
-
-This is the core problem: events from a finished session survive in the queue and leak into future sessions, breaking the renewal process. To circumvent this, the simulation associates a `session_gen` identifier to each user. Whenever a user goes offline and starts a new session, their `session_gen` counter increments. Every event scheduled during a session is stamped with the `session_gen` value active at scheduling time.
-
-When the simulation pops an event from the central queue, it first checks whether the session in which the event was generated is different from the one the user is currently in (`event.session_gen != user.session_gen`). If this condition holds true, the event is considered *stale* (originating from a previous session that was interrupted) and is safely discarded.
-
-Revisiting the example with the `session_gen` guard in place: at $t = 0$ user $u$ starts with $"session_gen" = 0$, and all scheduled events carry this stamp. At $t = 5$, when the session start fires, $"session_gen" (u)$ increments to $1$. At $t = 8$, when $e_"act"$ pops, its stamp ($0$) no longer matches $u$'s counter ($1$). The mismatch is detected immediately and the stale event is discarded—the renewal process in session 1 remains pristine.
-
-=== Actions
-
-To simulate the user decision making, a Categorical (or a generalized Bernoulli) distribution $pi$, with parameters $k=3, p_1, p_2, p_3$ event probabilities and support $x in {"nothing", "repost", "like"}$, with pdf $PP(x=i) = p_i$. The values of $p_i$ are obtained with calibration (see #todo[@ sec-data-cal]).
-
-The implementation of this distribution can be found in the `distributions` @soler2025distributions library, and the algorithm has been discussed already in @sec-method-rng-categorical.
-
-=== Propagate
-
-#pseudocode-list[
-+ *procedure* $"PropagatePost"(u, i, t_c)$
-  + *for* $v in cal(N)_"out"(u)$
-    + *if* $(v, i) in.not cal(S)$ *then*
-      + $"push"(cal(T)(v), "gen_arrival"(i, t_c))$
-    + *end*
-  + *end*
-+ *end*
-]
 
 == Time Causality
 
