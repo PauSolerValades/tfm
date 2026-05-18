@@ -434,43 +434,62 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                     }
 
                     if (post_id) |pid| {
-                    if (simconf.trace_to_file) {
-                        const a = TraceAction{ .time = t_clock, .type = act, .user_id = current_uid, .post_id = pid, .event_id = metrics.processed_events, .gen_id = gen_id };
-                        const bytes = std.mem.asBytes(&a);
-                        try action_trace.writeAll(bytes);
-                    }
+                        if (simconf.trace_to_file) {
+                            const a = TraceAction{ .time = t_clock, .type = act, .user_id = current_uid, .post_id = pid, .event_id = metrics.processed_events, .gen_id = gen_id };
+                            const bytes = std.mem.asBytes(&a);
+                            try action_trace.writeAll(bytes);
+                        }
 
-                    // Always mark as seen (diagnostic: counts every exposure)
-                    graph.user_seen_post.set(current_uid, pid);
-                    metrics.impressions += 1;
+                        // Always mark as seen (diagnostic: counts every exposure)
+                        graph.user_seen_post.set(current_uid, pid);
+                        metrics.impressions += 1;
 
-                    switch (act) {
-                        .repost => {
-                            // desensitized: user propagated, can't interact with this post again
-                            graph.user_interacted_post.set(current_uid, pid);
+                        switch (act) {
+                            .repost => {
+                                // desensitized: user propagated, can't interact with this post again
+                                graph.user_interacted_post.set(current_uid, pid);
 
-                            const propagate = eventPropagate(rng, simconf, t_clock, current_uid, pid, metrics.generated_events);
-                            try queue.add(gpa, propagate);
-                            metrics.generated_events += 1;
-                            metrics.reposts += 1;
-                        },
-                        .like => {
-                            // desensitized: user consumed and acknowledged (platform prevents double-liking)
-                            graph.user_interacted_post.set(current_uid, pid);
-                            metrics.likes += 1;
-                        },
-                        .ignore => {
-                            // NOT desensitized: user can be re-exposed to this post via another propagation
-                            // (aligned with Independent Cascade model: exposure ≠ adoption)
-                            metrics.ignored += 1;
-                        },
-                    }
-                    metrics.processed_events += 1;
+                                const propagate = eventPropagate(rng, simconf, t_clock, current_uid, pid, metrics.generated_events);
+                                try queue.add(gpa, propagate);
+                                metrics.generated_events += 1;
+                                metrics.reposts += 1;
+                            },
+                            .like => {
+                                // desensitized: user consumed and acknowledged (platform prevents double-liking)
+                                graph.user_interacted_post.set(current_uid, pid);
+                                metrics.likes += 1;
+                            },
+                            .ignore => {
+                                // NOT desensitized: user can be re-exposed to this post via another propagation
+                                // (aligned with Independent Cascade model: exposure ≠ adoption)
+                                metrics.ignored += 1;
+                            },
+                        }
+                        metrics.processed_events += 1;
 
-                    const event = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
-                    try queue.add(gpa, event);
-                    metrics.generated_events += 1;
+                        const event = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                        try queue.add(gpa, event);
+                        metrics.generated_events += 1;
                     } else {
+                        graph.users.items(.is_online)[current_uid] = false;
+
+                        metrics.total_online_time += (t_clock - graph.users.items(.session_start_time)[current_uid]);
+                        metrics.empty_timeline_ends += 1;
+                        graph.users.items(.session_gen)[current_uid] += 1;
+
+                        if (simconf.trace_to_file) {
+                            const s = TraceSession{ .time = t_clock, .type = .end, .user_id = current_uid, .event_id = metrics.processed_events, .gen_id = gen_id };
+                            const bytes = std.mem.asBytes(&s);
+                            try session_trace.writeAll(bytes);
+                        }
+
+                        const bored_start = eventSessionStart(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
+                        try queue.add(gpa, bored_start);
+                        metrics.generated_events += 1;
+                        // no need to nuke the timeline, it's already empty
+                        metrics.processed_events += 1;
+                    }
+                } else {
                     graph.users.items(.is_online)[current_uid] = false;
 
                     metrics.total_online_time += (t_clock - graph.users.items(.session_start_time)[current_uid]);
@@ -487,9 +506,8 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                     try queue.add(gpa, bored_start);
                     metrics.generated_events += 1;
                     // no need to nuke the timeline, it's already empty
-                    metrics.processed_events += 1;
+                    //metrics.processed_events += 1;
                 }
-            }
             },
 
             .propagate => |post_id| {
