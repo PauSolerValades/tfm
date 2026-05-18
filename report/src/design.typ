@@ -320,7 +320,7 @@ $ Q = [(u, "action", 13, 1), (u, "create", 14, 1), (u, "session.start", 16, 2)] 
 
 6. $"pop"(Q) arrow.r (u, "action", 13, 1)$. Current time $t=13$, user is offline and `user_session_id` is 2. Before processing the event, the `session_gen` from the event is 1, but the `user_session_id` is 2, therefore the event does not get processed, and it gets dropped. The same will happen with the create event, but not with the session.start event, as has the same, so it will keep the loop running. From now on, an event that can't be processed will be called a stale event.
 
-Knowing that the mechanism exists, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_gen$ is the `session_gen` of the current event, which we already know it's a session
+Knowing that the mechanism exists, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_"gen"$ is the `session_gen` of the current event, which we already know it's a session
 
 #figure(kind: "proc", supplement: [Procedure], caption: "Session event dispatch with stale-event guard")[
   #pseudocode-list[
@@ -343,14 +343,39 @@ The two variables that control the time between sessions and the session length 
 
 === Create
 
-The `create` event is characterized creates a post entity. As a post is a very simple entity, this s  When the post gets created, it augments by one the index of the last created post, and gets appended to the global post list.
+The `create` event behaves as a more traditional source of events, as it does not have relationships with other event sources or events. When a `create` event is assigned, the simulation searches the last `post_id`, augments it and makes the current user $u$ as it's author. The @proc-create showcases the event.
 
-Whenever a `create` post 
+#figure(kind: "proc", supplement: [Procedure], caption: "Create event dispatch with stale-event and max-posts guard")[
+  #pseudocode-list[
+    + *procedure* $"HandleCreate"(u: cal(U), t_c: T, e_"gen": bb(N))$
+      + $"is_stale" arrow.l e_"gen" != u."session_gen"$
+      + *if* $"is_stale" or "max_posts_reached" or !u."is_online"$ *then*
+        + *return*
+      + *end*
+      + $cal(P)(u) arrow.l cal(P)(u) union {(u, i)}$
+      + $"seen_posts"."set"(u, i)$
+      + $"interacted_posts"."set"(u, i)$
+      + $"push"(Q, "PropagateEvent"(u, i, t_c))$
+      + $"generated_events" arrow.l "generated_events" + 1$
+      + $"TraceCreate"(u, t_c, i)$
+      + $"post_count" arrow.l "post_count" + 1$
+      + $"processed_events" arrow.l "processed_events" + 1$
+      + $"push"(Q, "eventCreatePost"(u, t_c))$
+      + $"generated_events" arrow.l "generated_events" + 1$
+    + *end*
+  ]
+] <proc-create>
 
+A noticeable fact is that the `create` type does not contain any payload, as the user that creates it is at that point information known by the program and the `post_id` will be selected if the event is created. Preselecting which `post_id` would the post have when the create event is scheduled is, again, the naive approach, but breaks when interacting with the possibility of an event being stale.
 
-When a create event gets processed on the simu
-The create event contains no special payload, as it 
-A new id is generated, gets appended in the paginated bit set and the library array (cite the data structures sections)
+Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becames stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` are not going to be monotonically increasing, which has performance and logic consequences on their storing (see @ sec-design-hpc) #todo[check this]
+
+Apart from the staleness nuance, the three real and direct consequences this action has are 
+1. A post gets created and stores (see @ sec-design-datastructures)
+2. The new post gets marked as seen by $u$, as a user cannot be exposed to its own content (see @ sec-design-datastructures)
+3. The new post gets marked as interacted by its author $u$, as cannot like nor repost a post authored by itself. (see @ sec-design-datastructures)
+
+Create has two random quantites associated to it, the time between creations (handled by the variable `inter_post_creation`) and the delay simulating how long does a user take to create a post (variable `creation_delay`).
 
 === Actions
 
