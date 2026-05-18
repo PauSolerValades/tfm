@@ -180,7 +180,7 @@ The @proc-propagate showcases the implementation of the propagation, which is th
   ] 
 ]<proc-propagate>
 
-When a propagate event reaches the head of $Q$, the main event loop dispatches it to the handler below, as can be seen in @proc-propagate-switch. Unlike creation or action events, the propagate handler performs no validation checks (the event is always valid by construction) and directly delivers the post to all eligible followers.
+When a propagate event reaches the head of $Q$, the main event loop dispatches it to the handler below, as can be seen in @proc-propagate-switch. So, propagation event is not technically a source, but a result of any propagation of posts needed.
 
 #figure(kind: "proc", supplement: [Procedure], caption: "Propagate event dispatch in the main simulation loop")[
   #pseudocode-list[
@@ -194,36 +194,156 @@ When a propagate event reaches the head of $Q$, the main event loop dispatches i
 
 === Sessions
 
+The second event of the simulation are technically two events, but they behave complementary. A `session` event can be either one of the following: either `start` or `end`. The `start` forces a user back online, and the `end` makes it go back offline.
+
+*Going Online*
+
+When the simulation processes the event `online` for a offline user $u$, it has to start the whole simulation again. To do that, it needs to create an `action` event to start checking the timeline, and a `create` event, both according to their distributions, so the charactersitic loop of DES can start with both of the real sources. Additionally, this creates add appends a session event with `end` payload, as the session needs to end eventually.
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Session start: puts a user back online and primes the event loop")[
+  #pseudocode-list[
+    + *procedure* $"HandleGoOnline"(t: T, u: cal(U))$
+      + $u."is_online" arrow.l "true"$
+      + $u."session_gen" arrow.l u."session_gen" + 1$
+      + $u."session_start" arrow.l t$
+      + $"push"(Q, "eventAction"(u, t))$
+      + $"push"(Q, "eventCreatePost"(u, t))$
+      + $"push"(Q, "eventSessionEnd"(u, t))$
+      + $"metrics.generated_events" arrow.l "metrics.generated_events" + 3$
+    + *end*
+  ]
+]<proc-go-online>
+
+
+*Going Offline*
+
+There are two ways for a user to go offline: by the simulation processing the event `end` or by running out of posts in the timeline $cal(T)_t (u) = emptyset$.
+
+If an `end` event is processed, the user is marked as offline, and the new session `start` event gets sheduled, as the @ pseudocode shows 
+
+If the user timeline is empty, it's interpreted as the user seeing posts it has already seen, so logs off the platform. #todo[we should not bother with interpretations here, check if it's in the interpretation section.]. It still does the same as going offline normally.
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Session end: marks the user offline, clears the timeline, and schedules the next session")[
+  #pseudocode-list[
+    + *procedure* $"HandleGoOffline"(t: T, u: cal(U))$
+      + $u."is_online" arrow.l "false"$
+      + $"push"(Q, "eventSessionStart"(u, t))$
+      + $cal(T)(u) <- emptyset$
+    + *end*
+  ]
+] <proc-go-offline>
+
+Both of this options are nested under a check when the event type is a `session`, shown in the @proc-session-handle:
+
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Session handle")[
+  #pseudocode-list[
+    + *procedure* $"HandleSession"(u: cal(U), t_c: T, s: "Session")$
+      + *if* s == start *then*
+        + $"HandleGoOffline"(u, t_c)$
+      + *else if* s == end *then* 
+        + $"HandleGoOnline"(u, t_c)$
+      + *end*
+    + *end*
+  ]
+] <proc-session-handle>
+
+*Event Management when User is Online*
+
 To implement an activity based behaviour, the concept of session had to be introduced in the model (see @sec-model-sessions), and while being very natural to implement, there are some potential contradictions with how the events are scheduled.
-
-In @sec-method-des-mechanics it is explicitly stated that there are four types of events, and the session of a user $u$ is managed by an event $(u, t_1, "go_offline")$ and $(u, t_2, "go_online")$. Let's showcase the potential problem with the following example.
-
-Lets assume a simulation with $Q$ in the following state at $t_c=0$ 
-
-$ Q = {(u, 2, "create"), (u, 5, "go_offline")} $
-
-When the first event is processed with $"pop"(Q)$, a post gets created, and the delay
-
 
 The introduction of sessions introduces several operational challenges to the discrete event simulation, specifically regarding the interruption of stochastic processes. Time between actions and creations are measured *within a session* rather than globally. 
 
-Because DES relies on uninterrupted renewal processes to sample probability distributions correctly, pausing a user's activity when they go offline can mathematically invalidate the process. When a session ends mid-renewal, events that were scheduled to occur at a future time (sampled from, e.g., the inter-action distribution) remain in the queue—yet the user's timeline has been cleared and the session context destroyed. If those orphaned events were allowed to execute in a later session, the inter-action times would no longer follow the intended distribution: some would be effectively truncated by the offline interval, others would be shifted across session boundaries. A goodness-of-fit test would therefore fail, as the process would no longer be an uninterrupted renewal.
+Because DES relies on uninterrupted renewal processes to sample probability distributions correctly, pausing a user's activity when they go offline can mathematically invalidate the process. When a session ends mid-renewal, events that were scheduled to occur at a future time (sampled from, e.g., the inter-action distribution) remain in the queue—yet the user's timeline has been cleared and the session context destroyed. If those orphaned events were allowed to execute in a later session, the inter-action times would no longer follow the intended distribution: some would be effectively truncated by the offline interval, others would be shifted across session boundaries.
 
-To make this concrete, consider a scenario where the inter-session interval is inadequately short relative to the inter-action time. Let user $u$ start online at $t = 0$. The simulation queues three events for this session: an action $e_"act"$ at $t = 8$ (sampled from a long-tailed inter-action distribution), a session end at $t = 3$ (the session duration being, by configuration, far shorter than the typical action gap), and a post creation at $t = 12$.
+In @sec-method-des-mechanics it is explicitly stated that there are four types of events, and the session of a user $u$ is managed by an event $(u, t_1, "session.start")$ and $(u, t_2, "session.end")$. Let's showcase the potential problem with the following example.
 
-At $t = 3$, the session end fires: $u$ goes offline, $cal(T)(u)$ is cleared, and a session start is scheduled at $t = 5$—the offline interval lasts only 2 time units, a short draw from the inter-session distribution. At $t = 5$, the session start fires: a fresh batch of events is generated (a new action at $t = 13$, a new session end at $t = 7$, a creation at $t = 15$, etc.). 
+The queue initially holds a single event:
 
-At $t = 8$, the original action $e_"act"$—still sitting in $Q$—pops from the queue. The simulation blindly processes it: $u$ is online, so it attempts to act upon $cal(T)(u)$. However, the timeline was nuked at $t = 3$ and the posts it contained belonged to a previous session that is now gone. If $cal(T)(u)$ is empty, the simulation crashes or forces an early log-off. If posts happen to have accumulated from the new session, $u$ acts on them—but the inter-action time that was sampled as part of session 0's renewal process is now attributed to session 1, silently corrupting the calibrated distribution.
+$ Q = [(u, "session.end", 3)] $
 
-This is the core problem: events from a finished session survive in the queue and leak into future sessions, breaking the renewal process. To circumvent this, the simulation associates a `session_gen` identifier to each user. Whenever a user goes offline and starts a new session, their `session_gen` counter increments. Every event scheduled during a session is stamped with the `session_gen` value active at scheduling time.
+1. $"pop"(Q) arrow.r (u, "session.end", 3)$. $t = 3$. $u$ is online.
+   $"HandleGoOffline"$: $u$ goes offline, $"session.start"$ is scheduled at $t = 5$.
 
-When the simulation pops an event from the central queue, it first checks whether the session in which the event was generated is different from the one the user is currently in (`event.session_gen != user.session_gen`). If this condition holds true, the event is considered *stale* (originating from a previous session that was interrupted) and is safely discarded.
+$ Q = [(u, "session.start", 5)] $
 
-Revisiting the example with the `session_gen` guard in place: at $t = 0$ user $u$ starts with $"session_gen" = 0$, and all scheduled events carry this stamp. At $t = 5$, when the session start fires, $"session_gen" (u)$ increments to $1$. At $t = 8$, when $e_"act"$ pops, its stamp ($0$) no longer matches $u$'s counter ($1$). The mismatch is detected immediately and the stale event is discarded—the renewal process in session 1 remains pristine.
+2. $"pop"(Q) arrow.r (u, "session.start", 5)$. $t = 5$. $u$ is offline.
+   $"HandleGoOnline"$: $u$ goes online. Three events are queued for this session: $"session.end"$ at $t = 12$, $"action"$ at $t = 13$, $"create"$ at $t = 14$.
+
+$ Q = [(u, "action", 6), (u, "create", 8), (u, "session.end", 12)] $
+
+3. $"pop"(Q) arrow.r (u, "action", 6)$. $t = 6$. $u$ is online. The user acts over a post of it's timeline, we skip the details as they are not rellevant for the example, but another action is scheduled to keep the simulation loop running at $t=13$.
+
+$ Q = [(u, "create", 8), (u, "session.end", 12), (u, "action", 13)] $
+
+4. $"pop"(Q) arrow.r (u, "create", 8)$. $t = 8$. $u$ is online. A post gets created, it will get propagated at $8 + Delta_p$, and another creation gets scheduled at $t=14$.
+
+
+$ Q = [(u, i, "propagate", 9), (u, "session.end", 12), (u, "action", 13), (u, "create", 14)] $
+
+5. $"pop"(Q) arrow.r (u, "propagate", 9)$. $t = 14$. $u$ is online, and the post gets propagated and removed from the queue.
+
+6. $"pop"(Q) arrow.r (u, "session.end", 12)$. $t = 12$. $u$ is online, but it gets marked as offline, and a new session start is scheduled at $t=16$.
+
+$ Q = [(u, "action", 13), (u, "create", 14), (u, "session.start", 16)] $
+
+Now, the problem becomes obvious. The next pop will process the action at $t=13$, but user $u$ is not online at that moment $13 in.not cal(O)(u)$, so the simulation has to not process neither of $(u, "action", 13), (u, "create", 14)$. The naive solution would be to implement a procedure called after every go to online to just eliminate all the events between the time the user goes offline $t_e$ and the time it comes back online $t_s$ but this is an horrible idea implementation wise (see @ sec-design-hpc), so what is done is to count the amount of sessions the user has had until now and stablish the following rule: an event can just be processed by the simulation if the session it has been generated is the same as the user current session.
+
+The mechanism assigns a number to every session, and the user keeps track of how many sessions he has been active so far. Now, whenever any event is popped from the $Q$, the simulation will check the `session_gen` id. If they cooincide with `user_session_id`, it will get processed, if not, it will get discarded.
+
+Let's rerun the example with an added element to the event tuples, representing the session the user has been in so far. The queue initially holds a single event:
+
+$ Q = [(u, "session.end", 3, 0)] $
+
+1. $"pop"(Q) arrow.r (u, "session.end", 3, 0)$. $t = 3$. $u$ is online.
+   $"HandleGoOffline"$: $u$ goes offline, $"session.start"$ is scheduled at $t = 5$, and user session id augments by one.
+
+$ Q = [(u, "session.start", 5, 1)] $
+
+2. $"pop"(Q) arrow.r (u, "session.start", 5)$. $t = 5$. $u$ is offline.
+   $"HandleGoOnline"$: $u$ goes online. Three events are queued for this session: $"session.end"$ at $t = 12$, $"action"$ at $t = 13$, $"create"$ at $t = 14$. They all belong to `session_gen` 1 
+
+$ Q = [(u, "action", 6, 1), (u, "create", 8, 1), (u, "session.end", 12, 1)] $
+
+
+3. $"pop"(Q) arrow.r (u, "action", 6, 1)$. $t = 6$. $u$ is online. The user acts over a post of it's timeline, we skip the details as they are not rellevant for the example, but another action is scheduled to keep the simulation loop running at $t=13$. This new event will have the current `session_id` the user finds himself in, so $1$.
+
+$ Q = [(u, "create", 8, 1), (u, "session.end", 12, 1), (u, "action", 13, 1), ] $
+
+For the sake of brevity, we will skip two pops from the past example, until the queue looks as 
+
+$ Q = [(u, "session.end", 12, 1), (u, "action", 13, 1), (u, "create", 14, 1)] $
+
+5. $"pop"(Q) arrow.r (u, "session.end", 12, 1)$. $t = 12$. $u$ is online, but it gets marked as offline, the `user_session` augments by 1, and a new session start is scheduled at $t=16$.
+
+$ Q = [(u, "action", 13, 1), (u, "create", 14, 1), (u, "session.start", 16, 2)] $
+
+6. $"pop"(Q) arrow.r (u, "action", 13, 1)$. Current time $t=13$, user is offline and `user_session_id` is 2. Before processing the event, the `session_gen` from the event is 1, but the `user_session_id` is 2, therefore the event does not get processed, and it gets dropped. The same will happen with the create event, but not with the session.start event, as has the same, so it will keep the loop running. From now on, an event that can't be processed will be called a stale event.
+
+Knowing that the mechanism exists, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_gen$ is the `session_gen` of the current event, which we already know it's a session
+
+#figure(kind: "proc", supplement: [Procedure], caption: "Session event dispatch with stale-event guard")[
+  #pseudocode-list[
+    + *procedure* $"HandleSessionEvent"(u: cal(U), t_c: T, s: "Session", e_"gen": bb(N))$
+      + $"is_stale" arrow.l e_"gen" != u."session_gen"$
+      + *if* s = end *and* (!u.is_online *or* $"is_stale"$) *then*
+        + *return*
+      + *end*
+      + *if* s = start *then*
+        + $"HandleGoOnline"(u, t_c)$
+      + *else if* s = end *then*
+        + $"HandleGoOffline"(u, t_c)$
+      + *end*
+      + $"metrics"."processed_events" arrow.l "metrics"."processed_events" + 1$
+    + *end*
+  ]
+] <proc-session-event-handle>
+
+The two variables that control the time between sessions and the session length are `time_between_sessions` and `session_duration`.
 
 === Create
 
-The `create` event creates a post entity simulation. When the post gets created, it augments by one the index of the last created post, and gets appended to the global post list.
+The `create` event is characterized creates a post entity. As a post is a very simple entity, this s  When the post gets created, it augments by one the index of the last created post, and gets appended to the global post list.
 
 Whenever a `create` post 
 
