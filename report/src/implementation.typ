@@ -98,7 +98,7 @@ All data structures that require dynamic change during the simulation — primar
 ]
 
 == Input Data Format
-<sec-impl-input-data>
+<sec-impl-topology>
 
 #comment[
   Describes the JSON schema the simulation reads at startup, and how synthetic

@@ -29,6 +29,12 @@
   weight: "bold",
 )
 
+#show heading.where(level: 4): set heading(outlined: false, numbering: none)
+#show heading.where(level: 4): set text(
+  size: 11pt,
+  weight: "bold",
+)
+
 #show heading: it => [
   #block(above: 1.5em, below: 1em, it)
 ]
@@ -87,7 +93,7 @@
 = Data Analysis and Calibration
 <sec-data>
 
-#include "src/calibration.typ"
+#include "src/data.typ"
 
 
 #pagebreak()
@@ -108,7 +114,7 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/futurework.yml"),
+  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/futurework.yml"),
   title: "References",
 )
 

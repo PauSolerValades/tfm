@@ -1,0 +1,28 @@
+kooti2016twitter:
+  type: Article
+  title: "Twitter Session Analytics: Profiling Users' Short-Term Behavioral Changes"
+  author:
+    - Kooti, Farshad
+    - Moro, Esteban
+    - Lerman, Kristina
+  date: 2016
+  page-range: 71-86
+  serial-number:
+    doi: "10.1007/978-3-319-47874-6_6"
+  parent:
+    type: proceedings
+    title: "Social Informatics: 8th International Conference, SocInfo 2016, Bellevue, WA, USA, November 11–14, 2016, Proceedings, Part II"
+    editor:
+      - Spiro, Emma
+      - Ahn, Yong-Yeol
+    publisher:
+      name: Springer International Publishing
+      location: Cham
+    serial-number:
+      isbn: "978-3-319-47874-6"
+      doi: "10.1007/978-3-319-47874-6"
+    volume: 10047
+    parent:
+      type: periodical
+      title: Lecture Notes in Computer Science
+      publisher: Springer
