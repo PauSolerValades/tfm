@@ -1,0 +1,26 @@
+brown1988calendar:
+  type: Article
+  title: "Calendar Queues: A Fast {O(1)} Priority Queue Implementation for the Simulation Event Set Problem"
+  author: Brown, Randy
+  date: 1988-10
+  page-range: 1220-1227
+  parent:
+    type: Periodical
+    title: Communications of the ACM
+    volume: 31
+    issue: 10
+    publisher: Association for Computing Machinery
+  serial-number:
+    doi: "10.1145/63039.63045"
+
+kim2009mlist:
+  type: Article
+  title: "An Improved {MList} for Efficient Event List Management in Discrete Event Simulation"
+  author: ["Kim, Seong-Gon", "Yim, Dong-Soon"]
+  date: 2009-12
+  page-range: 29-37
+  parent:
+    type: Periodical
+    title: Journal of the Korean Simulation Society
+    volume: 18
+    issue: 4

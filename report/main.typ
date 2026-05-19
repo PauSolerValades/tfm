@@ -78,6 +78,12 @@
 #include "src/design.typ"
 
 #pagebreak()
+= Implementation
+<sec-impl>
+
+#include "src/implementation.typ"
+
+#pagebreak()
 = Data Analysis and Calibration
 <sec-data>
 
@@ -102,10 +108,22 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml"),
+  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/futurework.yml"),
   title: "References",
 )
 
+#pagebreak()
 
+// TODO: figure out how to do this properly
 
+// #counter(heading).update(0)
+// #set heading(numbering: none)
+//
+// = Appendix
+//
+// #set heading(numbering: "A")
+//
+// == Additional Mechanics 
+// #include "src/mechanics.typ"
+//
 

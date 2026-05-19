@@ -16,7 +16,7 @@ The CTIC model is an amazing fit for microblogging networks due to its reliance 
 
 While the CTIC model provides the ideal theoretical framework for continuous-time diffusion, evaluating these continuous hazard and survival functions analytically across a massive, highly connected graph is computationally prohibitive. Therefore, to operationalize this model, we chose to translate the continuous-time dynamics into a Discrete Event Simulation (DES) (see @sec-method-des).  
 
-By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a differnt quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simluation (architecture, data structures, and optimizations) are documented in @sec-design
+By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a differnt quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @sec-impl
 
 === The Homogeneous Rate Simplification
 
@@ -245,6 +245,20 @@ needs to be processed when it’s attended. Also, ABMs, if they discrete the tim
 //
 // In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
 //
+
+All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed offline to compute the power-law exponents, Gini coefficients, and structural virality scores described above.
+
+=== Experimental Design
+<sec-method-experimental-design>
+
+#comment[point 5 of fishman book. I dont even know where to start xd.]
+
+
+=== Convergence Criteria
+<sec-method-convergence>
+
+#comment[This is also in the Fishman book, but idk our simulation converges, right? What needs to be covered and explain is how are we going to cleverly replicate the results from the simulation]
+
 
 == Random Number Generation
 <sec-method-rng>

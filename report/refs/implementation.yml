@@ -1,0 +1,11 @@
+soler2025eazyargs:
+  type: Repository
+  title: EazyArgs 
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/eazy-args
+    date: 2026-05-08
+  parent:
+    title: GitHub
+
+
