@@ -17,7 +17,6 @@ pub const Index: type = u32;
 pub const User = struct {
     id: Index,
     follower_start: Index,
-    follower_count: Index,
     policy: Categorical(Precision, Action),
     max_posts: ?u32,
 

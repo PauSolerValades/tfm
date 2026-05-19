@@ -142,7 +142,11 @@ const Unif = dist.Uniform(Precision);
 
 fn propagatePost(gpa: Allocator, graph: *Topology, t_clock: f64, user_id: Index, post_id: Index) !void {
     const start_idx = graph.users.items(.follower_start)[user_id];
-    const count = graph.users.items(.follower_count)[user_id];
+    const end_idx = if (user_id + 1 < graph.users.len)
+        graph.users.items(.follower_start)[user_id + 1]
+    else
+        @as(Index, @intCast(graph.followers.len));
+    const count = end_idx - start_idx;
     const followers = graph.followers[start_idx .. start_idx + count];
 
     const tl_event = TimelineEvent{
@@ -470,24 +474,6 @@ pub fn simulate(gpa: Allocator, arena: Allocator, rng: Random, simconf: *const S
                         const event = eventAction(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
                         try queue.add(gpa, event);
                         metrics.generated_events += 1;
-                    } else {
-                        graph.users.items(.is_online)[current_uid] = false;
-
-                        metrics.total_online_time += (t_clock - graph.users.items(.session_start_time)[current_uid]);
-                        metrics.empty_timeline_ends += 1;
-                        graph.users.items(.session_gen)[current_uid] += 1;
-
-                        if (simconf.trace_to_file) {
-                            const s = TraceSession{ .time = t_clock, .type = .end, .user_id = current_uid, .event_id = metrics.processed_events, .gen_id = gen_id };
-                            const bytes = std.mem.asBytes(&s);
-                            try session_trace.writeAll(bytes);
-                        }
-
-                        const bored_start = eventSessionStart(rng, simconf, t_clock, current_uid, graph.users.items(.session_gen)[current_uid], metrics.generated_events);
-                        try queue.add(gpa, bored_start);
-                        metrics.generated_events += 1;
-                        // no need to nuke the timeline, it's already empty
-                        metrics.processed_events += 1;
                     }
                 } else {
                     graph.users.items(.is_online)[current_uid] = false;

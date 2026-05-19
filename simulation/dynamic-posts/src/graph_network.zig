@@ -50,7 +50,6 @@ pub const Topology = struct {
             const u = User{
                 .id = user.id,
                 .follower_start = 0,
-                .follower_count = 0,
                 .max_posts = user.max_posts,
                 .policy = cat,
             };
@@ -81,7 +80,6 @@ pub const Topology = struct {
         for (tmp_followers, 0..) |follow, i| {
             const follower_count = follow.items.len;
             users.items(.follower_start)[i] = @intCast(acc);
-            users.items(.follower_count)[i] = @intCast(follower_count);
             @memcpy(followers[acc .. acc + follower_count], follow.items);
             acc += follower_count;
         }
@@ -130,7 +128,7 @@ pub const Topology = struct {
 
         for (parsed_network.users) |user| { // ParsedUser
             const cat: Categorical(Precision, Action) = try .init(gpa, user.policy, user.actions);
-            const u = User{ .id = user.id, .follower_start = 0, .follower_count = 0, .policy = cat };
+            const u = User{ .id = user.id, .follower_start = 0, .policy = cat };
             users.appendAssumeCapacity(u);
         }
 
@@ -163,7 +161,6 @@ pub const Topology = struct {
         for (tmp_followers, 0..) |follow, i| {
             const follower_count = follow.items.len;
             users.items(.follower_start)[i] = @intCast(acc);
-            users.items(.follower_count)[i] = @intCast(follower_count);
             @memcpy(followers[acc .. acc + follower_count], follow.items);
             acc += follower_count;
         }

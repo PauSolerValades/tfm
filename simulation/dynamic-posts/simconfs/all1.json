@@ -1,5 +1,5 @@
 {
-  "seed": null,
+  "seed": 42,
   "horizon": 10000,
   "duration": 9000,
   "warmup_time": 1000,
