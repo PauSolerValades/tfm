@@ -3,6 +3,8 @@ data
 *.pdf
 results
 img
+/__pycache__/
+
 
 .zig-cache/
 zig-out/
