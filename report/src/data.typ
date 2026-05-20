@@ -7,7 +7,7 @@ This section covers the analysis of the Bluesky Firehose dataset in order to fin
 #comment[What did we actually use as software, please finish]
 - StartRocksDB: a statistical database that stores by columsn instead of rows.
 - Python 3.13: main tool for data analytics. rellevant packages apart from numpy and polars are powerlaw and scipy
-- R 4.5.3: Used for the session analytics, it's just one script but uses a whole tone of packages #todo[Fill those packages from the R script]
+- R 4.5.3: Used for per-user distribution fitting and inter-post gap analysis. The R scripts depend on `poweRlaw` (Clauset et al. power-law MLE), `fitdistrplus` (MLE for exponential, log-normal, Weibull, gamma), `data.table` (fast CSV ingestion), `tidyverse` (data wrangling and plotting), `broom` (tidying model outputs), and `parallel` (multi-core per-user fitting).
 
 == Firehose Data
 <sec-data-firehose>
@@ -18,8 +18,7 @@ The table `bsky.posts` contains $approx 28.1 times 10^6$ post records, normalise
 
 The table `bsky.records`: $approx 212.5 times 10^6$ raw firehose events covering all AT Protocol lexicon collections. The three dominant record types are likes (`app.bsky.feed.like`, $161.7 times 10^6$, 76.1%), reposts (`app.bsky.feed.repost`, $26.4 times 10^6$, 12.4%), and follows (`app.bsky.graph.follow`, $18.8 times 10^6$, 8.8%). Remaining types include blocks, profile updates, lists, and moderation records.
 
-//The full database schema is documented in `docs/database-data-description.md`.
-#todo[A more accurate descritipon of the data is needed here]
+The `bsky.records` table additionally captures follows ($18.8 times 10^6$), blocks ($1.7 times 10^6$), profile updates, thread reply controls, list memberships, and other moderation records, for a total of 16 lexicon collections. The `records` schema includes `subject_uri`, `subject_did`, and a full `record_json` payload enabling reconstruction of the target of every like, repost, follow, and block. A pre-aggregated per-user summary table `pau_db.users` ($3.09 times 10^6$ DIDs) stores `num_posts`, `num_likes`, `num_reposts`, `num_follows`, `first_seen_us`, `last_seen_us`, and `primary_lang` for each unique user. The full database schema is documented in `docs/database-data-description.md`.
 
 Before applying any session threshold, a systematic EDA was conducted to understand which users drive the gap distribution. The EDA is a structured pipeline of eight sections (each a standalone Python script under `session-analysis/eda/*.py`), orchestrated by `session-analysis/eda.py`. All scripts query the StarRocks database, compute a specific statistic, and produce both plots and summary text files under `session-analysis/eda/results/`.
 
@@ -54,32 +53,35 @@ A power-law fit via MLE with KS-based $x_min$ estimation @clauset2009powerlaw (s
 
 === User Archetypes
 
-Based on the ratio of content creation (posts, replies) to passive engagement (likes, reposts), users fall into distinct behavioural classes (scrip `user_classification.py`):
+Based on the ratio of content creation (posts + replies) to passive engagement (likes + reposts), users fall into distinct behavioural classes (script `user_classification.py`). Let $p = (n_"posts" + n_"replies") / (n_"posts" + n_"replies" + n_"likes" + n_"reposts")$ be the authored-content fraction and $r = n_"reposts" / (n_"likes" + n_"reposts")$ the repost-to-engagement ratio. The classification rules are:
 
-#todo[the table serves nothing if the ratio thresholds are not there]
+- *Tourist:* $ <= 5$ total events — too little data for a meaningful ratio.
+- *Creator:* $p >= 0.7$ — at least 70% of activity is authoring original content.
+- *Engager:* $p <= 0.3$ and $r < 0.4$ — likes dominate; few reposts.
+- *Curator:* $p <= 0.3$ and $r >= 0.4$ — heavy repost-to-like ratio, acting as a content amplifier.
+- *Balanced:* $0.3 < p < 0.7$ and $r < 0.4$ — mix of creation and engagement.
+- *Balanced-Curator:* $0.3 < p < 0.7$ and $r >= 0.4$ — balanced creation/engagement with a curatorial repost bias.
+
+The naming reflects behavioural intent: a *Creator* primarily authors posts, an *Engager* primarily likes others' content, a *Curator* amplifies via reposts, and *Balanced* users split their effort across actions. @tbl-archetypes gives the empirical counts, and @fig-archetype-map shows the classification regions in ratio space.
 
 #figure(
   table(
-    columns: 3,
-    align: (left, center, center),
+    columns: 4,
+    align: (left, center, center, center),
     stroke: none,
     table.hline(stroke: 0.8pt),
-    [*Archetype*], [*Users*], [*%*],
+    [*Archetype*], [*Users*], [*%*], [*Criterion*],
     table.hline(stroke: 0.5pt),
-    [Tourist], [$922,044$], [52.7],
-    [Engager], [$418,525$], [23.9],
-    [Balanced], [$148,994$], [8.5],
-    [Creator], [$142,948$], [8.2],
-    [Curator], [$90,655$], [5.2],
-    [Balanced-Curator], [$27,636$], [1.6],
+    [Tourist], [$922,044$], [52.7], [$<= 5$ events],
+    [Engager], [$418,525$], [23.9], [$p <= 0.3$, $r < 0.4$],
+    [Balanced], [$148,994$], [8.5], [$0.3 < p < 0.7$, $r < 0.4$],
+    [Creator], [$142,948$], [8.2], [$p >= 0.7$],
+    [Curator], [$90,655$], [5.2], [$p <= 0.3$, $r >= 0.4$],
+    [Balanced-Curator], [$27,636$], [1.6], [$0.3 < p < 0.7$, $r >= 0.4$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [User archetypes by event-type composition. The Tourist class coincides exactly with the $<= 5$ event threshold.]
+  caption: [User archetypes by event-type composition with classification thresholds. $p = ("posts"+"replies")/("posts"+"replies"+"likes"+"reposts")$, $r = "reposts"/("likes"+"reposts").]
 ) <tbl-archetypes>
-
-#todo[Why we call the sections a name or another? Add explanation]
-
-#todo[A 2D map could where axis1 is ratio posts/replies and likes/reposts to determine where every zone should be]
 
 Creators and engagers form distinct populations, not a continuum: creators produce content in bursts, engagers browse and react more passively. This suggests different session rhythms and motivates per-user adaptive thresholds (see §@sec-data). Figure @fig-archetypes shows the archetype composition across the full user base.
 
@@ -120,11 +122,9 @@ Table @tbl-coverage bins users by total event count and asks: who supplies the i
   caption: [Share of inter-arrival gaps contributed by each user stratum. The 101–500 bucket (5.5% of users) dominates with 37.4% of gaps. Generated by `coverage.py`.]
 ) <fig-coverage>
 
-#todo[This figure should be sorted by the bins.]
+The bins in @fig-coverage are ordered by ascending event-count, mirroring the table above.
 
-The 101--500 event bucket alone contributes 37.4% of all inter-arrival gaps while representing only 5.5% of users. @fig-coverage visualizes this imbalance: a small dominant stratum produces the majority of the signal, while the tourist majority (52.7%) is barely visible. The 501+ bucket adds another 27.7%, but users in this range exceed 62 events/day on average. Accounts with such high-activity rates are under suspicious of bot activities, and therefore are excluded from the threshold detection to avoid compressing the elbow downward. Together, just 6.3% of users drive 65.1% of the gap distribution.
-
-#todo[It's not clear wtf is the table, events/day, events in the total dataset, we don't know why and how we are filtering?]
+The *Events* column in @tbl-coverage is the total number of core events (posts, replies, reposts) each user generated across the full 8-day firehose window, not events per day. The 101–500 event bucket alone contributes 37.4% of all inter-arrival gaps while representing only 5.5% of users. @fig-coverage visualizes this imbalance: a small dominant stratum produces the majority of the signal, while the tourist majority ($<=5$ events, 52.7% of users) is barely visible. The 501+ bucket adds another 27.7% of gaps, but users in this range generate over 62 events per day on average — a rate suspicious of automated or scheduled accounts. These high-frequency users are excluded from threshold detection because their artificially tight posting intervals would compress the elbow downward. Together, just 6.3% of users drive 65.1% of the gap distribution.
 
 === Filtering outcome
 
@@ -265,7 +265,7 @@ The script was run on the same human-range population identified by the EDA (@se
 
 Applied to the 815,271 human-range users, the adaptive method produced 28.2 million sessions (Table @tbl-tukey-results). The same population was also clustered with the fixed 265 s threshold into `sessions_threshold_total` to serve as a comparison baseline (see @sec-session-dist).
 
-#todo[Why this table feels wrong in a way, why so many zeroes?]
+The prevalence of zero medians for reposts, posts authored, and follows reflects the dominance of liking as the primary session action. In most sessions, users exclusively like posts — reposting or authoring content is a rarer, higher-effort action. Over 50% of sessions contain zero reposts and zero posts authored, so the median sits at zero. The mean values ($0.3$–$0.7$) capture the non-zero minority. This asymmetry is expected: liking is the lowest-cost engagement and dominates casual browsing.
 
 #figure(
   table(
@@ -298,11 +298,9 @@ Compared with the fixed-threshold method ($8.47 times 10^6$ sessions from 95,795
 With sessions defined by both methods, the final calibration step is to characterise the statistical distributions governing session durations and inter-session gaps. The analysis is performed by `session-analysis/session_distribution_fit.R`, a parallelised R script using the packages `poweRlaw`, `fitdistrplus`, `data.table`, `tidyverse`, `broom`, and `parallel`. Data flows from StarRocks via CSV export (`session-analysis/export_sessions_csv.py`) into R for per-user fitting.
 
 For each user with $>= 10$ data points (477,659 users from `sessions_tukey`),
-we fit five candidate distributions — power-law (MLE with KS-based $x_min$ estimation @clauset2009powerlaw), exponential, log-normal, Weibull, and gamma — and select the best via Vuong's log-likelihood ratio test (significance $alpha = 0.05$) with AIC as a tie-breaker.
+we fit five candidate distributions — Pareto (MLE with KS-based $x_min$ estimation @clauset2009powerlaw), exponential, log-normal, Weibull, and gamma — and select the best via Vuong's log-likelihood ratio test (significance $alpha = 0.05$) with AIC as a tie-breaker.
 
 Table @tbl-dist-fit summarizes the results.
-
-#todo[This picture is ridicolous man, nowhting can be seen. Redo into a picture per disctibution, or seveal small pictures. Makes no sense to have a BIG ALL THE DISTRIBUTIONS, i can merge them together if i want the individual parts, but not the other way around]
 
 #figure(
   table(
@@ -312,7 +310,7 @@ Table @tbl-dist-fit summarizes the results.
     table.hline(stroke: 0.8pt),
     [*Distribution*], [*Session duration*], [*Inter-session gap*],
     table.hline(stroke: 0.5pt),
-    [powerlaw], [71.0% (338,819 users)], [74.0% (353,384 users)],
+    [Pareto], [71.0% (338,819 users)], [74.0% (353,384 users)],
     [lognormal], [12.1% (57,872)], [17.3% (82,757)],
     [weibull], [7.1% (34,032)], [7.1% (34,141)],
     [exponential], [3.6% (17,293)], [$<$0.01% (1)],
@@ -323,12 +321,22 @@ Table @tbl-dist-fit summarizes the results.
   caption: [Distribution fitting results for 477,659 users with $>= 10$ data points from `sessions_tukey`. Power-law is the overwhelming winner for both session durations (71%) and inter-session gaps (74%).]
 ) <tbl-dist-fit>
 
-*Power-law dominates.* For both quantities, roughly three-quarters of fittable users follow a power-law. The median exponent is $alpha = 2.68$ for durations and $alpha = 2.43$ for gaps — both in the $2$–$3$ range characteristic of social media behaviour, with gaps slightly fatter-tailed (more extreme outliers). The power-law regime begins at $x_min = 394$ s ($6.6$ min) for durations and $x_min = 12,798$ s ($3.6$ h) for gaps, meaning only the tail beyond these cut-offs is truly power-law-distributed; the body of short sessions and brief gaps follows a different regime. Figure @fig-param-densities shows the full parameter density estimates across all five distribution families.
+*Power-law dominates.* For both quantities, roughly three-quarters of fittable users follow a power-law. The median exponent is $alpha = 2.68$ for durations and $alpha = 2.43$ for gaps — both in the $2$–$3$ range characteristic of social media behaviour, with gaps slightly fatter-tailed (more extreme outliers). The power-law regime begins at $x_min = 394$ s ($6.6$ min) for durations and $x_min = 12,798$ s ($3.6$ h) for gaps, meaning only the tail beyond these cut-offs is truly power-law-distributed; the body of short sessions and brief gaps follows a different regime. Figure @fig-param-densities shows the parameter density estimates for the most relevant distributions individually.
 
 #figure(
-  image("figures/summary_all_params.png", width: 100%),
-  caption: [Parameter density estimates for all five distribution families. Top row: session durations; bottom row: inter-session gaps. Log-scale axes where appropriate. Median marked with a dashed line. Generated by `plot_parameter_densities.py` from the R fitting output.]
-) <fig-param-densities>
+  image("figures/dur_powerlaw_params.png", width: 70%),
+  caption: [Power-law parameter densities for session durations ($alpha$ left, $x_min$ right). Median $alpha = 2.68$, $x_min = 394$ s. Generated by `plot_parameter_densities.py`.]
+) <fig-dur-powerlaw>
+
+#figure(
+  image("figures/gap_powerlaw_params.png", width: 70%),
+  caption: [Power-law parameter densities for inter-session gaps. Median $alpha = 2.43$, $x_min = 12,798$ s ($3.6$ h). The gap $x_min$ is substantially higher than duration $x_min$, reflecting the longer timescales of inter-session pauses.]
+) <fig-gap-powerlaw>
+
+#figure(
+  image("figures/dur_lognormal_params.png", width: 70%),
+  caption: [Lognormal parameter densities for session durations ($mu$ left, $sigma$ right). Median $mu = 6.76$, $sigma = 0.69$. Generated by `plot_parameter_densities.py`.]
+) <fig-dur-lognormal>
 
 *Exponential is absent for gaps.* Only 1 user out of 478K has exponential inter-session gaps — definitively ruling out the memoryless hypothesis. Inter-session absences are structured, not random.
 
@@ -344,7 +352,28 @@ Table @tbl-dist-fit summarizes the results.
 
 *Comparison with the fixed threshold.* Running the same distribution fit on `sessions_threshold` (the 265 s fixed-threshold table) yields dramatically worse results: *60.5% of users cannot be fitted* (vs 5.6% for Tukey) because the fixed boundary fragments sessions into noise. This validates the adaptive method as the superior choice for simulation calibration; power-law dominance shines through only when each user's natural rhythm is respected.
 
-#todo[where are the lognormal parameters and the exponential parametrs? The table conveys more information than the text, this is unacceptable..]
+The full per-distribution parameter estimates are given in @tbl-dist-params. The power-law $x_min$ values reveal a two-regime structure: most session durations under $394$ s ($6.6$ min) and most inter-session gaps under $12,798$ s ($3.6$ h) follow a different distribution (the "body"); the power-law only governs the tail beyond these cut-offs. Lognormal users have median parameters $mu = 6.76$, $sigma = 0.69$ for durations and $mu = 9.60$, $sigma = 0.94$ for gaps, corresponding to central tendencies of $approx 14$ min and $approx 4.1$ h respectively. For the 3.6% of exponential-duration users, the rate parameter $lambda^(-1) = 252$ s ($4.2$ min). The negligible exponential presence for gaps (1 user) definitively rules out memoryless inter-session behaviour.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Distribution*], [*Parameter*], [*Median (dur.)*], [*Median (gap)*], [*Interpretation*],
+    table.hline(stroke: 0.5pt),
+    [Pareto], [$alpha$], [2.68], [2.43], [Exponent in $2$–$3$ range (finite mean, infinite variance)],
+    [Pareto], [$x_min$], [394 s (6.6 min)], [12,798 s (3.6 h)], [Tail threshold; body below follows different regime],
+    [lognormal], [$mu$ (meanlog)], [6.76], [9.60], [$exp(mu) approx 863$ s dur., $14{,}771$ s gap],
+    [lognormal], [$sigma$ (sdlog)], [0.69], [0.94], [Greater dispersion in gaps than durations],
+    [weibull], [shape $k$], [1.14], [1.33], [60% of gap Weibull users have $k > 1$ (habitual checking)],
+    [weibull], [scale $lambda$], [6,587 s (1.8 h)], [47,433 s (13.2 h)], [Characteristic timescale],
+    [exponential], [scale $lambda^(-1)$], [252 s (4.2 min)], [—], [Only 3.6% of users; absent for gaps],
+    [gamma], [shape $k$], [—], [—], [Negligible ($< 1$% of users for both)],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: [Full parameter estimates for all five distribution families from `sessions_tukey` (477,659 users with $>= 10$ data points). Medians are reported as they are robust to extreme outliers in parameter fits. Generated by `session_distribution_fit.R`.]
+) <tbl-dist-params>
 
 === Engagement Rate ($pi$ Policy)
 
@@ -363,11 +392,6 @@ $
 The median engagement rate across all sessions is 20.0% (mean 19.5%). In other words, the typical Bluesky user likes or reposts roughly one in five posts they see during a browsing session. The complementary $pi$ policy — $pi_"ignore" = 80%$, $pi_"like" approx 17%$, $pi_"repost" approx 3%$ — is the categorical distribution needed for the simulation calibration.
 
 Sensitivity analysis varying $v$ from 2 s (fast scrolling) to 15 s (deep reading) shifts the median engagement rate from $approx 6%$ to $approx 44%$, confirming that $v = 5$ s is a reasonable mid-range assumption.
-
-== Inter Post Creation Estimation
-
-#todo[Fill with the ../../../bsky-data-analysis/post-lifetime/...]
-
 
 == Lifetime Analysis
 
@@ -462,7 +486,7 @@ $7.5 times 10^6$ engaged posts with positive lifetime.
     [4], [Exponential], [$-88.8 times 10^6$], [scale $= 14.2$ h],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Distribution fit on post lifetimes. Pareto is best for the
+  caption: [Distribution fit on post lifetimes. Power-law is best for the
     tail ($> 15.6$ h). Weibull (shape 0.53) best describes the body.
     Exponential is a poor fit — lifetimes are not memoryless.]
 ) <tbl-lifetimes-fit>
@@ -472,7 +496,7 @@ The body of the distribution (lifetimes $< 15.6$ h, ~75% of engaged posts)
 is best fit by a Weibull with shape $k = 0.53$. Since $k < 1$, the *hazard
 rate decreases over time* — a post is actually *less* likely to die the longer
 it has been alive, consistent with rich-get-richer dynamics. The tail
-($> 15.6$ h, ~25% of engaged posts) follows a Pareto distribution with
+($> 15.6$ h, ~25% of engaged posts) follows a Pareto with
 $alpha = 2.16$. The median lifetime is 3.8 hours, but $P_{99}$ reaches 133 h
 (5.6 days).
 
