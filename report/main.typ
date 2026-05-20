@@ -129,14 +129,20 @@
 
 // TODO: figure out how to do this properly
 
-// #counter(heading).update(0)
+#counter(heading).update(0)
 // #set heading(numbering: none)
 //
-// = Appendix
-//
+
+= Appendix
+
 // #set heading(numbering: "A")
-//
-// == Additional Mechanics 
-// #include "src/mechanics.typ"
-//
+
+== Additional Mechanics 
+
+#include "src/annex/mechanics.typ"
+
+== Session Threshold
+
+#include "src/annex/threshold.typ"
+
 
