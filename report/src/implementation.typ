@@ -17,7 +17,7 @@ To build a simulation engine from scratch in a systems level programming languag
 
 The development process has been splited in three separate versions of the simulation, with the following milestones inside them:
 
-*v1: Cronological Order and max posts per user*
+==== v1: Cronological Order and max posts per user
 
 The first version served as a proof of concept implementation and design, and was where most of the tangential utilities were developed. Here the Heap was implemented, as well as the _distributions_ library for the Categorical distribution $pi$.
 
@@ -25,13 +25,13 @@ The most interesting simplification was to assume user timelines were min-heaps,
 
 The first version of the network topology loading and wiering was introduced here, as well as the scripts to generate some sample ones to validate it. Furthermore, none of the strategies from Data Oriented Design (@sec-impl-dod) where applied here, being very noticeable the poor performance when loading and wiring the topology.
 
-*v2: Reverse-Chronological Order and Sessions*
+==== v2: Reverse-Chronological Order and Sessions
 
 To change every user timeline into a max-heap was the most complicated part of the implementation, for every user now had to disconnect from the simulation for their timeline to be refilled. That introduces plenty of bugs and missbehaviours with time traveling errors such a repost made to a post before the post arrived to a user timeline; the propagate event was introduced to isolate those bugs, as the old mechanism directly inserted posts into the user timelines.
 
 Here some DOD principles were applied, specially when wiring the graph topology structure, as the reading data format was redesigned. 
 
-*v3: Unilimited Posts and Refactor*
+==== v3: Unilimited Posts and Refactor
 
 When the core functionalities of the simulation was build, the Pagination was introduced to allow an unlimited number of posts per user, while maintaining all the other features. 
 
@@ -200,12 +200,14 @@ This means that when the simulation iterates over all users to check their onlin
 
 Because posts can be created arbitrarily throughout the simulation duration without a hard upper limit, their tracking mechanisms must be highly scalable. Posts are stored in the `ds` package's `SegmentedMultiArrayList`.
 
-*Segmented List for Posts*
+==== Segmented List for Posts
+
 To hold an uncapped number of posts in memory without incurring massive reallocation penalties, a `SegmentedMultiArrayList` is utilized. This behaves like a dynamically growing bookshelf: it allocates arrays in fixed capacities equal to a power of two ($2^n$). When one block fills up, a new one is allocated and appended. Searching for a post relies entirely on rapid bitwise operations (`i >> n` for the block, `i & (capacity - 1)` for the local index), completely avoiding array reallocation.
 
 Additionally, this structure maintains a Structure-of-Arrays (SoA) layout. If posts eventually incorporate heavy elements like `[1536]f32` NLP embeddings, keeping data in SoA format prevents these massive arrays from polluting the CPU cache when the core simulation only needs to iterate rapidly over lightweight fields like `author_id` and `timestamp`.
 
-*Post ID Assignment*
+==== Post ID Assignment
+
 A scheduling quirk arises with dynamic creation: a post might be scheduled in the event queue as $(u, "create", p_"id", t)$, but because events can be dropped or skipped, the ID predicted at schedule time might not align with the actual ID when the event fires. To solve this, scheduled creates are assigned a placeholder ID of `0` in the queue, and are strictly assigned their true, globally unique ID only at the exact moment the event is actually processed.
 
 === Impressions: PagedBitSet

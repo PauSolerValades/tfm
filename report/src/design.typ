@@ -118,7 +118,7 @@ The first event we must cover is the only event that does not correspond to any 
 
 Refreshing the CTIC model (see @sec-sota-diffusion-ctic and @sec-method-model), there is a strong emphasis in the incubation time for the infection: "the delay between a node $j$ becoming infected at time $t_j$ and subsequently infecting an uninfected neighbor $i$ at time $t_i > t_j$" which not only serves the purpose of modeling reality, but that delay helps the model not being degenerated.
 
-*Example*
+==== Example
 
 Consider a minimal microblogging network of three users forming a directed cycle:
 
@@ -134,7 +134,9 @@ $ cal(N)_"in" (A) = {C}, quad cal(N)_"in" (B) = {A}, quad cal(N)_"in" (C) = {B} 
 
 Assume all three users are permanently online ($cal(O)(u) = T quad forall u in cal(U)$), and let user $A$ start a cascade by creating a post $p_0$ at $t = 0$. We trace the simulation under two regimes.
 
-*Without propagation delay ($Delta_p = 0$).* At creation time, the post is delivered directly to the creator's followers at the same timestamp:
+==== Without propagation delay ($Delta_p = 0$)
+
+At creation time, the post is delivered directly to the creator's followers at the same timestamp:
 
 1. $t = 0: quad Q = [(A, "create", 0)]$ Pop: $A$ creates $p_0$. Propagation fires over $cal(N)_"in" (A) = {C}$, scheduling an action event for $C$ at $t=0$:
 
@@ -150,7 +152,9 @@ $ Q = [(A, "action", 0)] $
 
 In a single instant $t=0$, three cascading actions have taken place. The post traverses the entire network without any notion of temporal distance: creation has the same timestamp as the last cascaded action. This degeneracy collapses any incremental diffusion process into an instantaneous event, and renders the queue $Q$ useless as a scheduling mechanism.
 
-*With propagation delay ($Delta_p > 0$).* Rather than delivering posts directly, the creation event pushes a propagate event into the future for each follower, at $t_c + Delta_p$:
+==== With propagation delay ($Delta_p > 0$)
+
+Rather than delivering posts directly, the creation event pushes a propagate event into the future for each follower, at $t_c + Delta_p$:
 
 1. $t = 0: quad Q = [(A, "create", 0)]$ Pop: $A$ creates $p_0$. For each $v in cal(N)_"in"(A) = {C}$, schedule propagation at $0 + Delta_p$:
 
@@ -207,7 +211,7 @@ The propagation delay $Delta_p$ can be configured with the variable `propagation
 
 The second event of the simulation are technically two events, but they behave complementary. A `session` event can be either one of the following: either `start` or `end`. The `start` forces a user back online, and the `end` makes it go back offline.
 
-*Going Online*
+==== Going Online
 
 When the simulation processes the event `online` for an offline user $u$, it has to start the whole simulation again. To do that, it needs to create an `action` event to start checking the timeline, and a `create` event, both according to their distributions, so the characteristic loop of DES can start with both of the real sources. Additionally, this also appends a session event with `end` payload, as the session needs to end eventually.
 
@@ -226,7 +230,7 @@ When the simulation processes the event `online` for an offline user $u$, it has
 ]<proc-go-online>
 
 
-*Going Offline*
+==== Going Offline
 
 There are two ways for a user to go offline: by the simulation processing the event `end` or by running out of posts in the timeline $cal(T)_t (u) = emptyset$.
 
@@ -259,7 +263,7 @@ Both of this options are nested under a check when the event type is a `session`
   ]
 ] <proc-session-handle>
 
-*Event Management when User is Online*
+==== Event Management when User is Online
 
 To implement an activity based behavior, the concept of session had to be introduced in the model (see @sec-model-sessions), and while being very natural to implement, there are some potential contradictions with how the events are scheduled.
 
@@ -601,7 +605,7 @@ A Heap #todo[citation from the MIT classic data structures book] is the traditio
 
 On the contrary, the heap uses its tree representation to sift up or sift down the element in the tree branches, making $O(log n)$ operations at most.
 
-*Estimating the amount of elements in the FES*
+==== Estimating the amount of elements in the FES
 
 Analyzing the simulation, a good heuristic can be given to know more or less to what the number of total events at a single time $t$ will be.
 

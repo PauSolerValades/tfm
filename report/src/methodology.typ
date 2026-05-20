@@ -175,16 +175,16 @@ To see the parameter calibration and results, see #todo[@ sec-data-cal]
 
 To evaluate the simulation, the following metrics are going to be obtained from the simulation traces:
 
-*Reposts Power-law* 
+==== Reposts Power-law
 
 According to the CTIC model, the number of reposts of a post should follow a power law, with $gamma in [2,3]$. That is, the log-log plot of the most to least sorted repost different post has should be drawn as a line. This is the same concept introduced in @sec-sota-topo-scalefree.
 
 
-*Post Lifetime*
+==== Post Lifetime
 
 This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptely decrease as time goes on.
 
-*Gini Coefficient*
+==== Gini Coefficient
 
 Inequality ---defined as --- in a social system can be quantified using the Gini index @kwak2017centrality. Given a vector $X in RR^n$ of some wealth attribute (e.g., a node centrality), let $Y$ be $X$ sorted in increasing order. The Lorenz curve $L : [0,1] -> [0,1]$ is defined as the piecewise linear function connecting $(x(k), l(k))$ for $0 <= k <= n$, where
 
@@ -198,7 +198,7 @@ A value of $0$ indicates perfect equality (all individuals are equal), while a v
 
 In Online Social Networks, the Gini index can be applied to different node centralities to measure structural inequality from distinct perspectives @kwak2017centrality, and in this project it will be used to measure inequality in how much information a node directly receives from its neighbors. High degree-Gini indicates that a small set of users dominates the inflow of information, a typical signature of power-law follower distributions on platforms like Twitter or Bluesky.
 
-*Structural Virality*
+==== Structural Virality
 
 Virality is a concept that is more nuanced than it first appears. While content is said to have "gone viral" when it rapidly becomes popular through person-to-person contagion, popularity alone does not imply virality: a piece of content may reach a large audience through a single broadcast event (e.g., a post by a celebrity with millions of followers) just as easily as through multi-generational peer-to-peer propagation @goel2016structural. Distinguishing between these two mechanisms requires examining the fine-grained structure of the diffusion cascade itself, not just its aggregate size.
 

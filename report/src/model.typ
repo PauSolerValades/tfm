@@ -4,24 +4,24 @@ This section narrows the description of the Bluesky social network (see @sec-sot
 
 To model all the features in a complete social network is a challenge out of the scope of this project. To achieve the objectives of the project within its time constraints and scope, a significant subset of the Bluesky platform will be modeled according to the research tools and approaches to be followed. It is believed that the selected subset of features will behave as a microblogging social network.
 
-*1. Just the Following Feed*
+==== 1. Just the Following Feed
 
 The following feed is a timeline with a reverse-chronological post showing criteria, and from now on this will be referred to as the _timeline_ of every user. As simulating a recommender is a difficult challenge in itself, it is believed that the flow of information can be meaningfully studied with a more traditional content strategy, even if the use of these feeds is not the norm on social networks. 
 
-*2. Static Users and Followers*
+==== 2. Static Users and Followers
 
 During the course of the simulation, no new users will be added, nor new relationships between them. The inter-user relationships are considered static during the whole duration of the simulation, as the flow of content can be studied without this behavior.
 
-*3. No Mutes nor Blocks*
+==== 3. No Mutes nor Blocks
 
 We assume that if user $u$ follows user $v$, user $u$ will receive all posts from user $v$.
 
 
-*4. No Quotes, no Replies*
+==== 4. No Quotes, no Replies
 
 With the same criteria, we want to focus on the content of the text, so the way the information transmits itself can be reduced to a single post.
 
-*5. No Profile of a User*
+==== 5. No Profile of a User
 
 A user won't be able to enter to see other users' profiles; they will be limited to observing their posts on the timeline.
 

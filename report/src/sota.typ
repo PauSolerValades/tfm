@@ -32,7 +32,9 @@ This section aims to characterize the topology of social networks according to t
 While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is:
 
 #todo[Think how (and if) a figure explaing this could work]
-*Definition* (Multilayer Network @kivela2014multilayer): A multilayer network is a quadruplet $M = (V_M, E_M, V, L)$, where:
+==== Definition (Multilayer Network @kivela2014multilayer)
+
+A multilayer network is a quadruplet $M = (V_M, E_M, V, L)$, where:
 - $V$ is the set of all nodes in the system
 - $L = {L_a}_(a=1)^d$ is a sequence of sets of possible layers, where $d$ represents the number of distinct aspects (dimensions) of the network
 - $V_M subset.eq V times product_(a=1)^d L_a$ is the set of node-layer tuples, representing exactly which node exists in which layer
@@ -234,7 +236,9 @@ By allowing transmission at different rates $alpha_{j,i}$ across different edges
 
 Despite social networks being a relatively new addition to normal modern life, they have fundamentally changed how information is consumed and spread in the modern age. To adequately understand the aims of this project, some definitions and context regarding social networks are provided.
 
-*Definition:* A *Microblogging Social Network* (e.g., Twitter/$bb(X)$ or Bluesky) is a specialized type of social network where users publish and exchange short-form content. This is enforced by a limit on the maximum number of characters per entry, known as microblogs or posts. A post, while traditionally text-based, can also include up to four multimedia elements.
+==== Definition
+
+A *Microblogging Social Network* (e.g., Twitter/$bb(X)$ or Bluesky) is a specialized type of social network where users publish and exchange short-form content. This is enforced by a limit on the maximum number of characters per entry, known as microblogs or posts. A post, while traditionally text-based, can also include up to four multimedia elements.
 
 #comment[The upper definitons are mine, should i search a definition of this? Is there a good source or am I overthinking this?]
 

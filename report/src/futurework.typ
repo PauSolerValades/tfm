@@ -17,7 +17,7 @@ With at most $4N$ events simultaneously in the queue and each event requiring tw
 
 The solution is a Calendar Queue @brown1988calendar — a bucketed priority queue that achieves $O(1)$ amortized time by distributing events across time slices. Brown originally introduced the Calendar Queue for the simulation event set problem, demonstrating experimental hold times three times shorter than splay trees for 10,000 events. The standard dynamic Calendar Queue resizes its bucket array to maintain optimal density, but the simulation's known parameters (static user count, bounded events per user, known delay distributions) allow a static heuristic to determine the optimal configuration upfront, eliminating all resizing overhead.
 
-*Heuristic design*
+==== Heuristic design
 
 This heuristic depends on three simulation characteristics known a priori:
 - The static number of users ($N$) and the maximum bounded events per user (yielding a maximum queue size of $4N$).
@@ -46,7 +46,8 @@ This demonstrates that the optimal time-slice $b$ is entirely independent of the
 
 To illustrate the heuristic, we assume the weighted average delay of the simulation events is calculated as $T_"mean_delay" = 11.92$ time units. #text(blue)[TODO: recalcular amb la calibració final]
 
-*Example 1: Unconstrained Memory (Target $N = 10^7$)*
+==== Example 1: Unconstrained Memory (Target $N = 10^7$)
+
 With $10$ million users, the maximum queue capacity is $40,000,000$ events. If memory is unconstrained, we find the next power-of-two for $B$:
 $ B = 2^(ceil(log_2(40000000))) = 2^26 = 67108864 "buckets" $
 The resulting density $k$ and bucket width $b$ are:
@@ -54,14 +55,16 @@ $ k = frac(40000000, 2^26) approx 0.60 "events per bucket" $
 $ b = frac(T_"mean_delay", B) = frac(11.92, 67108864) approx 1.78 times 10^(-7) "time units" $
 This configuration requires approximately 537 MB of RAM for the bucket pointers. Because $k < 1$, the vast majority of buckets will contain a single event, guaranteeing absolute $O(1)$ retrieval without list traversal.
 
-*Example 2: Limited Memory (Target $N = 10^6$, Max 2MB RAM)*
+==== Example 2: Limited Memory (Target $N = 10^6$, Max 2MB RAM)
+
 With $1$ million users, the queue holds up to $4 dot 10^6$ events. The unconstrained $B$ would be $2^23$ (~67 MB). If the system is strictly limited to 2 MB for the queue array, we cap $B_"max"$ at $2^18$ (yielding 262,144 buckets):
 $ B_"max" = 2^18 = 262144 "buckets" $
 $ k = frac(4000000, 262144) approx 15.26 "events per bucket" $
 $ b = frac(11.92, 262144) approx 4.54 times 10^(-5) "time units" $
 By restricting the memory, the density $k$ increases to ~15 elements per bucket. While this incurs a small $O(k)$ penalty during insertion as the algorithm scans the short linked list, the performance remains exceptionally fast while strictly adhering to hardware constraints.
 
-*Example 3: Massive Scale (Target $N = 10^9$)*
+==== Example 3: Massive Scale (Target $N = 10^9$)
+
 When scaling to $1$ billion users, the queue capacity reaches $4 dot 10^9$ events. Applying the unconstrained formula yields:
 $ B = 2^(ceil(log_2(4000000000))) = 2^32 = 4294967296 "buckets" $
 While mathematically optimal for time complexity, allocating an array of $4.29$ billion 8-byte pointers requires $34.3$ GB of RAM exclusively for the Calendar Queue's root array structure. At this massive scale, utilizing a $B_"max"$ constraint becomes virtually mandatory to trade a surplus of RAM for a slightly denser $k$ parameter.

@@ -30,6 +30,7 @@
 )
 
 #show heading.where(level: 4): set heading(outlined: false, numbering: none)
+#show heading.where(level: 5): set heading(outlined: false, numbering: none)
 #show heading.where(level: 4): set text(
   size: 11pt,
   weight: "bold",
@@ -40,6 +41,12 @@
 ]
 
 #set math.equation(numbering: "(1)")
+
+// Add a bit of breathing room after figure captions
+#show figure: it => {
+  it
+  v(0.6em)
+}
 
 // ----------------------------------------------------------
 #include "src/cover.typ"

@@ -1,3 +1,42 @@
+satopaa2011kneedle:
+  type: Article
+  title: "Finding a \"kneedle\" in a Haystack: Detecting Knee Points in System Behavior"
+  author:
+    - Satopaa, Ville
+    - Albrecht, Jeannie
+    - Irwin, David
+    - Raghavan, Barath
+  date: 2011
+  page-range: 166-171
+  serial-number:
+    doi: "10.1109/ICDCSW.2011.20"
+  parent:
+    type: proceedings
+    title: "2011 31st International Conference on Distributed Computing Systems Workshops"
+    publisher:
+      name: IEEE
+    serial-number:
+      isbn: "978-1-4577-0384-1"
+
+clauset2009powerlaw:
+  type: Article
+  title: "Power-Law Distributions in Empirical Data"
+  author:
+    - Clauset, Aaron
+    - Shalizi, Cosma Rohilla
+    - Newman, M. E. J.
+  date: 2009
+  serial-number:
+    doi: "10.1137/070710111"
+  parent:
+    type: periodical
+    title: "SIAM Review"
+    publisher:
+      name: "Society for Industrial & Applied Mathematics (SIAM)"
+    volume: 51
+    number: 4
+    page-range: 661-703
+
 kooti2016twitter:
   type: Article
   title: "Twitter Session Analytics: Profiling Users' Short-Term Behavioral Changes"
