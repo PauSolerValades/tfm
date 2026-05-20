@@ -104,9 +104,9 @@
 
 
 #pagebreak()
-= Results
+= Simulation Execution 
 
-// #include "src/results.typ"
+#include "src/results.typ"
 
 #pagebreak()
 = Conclusions

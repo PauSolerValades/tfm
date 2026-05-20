@@ -62,7 +62,7 @@ Based on the ratio of content creation (posts + replies) to passive engagement (
 - *Balanced:* $0.3 < p < 0.7$ and $r < 0.4$ — mix of creation and engagement.
 - *Balanced-Curator:* $0.3 < p < 0.7$ and $r >= 0.4$ — balanced creation/engagement with a curatorial repost bias.
 
-The naming reflects behavioural intent: a *Creator* primarily authors posts, an *Engager* primarily likes others' content, a *Curator* amplifies via reposts, and *Balanced* users split their effort across actions. @tbl-archetypes gives the empirical counts, and @fig-archetype-map shows the classification regions in ratio space.
+The naming reflects behavioural intent: a *Creator* primarily authors posts, an *Engager* primarily likes others' content, a *Curator* amplifies via reposts, and *Balanced* users split their effort across actions. @tbl-archetypes gives the empirical counts.
 
 #figure(
   table(
@@ -70,7 +70,7 @@ The naming reflects behavioural intent: a *Creator* primarily authors posts, an 
     align: (left, center, center, center),
     stroke: none,
     table.hline(stroke: 0.8pt),
-    [*Archetype*], [*Users*], [*%*], [*Criterion*],
+    [*Archetype*], [*Users*], [*\%*], [*Criterion*],
     table.hline(stroke: 0.5pt),
     [Tourist], [$922,044$], [52.7], [$<= 5$ events],
     [Engager], [$418,525$], [23.9], [$p <= 0.3$, $r < 0.4$],
@@ -80,7 +80,7 @@ The naming reflects behavioural intent: a *Creator* primarily authors posts, an 
     [Balanced-Curator], [$27,636$], [1.6], [$0.3 < p < 0.7$, $r >= 0.4$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [User archetypes by event-type composition with classification thresholds. $p = ("posts"+"replies")/("posts"+"replies"+"likes"+"reposts")$, $r = "reposts"/("likes"+"reposts").]
+  caption: [User archetypes by event-type composition with classification thresholds. $p = ("posts"+"replies")/("posts"+"replies"+"likes"+"reposts")$, $r = "reposts"/("likes"+"reposts")$.]
 ) <tbl-archetypes>
 
 Creators and engagers form distinct populations, not a continuum: creators produce content in bursts, engagers browse and react more passively. This suggests different session rhythms and motivates per-user adaptive thresholds (see §@sec-data). Figure @fig-archetypes shows the archetype composition across the full user base.
