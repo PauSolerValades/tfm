@@ -127,21 +127,16 @@
 
 #pagebreak()
 
-// TODO: figure out how to do this properly
-
 #counter(heading).update(0)
-// #set heading(numbering: none)
-//
+#heading(numbering: none)[Appendix]
+#set heading(numbering: "A.")
 
-= Appendix
-
-// #set heading(numbering: "A")
-
-== Additional Mechanics 
+= Additional Mechanics: Quoting and Notifications 
 
 #include "src/annex/mechanics.typ"
 
-== Session Threshold
+#pagebreak()
+= Twitter Session Mechanics Threshold 
 
 #include "src/annex/threshold.typ"
 

@@ -19,7 +19,7 @@
   #v(2.8cm)
 
   #text(fill: blue, size: 25pt, weight: "bold")[
-  Information Diffusion on Bluesky: \ Discrete Event Simulation of a  Queue-Based, Activity Driven \ Continuous-Time Cascade Model 
+  Studying Information Diffusion on Bluesky: A Continuous-Time \ Independent Cascade Model via \ Discrete-Event Simulation
  ]
   
   #v(0.3em)
@@ -31,9 +31,9 @@
   #v(4.5cm)
 
   #text(size: 14pt)[
-    Supervised by Jana Lasser and Esteve Codina Sancho\
+    Supervised by Jana Lasser, Esteve Codina, and Pau Fontseca\
     #v(0.5em)
-    June, 2026 
+    29th of March, 2026 
   ]
 ]
 
