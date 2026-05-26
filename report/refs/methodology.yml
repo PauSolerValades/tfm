@@ -93,6 +93,30 @@ goldberg1991floating:
     issue: 1
     page-range: 5-48
 
+devroye1986nonuniform:
+  type: Book
+  title: "Non-Uniform Random Variate Generation"
+  author: Devroye, Luc
+  date: 1986
+  publisher: Springer
+  location: New York, NY
+  serial-number:
+    isbn: "978-1-4613-8645-2"
+    doi: "10.1007/978-1-4613-8643-8"
+
+casella2002statistical:
+  type: Book
+  title: "Statistical Inference"
+  author:
+    - Casella, George
+    - Berger, Roger L.
+  date: 2002
+  edition: 2nd Edition
+  publisher: Duxbury/Thomson Learning
+  location: Pacific Grove, CA
+  serial-number:
+    isbn: "978-0-534-24312-8"
+
 maidstone2012discrete:
   type: Article
   title: "Discrete Event Simulation, System Dynamics and Agent Based Simulation: Discussion and Comparison"

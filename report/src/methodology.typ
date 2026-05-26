@@ -50,60 +50,8 @@ In OSNs, these activity states are usually called sessions: a user starts a sess
 
 While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself #todo[Cite cognitive limits/attention economy paper]. 
 
-#comment[What follows is quite intuitive to say but I'm struggling with how I've modeled it, please Esteve give it a careful look]
+An informal mathematical way of the lifetime analysis post is provided on @apx-lifetime.
 
-To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-method-model, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
-
-Let us assume a post $i$ is created (or reposted) by user $u$ at time $t$, and $v in cal(N)_"out"(u)$ is a follower of user $u$. The exact time user $v$ is actually exposed to this post, denoted as $tau$, can be modeled as:
-
-$ tau = t_a + X $
-
-where $t_a = t + eta((u,v,"follow"), t)$ is the exact arrival time of the post in the timeline (incorporating the structural platform delay), and $X$ is a dynamic random variable representing the user-side consumption delay. 
-
-Because the timeline is sorted in reverse-chronological order (newest first), $X$ is a complex convolution of the user's offline status and their scrolling behavior, structured as:
-
-$ X = Delta_"idle" + Delta_"scroll" $
-
-These components behave strictly according to the LIFO (Last-In, First-Out) nature of the timeline:
-+ *Offline Penalty ($Delta_"idle"$)*: If the post arrives at time $t_a$ while the user is offline ($t_a in.not cal(O)(v)$), it sits unseen until the user's next active session interval $I_k$ begins at $t_k$. Therefore, $Delta_"idle" = t_k - t_a$. If the user is already online when the post arrives, it appears at the top of the feed, meaning $Delta_"idle"$ is effectively just the time until the user's next immediate action tick.
-+ *Reverse-Chronological Processing ($Delta_"scroll"$)*: Once the user is online, they consume the feed from newest to oldest. Therefore, the "backlog" obstructing post $i$ does not consist of older posts, but of $N_"newer"$ posts that arrived *after* $t_a$ (e.g., while the user was still offline). $Delta_"scroll"$ represents the cumulative inter-action time required for the user to evaluate and scroll past all $N_"newer"$ posts positioned above post $i$ in $cal(T)_t (v)$.
-
-This reverse-chronological dynamic introduces a somewhat survival mechanism for the posts, perfectly mirroring the hazard functions of the CTIC model. If a post arrives early in a long offline period, a massive volume of newer posts will pile on top of it. When the user logs in, the required $Delta_"scroll"$ to reach the post will be exceptionally high. 
-
-If the user's active session duration $Delta_k$ is shorter than the time required to scroll past the newer content ($Delta_"scroll" > Delta_k$), the transmission opportunity is lost entirely. In our simulation, timelines are purged upon session termination, meaning buried, unread posts fail to propagate ($tau -> oo$). Because $X$ dynamically depends on the instantaneous influx of competing posts and overlapping temporal session boundaries, it is mathematically intractable to solve via closed-form equations #todo[I am quite sure I wrote this, and I think it really is the case, but well], which justifies the use of a Discrete Event Simulation (DES), which allows us to natively resolve $X$ by simulating reverse-chronological consumption step-by-step.
-
-#comment[Continuation of the TODO from the previous paragraph: what I mean here is that if we tried to model this model analytically it is super complicated to solve, not that an analytical solution does not exist (I don't know that) but just thinking about formalizing it analytically makes me dizzy, that is the intention. Tangentially, this justifies the use of DES super super well!
-]
-
-=== Post Lifetime Analysis
-
-To formally synthesize this dynamic, the probability of post $i$ surviving the queue and being seen by user $v$ is fundamentally dictated by the volume of competing information. We can define a timeline influx rate, $mu_v$:
-
-#def(name: "Influx Rate")[The influx rate $mu_v$ is the expected number of posts arriving per unit of time in user $v$'s timeline.]
-
-As a macroscopic variable, $mu_v$ is an aggregation of the network topology (the out-degree $|cal(N)_"out"(v)|$), the generative creation rates of those followees ($lambda$), and their reactive repost probabilities ($pi("repost")$), for which we do not attempt to derive a closed-form analytical expression.
-
-If post $i$ arrives at time $t_a$ while the user is offline, it will sit idle until the next session begins at $t_k$, resulting in an offline penalty $Delta_"idle" = t_k - t_a$. During this exact temporal window, newer posts continue to arrive at rate $mu_v$. 
-
-To find the exact probability of the post being seen, we must consider the processing time of every single newer post. Let $D_"action"^((m))$ be the random variable representing the time taken by user $v$ to process the $m$-th newer post. For post $i$ to be successfully seen, the cumulative time required to evaluate the $N_"newer"$ posts positioned above it must be strictly less than the user's active session duration $Delta_k$. The exact survival probability is therefore:
-
-$ PP ("seen") = PP  ( sum_(m=1)^(N_"newer") D_"action"^((m)) < Delta_k ) $
-
-Evaluating this strict probability analytically requires convolving the distributions of the arrival process ($N_"newer"$), the individual reading times ($D_"action"^((m))$), and the session durations ($Delta_k$). Because this is a very complex system, finding a closed-form solution is computationally intractable. This intractability fundamentally justifies the reliance on the Discrete Event Simulation (DES) (see @sec-method-des) to natively resolve these reverse-chronological interactions.
-
-However, to establish an intuitive macroscopic understanding of the system's core mechanism, we can apply a first-order mean-value approximation. The expected number of newer posts positioned above post $i$ when the user finally logs in can be approximated by:
-
-$ EE[N_"newer"] approx mu_v dot Delta_"idle" = mu_v dot (t_k - t_a) $
-
-Let $EE[D_"action"]$ denote the expected inter-action delay (the average time user $v$ spends processing a single post). Applying Wald's Equation, the expected continuous time required to scroll past the newer backlog is:
-
-$ EE[Delta_"scroll"] approx EE[N_"newer"] dot EE[D_"action"] = mu_v dot (t_k - t_a) dot EE[D_"action"] $
-
-In this deterministic mean-value framework, the condition for a post to likely survive is that the expected scrolling time must be bounded by the user's active session duration:
-
-$ EE[Delta_"scroll"] < Delta_k $
-
-Together, the theoretical probability and its mean-value approximation define the core mechanism of the simulation: the likelihood of a post surviving the queue is *inversely proportional* to both the timeline influx rate $mu_v$ and the elapsed idle time.
 
 
 == Discrete-Event Simulation
@@ -154,7 +102,6 @@ $ pi(a | i) = pi(a | j) = pi(a) quad forall i, j in cal(I), forall a in cal(R)'_
 
 $ PP ( rho((u, i, a), t) = 1 mid cal(H)_t (u) ) = pi(a) $
 
-#todo[This condition is with the past formulation, we have to change it]
 
 As it's been discussed until now, the proposed model is a dynamical system in which its solution cannot be found analytically due to it's complexity. In a DES implementation, the system's state only changes at discrete points in time when a specific event occurs, allowing the simulation engine to jump efficiently from one event to the next without calculating the time in between. 
 
@@ -172,31 +119,22 @@ The main parameters that define the simulation, once the simplificating assumpti
 To see the parameter calibration and results, see #todo[@ sec-data-cal]
 
 === Evaluation Metrics
+<sec-method-des-metrics>
 
 To evaluate the simulation, the following metrics are going to be obtained from the simulation traces:
+
+#todo[Expand the first two sections slightily]
+
+#todo[Mark which ones are caracteristic metrics vs fundamental metrics]
 
 ==== Reposts Power-law
 
 According to the CTIC model, the number of reposts of a post should follow a power law, with $gamma in [2,3]$. That is, the log-log plot of the most to least sorted repost different post has should be drawn as a line. This is the same concept introduced in @sec-sota-topo-scalefree.
 
 
-==== Post Lifetime
+==== Post Lifetimes
 
 This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptely decrease as time goes on.
-
-==== Gini Coefficient
-
-Inequality ---defined as --- in a social system can be quantified using the Gini index @kwak2017centrality. Given a vector $X in RR^n$ of some wealth attribute (e.g., a node centrality), let $Y$ be $X$ sorted in increasing order. The Lorenz curve $L : [0,1] -> [0,1]$ is defined as the piecewise linear function connecting $(x(k), l(k))$ for $0 <= k <= n$, where
-
-$ x(k) = k / n, quad l(k) = sum_(i=1)^k Y_i / sum_(i=1)^n Y_i $
-
-The Gini index is then the area between the perfectly equal line ($y = x$) and the Lorenz curve:
-
-$ GG(X) = 1 - 2 integral_0^1 L(x) - x $
-
-A value of $0$ indicates perfect equality (all individuals are equal), while a value approaching $1$ indicates extreme inequality (the resource is centralized in a single metric). Unlike the power-law exponent, the Gini index requires no parametric assumptions about the underlying distribution, making it applicable to any network structure @kwak2017centrality.
-
-In Online Social Networks, the Gini index can be applied to different node centralities to measure structural inequality from distinct perspectives @kwak2017centrality, and in this project it will be used to measure inequality in how much information a node directly receives from its neighbors. High degree-Gini indicates that a small set of users dominates the inflow of information, a typical signature of power-law follower distributions on platforms like Twitter or Bluesky.
 
 ==== Structural Virality
 
@@ -246,19 +184,7 @@ needs to be processed when it’s attended. Also, ABMs, if they discrete the tim
 // In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
 //
 
-All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed offline to compute the power-law exponents, Gini coefficients, and structural virality scores described above.
-
-=== Experimental Design
-<sec-method-experimental-design>
-
-#comment[point 5 of fishman book. I dont even know where to start xd.]
-
-
-=== Convergence Criteria
-<sec-method-convergence>
-
-#comment[This is also in the Fishman book, but idk our simulation converges, right? What needs to be covered and explain is how are we going to cleverly replicate the results from the simulation]
-
+All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed offline to compute the power-law exponents, and structural virality scores described above.
 
 == Random Number Generation
 <sec-method-rng>
@@ -267,7 +193,7 @@ This section covers the implementations of the Random Number Generators needed i
 
 
 === Ziggurat Algorithm
-The generation of random variates for continuous distributions, specifically the Normal and Exponential distributions, relies on the highly optimized Ziggurat algorithm @marsaglia2000ziggurat. This method is a form of rejection sampling that overlays the target probability density function (PDF) with a set of $n=256$ horizontal rectangles (named after the Mesopotamian ziggurat temples for their tiered resemblance) of equal area, constructed such that they tightly bound the distribution curve.
+The generation of random variates for continuous distributions, specifically the Normal, Exponential and Pareto distributions, relies on the highly optimized Ziggurat algorithm @marsaglia2000ziggurat. This method is a form of rejection sampling that overlays the target probability density function (PDF) with a set of $n=256$ horizontal rectangles (named after the Mesopotamian ziggurat temples for their tiered resemblance) of equal area, constructed such that they tightly bound the distribution curve.
 
 Our implementation in Zig heavily leverages compile-time evaluation (`comptime`) to specialize the algorithm identically for both `f32` and `f64` precision without runtime overhead. The core optimization focuses on minimizing calls to the pseudo-random number generator (PRNG). Instead of requiring two distinct random values—one to select a rectangle and another to sample a point within it—a single 64-bit random integer is generated (or 32-bit for `f32`).
 
@@ -281,38 +207,42 @@ This uniformly distributed value $u$ is scaled by the $x$-coordinate boundary of
 
 When a candidate falls outside the fast-path core, two edge cases are handled:
 - *Boundary Cases:* If $i > 0$ and the sample is in the wedge between rectangles, an additional random draw evaluates the exact PDF to deterministically accept or reject the candidate.
-- *Tail Cases:* If $i = 0$, the sample lies in the infinite tail of the distribution. A specialized `zeroCase` function handles this tail recursively. For the Exponential distribution, it evaluates the inverse transform shifted by the rightmost boundary $R$, yielding $R - \ln(U)$. For the Normal distribution, it implements Marsaglia's tail generation, looping to draw values until $-2y < x^2$ is satisfied, and appropriately shifting the result by $R$.
+- *Tail Cases:* If $i = 0$, the sample lies in the infinite tail of the distribution. A specialized `zeroCase` function handles this tail recursively. 
+ - *Exponential* distribution, it evaluates the inverse transform @devroye1986nonuniform shifted by the rightmost boundary $R$, yielding $R - \ln(U)$. 
+ - *Normal* distribution, it implements Marsaglia's tail generation, looping to draw values until $-2y < x^2$ is satisfied, and appropriately shifting the result by $R$.
+
 
 === Categorical Distribution
 <sec-method-rng-categorical>
 
-The categorical distribution models discrete random variables that can take on one of $k$ possible
- categories, each with a specific probability. In our Zig implementation, a categorical distribution is
- initialized with an array of distinct items (`data`) and their corresponding probabilities (`weights`).
- During initialization, an accumulator array (`acc`) is computed that stores the cumulative sum of the
+The categorical distribution models discrete random variables that can take on one of $k$ possible categories, each with a specific probability. In our Zig implementation, a categorical distribution is initialized with an array of distinct items (`data`) and their corresponding probabilities (`weights`). During initialization, an accumulator array (`acc`) is computed that stores the cumulative sum of the
 given probabilities.
 
-To sample from this distribution, we employ a standard inverse transform method: a uniform
- floating-point value $u in [0, 1)$ is drawn and compared linearly against the cumulative weights array
- until a value satisfying $u <= text("acc")[i]$ is found, at which point the category at index $i$ is
- returned.
+To sample from this distribution, we employ a standard inverse transform method @devroye1986nonuniform: a uniform floating-point value $u in [0, 1)$ is drawn and compared linearly against the cumulative weights array until a value satisfying $u <= text("acc")[i]$ is found, at which point the category at index $i$ is returned.
 
 While theoretically faster alternatives like the Alias Method @walker1977alias exist --—capable of sampling in $O(1)$ time after a linear $O(k)$ setup—-- they introduce additional memory overhead and initialization complexity. For the context of this simulation, where $k$ is typically very small (e.g., modeling a handful of user action types), the performance difference is strictly negligible. Thus, we have opted for the linear search approach due to its simplicity and cache locality.
 
 However, to optimize the performance of the linear search, the following convention has been maintained when constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
 
-// === Erlang Distribution
-//
-// Another meaningful optimization present in the simulation pertains to the generation of Erlang-distributed random variates. The Erlang distribution with shape parameter $k$ and rate parameter $lambda$ describes the sum of $k$ independent and identically distributed Exponential random variables. 
-//
-// Naively simulating this process using the inverse transform method would involve generating $k$ standard uniform random variables $U_i$, computing their inverse transforms, and summing the results: 
-// $ X = sum_(i=1)^k frac(-ln(U_i), lambda) $
-// This standard approach requires invoking the computationally expensive logarithm function $k$ times, alongside $k$ divisions. 
-//
-// Instead, our implementation exploits the mathematical properties of logarithms to condense these operations. By factoring out the rate parameter and converting the sum of logarithms into the logarithm of a product, the calculation is reduced to:
-// $ X = frac(-1, lambda) ln(product_(i=1)^k U_i) $
-// This optimization allows the algorithm to simply compute a running product of $k$ standard uniform variables and perform a single logarithm and a single division at the end. By reducing the number of logarithm calls from $k$ to exactly 1, the generation speed for Erlang variates is drastically improved, especially for higher values of $k$.
-//
+
+=== Pareto Distribution
+
+The Pareto Distribution is fundamental when talking about social networks, as its the distribution associated with the power-law. It's defined by two parameters, scale $alpha$ and shape $x_m$, and has the following density and cumulative density functions:
+
+$ f(x | alpha, x_m ) = cases(frac(alpha x_m^alpha, x^(alpha + 1)) & "if" x >= x_m, 0 & "if" x < x_m )  $
+
+$ F(x | alpha, x_m) = cases(
+  1 - (frac(x_m, x))^alpha & "if" x >= x_m,
+  0 &"if" x < x_m
+)
+$ 
+
+To sample from it we've used the following relationship @casella2002statistical: a random variable $X$ follows a $"Pareto"(alpha, x_m)$ distribution when $Y ~ "Exp"(1)$ and
+
+$ X ~ x_m · exp{Y/alpha} $
+
+therefore being as efficient as generating an exponential with the ziggurat algorithm.
+
 
 == Time-Variyng Heterogeneous Graphs
 <sec-method-graph>

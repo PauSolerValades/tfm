@@ -1,0 +1,12 @@
+lares-tukey:
+  type: Web
+  title: "lares: outlier_turkey — Outliers: Tukey's Fences"
+  author: Lares, Bernardo
+  url:
+    value: https://search.r-project.org/CRAN/refmans/lares/html/outlier_turkey.html
+    date: 2026-05-26
+  organization: CRAN
+  parent:
+    type: Web
+    title: "lares: Analytics & Machine Learning Sidekick (R package)"
+    url: https://cran.r-project.org/package=lares

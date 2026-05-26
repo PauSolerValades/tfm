@@ -65,3 +65,43 @@ kooti2016twitter:
       type: periodical
       title: Lecture Notes in Computer Science
       publisher: Springer
+
+kwak2010twitter:
+  type: Article
+  title: "What is Twitter, a Social Network or a News Media?"
+  author:
+    - Kwak, Haewoon
+    - Lee, Changhyun
+    - Park, Hosung
+    - Moon, Sue
+  date: 2010
+  page-range: 591-600
+  serial-number:
+    doi: "10.1145/1772690.1772751"
+  parent:
+    type: proceedings
+    title: "Proceedings of the 19th International Conference on World Wide Web"
+    publisher:
+      name: ACM
+      location: New York, NY, USA
+    serial-number:
+      isbn: "978-1-60558-799-8"
+
+leskovec2006sampling:
+  type: Article
+  title: "Sampling from Large Graphs"
+  author:
+    - Leskovec, Jure
+    - Faloutsos, Christos
+  date: 2006
+  page-range: 631-636
+  serial-number:
+    doi: "10.1145/1150402.1150479"
+  parent:
+    type: proceedings
+    title: "Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining"
+    publisher:
+      name: ACM
+      location: New York, NY, USA
+    serial-number:
+      isbn: "978-1-59593-339-3"

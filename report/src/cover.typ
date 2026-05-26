@@ -19,8 +19,8 @@
   #v(2.8cm)
 
   #text(fill: blue, size: 25pt, weight: "bold")[
-  Studying Information Diffusion on Bluesky: A Continuous-Time \ Independent Cascade Model via \ Discrete-Event Simulation
- ]
+  A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
+  ]
   
   #v(0.3em)
   

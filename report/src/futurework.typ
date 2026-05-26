@@ -5,7 +5,7 @@ This chapter outlines directions for extending the simulation beyond its current
 == Performance Optimizations
 <sec-future-performance>
 
-The simulation already applies Data-Oriented Design and buffered I/O to keep the hot loop from stalling (see @sec-impl-performance). Two bottlenecks remain that are structural rather than implementational: the $O(log n)$ cost of the event queue, and the single-threaded nature of trace writing.
+The simulation already applies arena-based memory allocation and buffered file I/O to keep the hot loop from stalling (see @sec-impl-memory and @sec-impl-trace-io). Two bottlenecks remain that are structural rather than implementational: the $O(log n)$ cost of the event queue, and the single-threaded nature of trace writing.
 
 === Future Event Set Data Structures
 
@@ -74,29 +74,15 @@ It is important to note that the Calendar Queue and its variants remain an activ
 === Parallelism
 <sec-future-multiprocess>
 
-#comment[
-  Even with buffered binary writes (see @sec-impl-trace-io), the simulation loop still
-  performs the memcpy into the buffer synchronously. At extreme event rates, this becomes
-  a bottleneck — the CPU is context-switching between simulation logic and I/O.
+#todo[FINISH]
 
-  The solution is to offload trace writing to a separate thread or process.
+Three main points to cover here:
+1. Parallel discrete-event simulations: they are it's own field of research, not the objective of this project.
+2. Multithreading on execution: it would be very good for a lot of things and was not feasible to implement due to time constirctions. It would involve:
+  - Spliting the `Topology` struct into the CSR + inmmutable information and the users information.
+  - Reseting the users and the arenas per run to avoid more overhead than necessary.
+3. I/O optimization: split every thread into an evented IO, in which one green thread would just write the trace, and another would just compute. when to dump would be a pointer change, as we would have two buffers.
 
-  Points to cover:
-  - Current architecture: four 64KB stack buffers flushed when full. The flush (write()
-    syscall) blocks the simulation thread. Under high event throughput, flushes become
-    frequent enough to matter.
-  - Proposed: a dedicated writer thread consumes from a lock-free ring buffer (or a
-    pair of double-buffered pages). The simulation loop writes trace events into the
-    ring buffer with a single atomic store; the writer thread drains to disk
-    asynchronously. No simulation cycle ever waits for a syscall.
-  - Alternative: use io_uring (Linux) or IOCP (Windows) for truly asynchronous kernel-level
-    I/O without spawning threads. More complex to implement but lower overhead.
-  - The trace format (fixed-size binary structs) is ideal for this — each event is
-    a known number of bytes, so the ring buffer can use a simple producer-consumer
-    protocol without serialization or variable-length framing.
-  - This optimization is independent of the Calendar Queue; both can be applied
-    simultaneously for cumulative speedup.
-]
 
 === Multi-Stage Compilation
 <sec-future-compiletime>
@@ -115,6 +101,17 @@ Benefits:
 - Heap pre-allocation estimates can be computed at code-gen time from the known distribution parameters and network size. If the expected event count per user is statically bounded by the config and topology dimensions, the per-user timeline heaps can be pre-sized, eliminating reallocation churn in the hot loop. Notably, the topology is only *inspected* for these aggregate statistics — the network data itself is not embedded in the specialized binary and remains a runtime input, so the same specialized binary can process different topologies of similar scale.
 
 As trade-offs, each configuration change requires a recompilation (a few seconds), and the resulting binary is specialized to one config shape. This approach favors long-running, single-config executions or a small number of carefully chosen parameter points over rapid parameter sweeps with hundreds of configs. For the final calibrated configuration that will be run at full scale with many replications, the compile-time investment may be justified by the runtime savings.
+Implement appropiately the session gaps, duration and inter post creation as the data gave. The decisions taken in the works were result of a severe time limitation constraint and the need for the distribtuions software to implement the lognormal, the weibull and the gamma from scratch.
+
+== Execution and Evaluation
+<sec-future-execution>
+
+#todo[Write this properly]
+
+First, try to profile the parts of the current simulation that are actual bottlenecks, and perfrom a professional performance analysis, with hunderds of rams, with warm and cold caches, and give the input analysis time, memory and trace lenght (space).
+
+Implement appropiately the session gaps, duration and inter post creation as the data gave. The decisions taken in the works were result of a severe time limitaiton constraint and the need for the distribtuions software to implement the lognormal, the weibull and the gamma from scratch.
+
 
 == Content-Aware Information Diffusion
 <sec-future-content>
@@ -171,6 +168,14 @@ The main strong point of this approach is to avoid heavyweight operations per-ev
 
 Given a user $u in cal(U)$, their observable identity ---what they have contributed to the network--- is captured by their activity set $cal(A)_t (u)$, which includes both original creations and reposts (see @sec-method-model, @def-activity). This is distinct from the narrower set of original posts $cal(P)_t (u)$: a repost is an act of endorsement that shapes the user's public identity just as much as an original post.
 
+#todo[finish this]
+
+#def(name: "Embedding")[
+  Something that if you cosine similarity a user with a post and gives a kind of probability of an interaction (like respost ignore).
+]
+
+Details on two tower approach without mencioning two tower approach.
+
 Let $f$ be an embedding function that maps a post to a vector in $bb(R)^d$. The user's identity embedding $S_"id"(u, t)$ is an aggregation of everything they have output:
 
 $ S_"id" (u, t) = Gamma_"id" ({ f(i) | i in cal(A)_t (u) }) $
@@ -184,7 +189,6 @@ $ S_"inf" (u, t) = Gamma_"inf" ({ w(i) dot f(i) | i in cal(T)_t (u) }) $
 where $cal(T)_t (u)$ is the user's timeline ---all posts they have been exposed to--- and $w(i)$ is a weight reflecting the depth of engagement with post $i$:
 
 $ w(i) = cases(
-  w_"seen" &"if" i in cal(T)_t(u) without cal(H)_t(u),
   w_"like" &"if" i in cal(H)_t(u) "and" i in.not cal(A)_t(u),
   w_"repost" &"if" i in cal(A)_t(u)
 ) $
@@ -208,7 +212,7 @@ The new post embedding is then a convex combination of the candidate pool's embe
 
 $ f(i_"new") = sum_(j=1)^K w_j dot f(i_j) quad "where" i_j in C(u, t) $
 
-with weights drawn from a Dirichlet distribution $bold(w) ~ "Dir"(bold(1))$, ensuring $sum w_j = 1$ and $w_j >= 0$. This guarantees the generated embedding lies within the convex hull of semantically valid posts---unlike additive Gaussian noise, which can drift into meaningless regions of the embedding space. The exact sampling strategy for constructing $C(u, t)$ and the optimal Dirichlet concentration remain open questions, as this is a design sketch rather than a finalized algorithm.
+with weights drawn from a Dirichlet distribution $bold(w) ~ "Dir"(bold(1))$, ensuring $sum w_j = 1$ and $w_j >= 0$. #todo[don't say it as true, but as maybe] This guarantees the generated embedding lies within the convex hull of semantically valid posts---unlike additive Gaussian noise, which can drift into meaningless regions of the embedding space. The exact sampling strategy for constructing $C(u, t)$ and the optimal Dirichlet concentration remain open questions, as this is a design sketch rather than a finalized algorithm.
 
 This formulation captures a fundamental feedback loop absent from the current simulation. As a user scrolls through their timeline, the engagement-weighted sampling from $cal(T)_t(u)$ ensures that the candidate pool gradually drifts toward the semantic center of their information diet. A user embedded in a polarized community will see their creations shift toward that community's positions---not because they necessarily agree with everything they read, but simply because that is what surrounds them. Over time, $S_"id"$ follows: the user's own output (now part of $cal(A)_t(u)$) feeds back into their identity, closing the loop. This models the slow, feedback-driven nature of opinion change that purely spontaneous creation cannot produce.
 
@@ -252,24 +256,9 @@ $ beta_(u,i)(x) = pi_u ("repost" | c) dot x  (1 - gamma)^(x^(omega_i)) $
 
 Expanding the softmax policy with the cosine similarity $c$ between user identity embedding $S_"id" (u, t)$ and post embedding $f(i)$:
 
-$ beta_{u,i}(x) = frac{exp(theta_{"repost"} dot c + beta_{"repost"})}{sum_{k in cal(A)} exp(theta_k dot c + beta_k)} dot x \, (1 - gamma)^{x^{omega_i}} $
+$ beta_(u,i)(x) = frac(exp(theta_"repost" dot c + beta_"repost"), sum_(k in cal(A)) exp(theta_k dot c + beta_k) dot x) (1 - gamma)^(x^(omega_i) $
 
 This synthesis resolves the reinforcement paradox: even highly exposed posts (large $x$) will not trigger unrealistic, network-wide outbreaks unless they maintain high semantic alignment ($c$) with the viewing users. Cascades naturally fracture into topically relevant sub-communities, preserving both structural decay and semantic homophily.
 
-Up to this point, we have assumed that a post's embedding remains static as it propagates. But in real social networks, every repost is an opportunity to reframe.
-
-=== Quoting as Semantic Blending
-
-In the current model, reposting a post $i$ simply propagates its original embedding $f(i)$ unchanged. Real platforms, however, support quote-posting: a user reposts $i$ while appending their own commentary, creating a new post $i'$ that blends the original with their perspective.
-
-This can be modeled as a special case of the content generation framework described above, where the candidate pool is anchored on the original post:
-
-$ f(i') = lambda \, f(i) + (1 - lambda) \, S_"id"(u, t) $
-
-where $lambda in (0, 1)$ controls how much of the original is preserved versus replaced by the quoting user's identity. A high $lambda$ produces a faithful repost; a low $lambda$ produces a reframing that says more about the quoter than the quoted.
-
-Under this mechanism, a post's semantic meaning shifts at each quote-repost step, absorbing the bias of whichever community is currently amplifying it. A benign post that passes through a polarized cluster may emerge semantically unrecognizable from its source---not because the content autonomously mutated, but because each quoter injected their own perspective into it.
-
-So far, every mechanism we have proposed assumes engagement increases with similarity. But that is only half the story.
 
 Taken together, the proposals given in this section sketch a research path from a purely structural, content-agnostic simulation toward one where diffusion emerges from the interplay between semantics and topology. The result is a framework where who users are, what content says, and how communities reshape it are no longer orthogonal assumptions but continuous, entangled dynamics, making ---allegidly--- a worth exploring research topic.

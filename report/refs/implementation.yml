@@ -8,4 +8,103 @@ soler2025eazyargs:
   parent:
     title: GitHub
 
+zig-std:
+  type: Web
+  title: Zig Standard Library (v0.16.0)
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  note: "Source code: https://github.com/ziglang/zig/tree/master/lib/std"
+
+zig-std-heap:
+  type: Web
+  title: "std.heap — GeneralPurposeAllocator and ArenaAllocator"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-io:
+  type: Web
+  title: "std.io — Buffered and Streaming I/O"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-json:
+  type: Web
+  title: "std.json — JSON Serialization and Deserialization"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-priority-queue:
+  type: Web
+  title: "std.PriorityQueue — Binary Heap Implementation"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-multi-array-list:
+  type: Web
+  title: "std.MultiArrayList — Structure of Arrays Container"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-dynamic-bit-set:
+  type: Web
+  title: "std.DynamicBitSetUnmanaged — Dynamically-Sized Bitset"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+duckdb:
+  type: Article
+  title: "DuckDB: an Embeddable Analytical Database"
+  author:
+    - Raasveldt, Mark
+    - Mühleisen, Hannes
+  date: 2019
+  page-range: 1981-1984
+  serial-number:
+    doi: "10.1145/3299869.3320212"
+  parent:
+    type: proceedings
+    title: "Proceedings of the 2019 International Conference on Management of Data (SIGMOD '19)"
+    publisher:
+      name: ACM
+      location: New York, NY, USA
+    serial-number:
+      isbn: "978-1-4503-5643-5"
 

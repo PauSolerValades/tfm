@@ -1,6 +1,6 @@
 #import "@preview/lovelace:0.3.0": *
 
-#import "utils.typ": todo, comment
+#import "utils.typ": todo, comment, procedure
 
 This chapter covers the design of the simulation: the entities and data model (see @sec-design-entities), the semantics of each event source (see @sec-design-sources), the overall simulation lifecycle (see @sec-design-lifecycle), and the trace schema that captures all state transitions (see @sec-design-traces). For every data structure referenced here, only the algorithmic motivation is provided; the concrete realization, memory layout, and performance considerations are treated separately in @sec-impl.
 
@@ -54,9 +54,7 @@ Because the validity of any simulation can rely on sheer computational volume an
 
 The first step in achieving this explicit memory control is choosing the appropriate tools for the job. Interpreted languages like Python #todo[cite] and R #todo[cite] are immediately discarded. Even on powerful hardware, the overhead of interpretation introduces unacceptable latency for massive, CPU-bound simulation loops. Moreover, they do not offer control over memory allocation---the most critical performance killer, since any garbage collector memory strategy will affect performance greatly. This is also why the excellent performance of Julia is discarded: despite being fast, its garbage collector introduces the same fundamental limitation. Following this logic, manual memory management becomes necessary to deeply optimize performance and take full advantage of CPU caching. With requirements pointing strictly toward a systems language with manual memory management, the engine was implemented in Zig @zig.
 
-Zig is a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (#todo[see] @sec-impl-dod). By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (#todo[see] @sec-impl-performance), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
-
-
+Zig is a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (#todo[see @ sec-impl-dod] ). By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (#todo[see] @sec-impl-memory), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
 
 
 == Data Model
@@ -71,7 +69,7 @@ The aim of this data model is to translate the mathematical rules of the describ
 
 The fundamental entity of the simulation is the *Event*. It represents a unit of temporal state transition with the elements residing in the global priority queue $Q$. An Event is a composite structure containing the scheduled execution time ($t$), the targeted user, a session validation tracker, and the specific payload (`EventType`) dictating the transition. The type of an event can be a user state-change (`session`), a post creation (`create`), an interaction with a post (`action`), or an information propagation (`propagate`).  #todo[check if a citation to a posterior document is needed. If it is, remove the next paragraph]
 
-These are the same event types described in @sec-method-des-mechanics, but with the extra `propagate`. The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$ (#todo[see] @ sec-design-sources-propagate).
+These are the same event types described in @sec-method-des-mechanics, but with the extra `propagate`. The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$ (#todo[see] @sec-design-sources-propagate).
 
 The simulation needs to differentiate between what is an event that changes state ---such as the Event entity also described in this section--- and a smaller event to represent the contents of the timelines of a user, the *Timeline Event*. It is a highly specialized, minimalist tuple linking a continuous timestamp $t$ (when did the post arrive) with the `post_id` of the event the user sees. These events are stored in every user timeline $cal(T)_t (u)$, and are treated as the reverse-chronological storage: when a "pop" operation is performed, the event with the maximum time $t$ will be returned; this is the opposite of the main queue $Q$, where a "pop" will return the event with the minimum timestamp.
 
@@ -113,6 +111,7 @@ These relationships are entirely static. The data model describes what can be st
 This section describes the implementation strategies of the different sources of the simulation provided in @sec-design-dm-event, and which logic follows the simulation when an event gets processed according to the rules of the simulation (@sec-design-rules).
 
 === Propagate
+<sec-design-sources-propagate>
 
 The first event we must cover is the only event that does not correspond to any physical event: the `propagate` event.
 
@@ -180,7 +179,7 @@ The `propagate` event therefore contains two critical pieces of information:
 
 The @proc-propagate showcases the implementation of the propagation, which is the same as the one described in @eq-proc-propagate at section the description of the DES simulation (see @sec-method-des-mechanics).
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Procedure of propagation of a post")[
+#procedure(caption: "Procedure of propagation of a post")[
   #pseudocode-list[
     + *procedure* $"PropagatePost"(u: cal(U), i: cal(I), t_c: T)$
       + *for* $v in cal(N)_"in" (u)$
@@ -194,7 +193,7 @@ The @proc-propagate showcases the implementation of the propagation, which is th
 
 When a propagate event reaches the head of $Q$, the main event loop dispatches it to the handler below, as can be seen in @proc-propagate-switch. So, propagation event is not technically a source, but a result of any propagation of posts needed.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Propagate event dispatch in the main simulation loop")[
+#procedure(caption: "Propagate event dispatch in the main simulation loop")[
   #pseudocode-list[
     + *procedure* $"HandlePropagate"(Q: "EventQueue", t: T, u: cal(U), p: cal(I))$
       + $"pop"(Q) arrow.r (t, u, "propagate"(p))$
@@ -215,7 +214,7 @@ The second event of the simulation are technically two events, but they behave c
 
 When the simulation processes the event `online` for an offline user $u$, it has to start the whole simulation again. To do that, it needs to create an `action` event to start checking the timeline, and a `create` event, both according to their distributions, so the characteristic loop of DES can start with both of the real sources. Additionally, this also appends a session event with `end` payload, as the session needs to end eventually.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Session start: puts a user back online and primes the event loop")[
+#procedure(caption: "Session start: puts a user back online and primes the event loop")[
   #pseudocode-list[
     + *procedure* $"HandleGoOnline"(Q: "EventQueue", t: T, u: cal(U))$
       + $u."is_online" arrow.l "true"$
@@ -238,7 +237,7 @@ If an `end` event is processed, the user is marked as offline, and the new sessi
 
 If the user timeline is empty, it's interpreted as the user seeing posts it has already seen, so logs off the platform. #todo[we should not bother with interpretations here, check if it's in the interpretation section.]. It still does the same as going offline normally.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Session end: marks the user offline, clears the timeline, and schedules the next session")[
+#procedure(caption: "Session end: marks the user offline, clears the timeline, and schedules the next session")[
   #pseudocode-list[
     + *procedure* $"HandleGoOffline"(Q: "EventQueue", t: T, u: cal(U))$
       + $u."is_online" arrow.l "false"$
@@ -251,7 +250,7 @@ If the user timeline is empty, it's interpreted as the user seeing posts it has 
 Both of this options are nested under a check when the event type is a `session`, shown in the @proc-session-handle:
 
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Session handle")[
+#procedure(caption: "Session handle")[
   #pseudocode-list[
     + *procedure* $"HandleSession"(Q: "EventQueue", u: cal(U), t_c: T, s: "Session")$
       + *if* s == start *then*
@@ -302,7 +301,7 @@ $ Q = [(u, i, "propagate", 9), (u, "session.end", 12), (u, "action", 13), (u, "c
 
 $ Q = [(u, "action", 13), (u, "create", 14), (u, "session.start", 16)] $
 
-Now, the problem becomes obvious. The next pop will process the action at $t=13$, but user $u$ is not online at that moment $13 in.not cal(O)(u)$, so the simulation cannot process either of $(u, "action", 13), (u, "create", 14)$. The naive solution would be to implement a procedure called after every go to online to just eliminate all the events between the time the user goes offline $t_e$ and the time it comes back online $t_s$ but this is an horrible idea implementation wise (see @sec-impl-performance), so what is done is to count the amount of sessions the user has had until now and establish the following rule: an event can just be processed by the simulation if the session it has been generated is the same as the user current session.
+Now, the problem becomes obvious. The next pop will process the action at $t=13$, but user $u$ is not online at that moment $13 in.not cal(O)(u)$, so the simulation cannot process either of $(u, "action", 13), (u, "create", 14)$. The naive solution would be to implement a procedure called after every go to online to just eliminate all the events between the time the user goes offline $t_e$ and the time it comes back online $t_s$ but this implies reallocating and copying large portions of the event queue on every session boundary (see @sec-impl-memory), so what is done instead is to count the amount of sessions the user has had so far and establish the following rule: an event can just be processed by the simulation if the session it has been generated is the same as the user current session.
 
 The mechanism assigns a number to every session, and the user keeps track of how many sessions he has been active so far. Now, whenever any event is popped from the $Q$, the simulation will check the `session_gen` id. If they coincide with `user_session_id`, it will get processed, if not, it will get discarded.
 
@@ -337,7 +336,7 @@ $ Q = [(u, "action", 13, 1), (u, "create", 14, 1), (u, "session.start", 16, 2)] 
 
 Knowing that the mechanism exists, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_"gen"$ is the `session_gen` of the current event, which we already know it's a session
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Session event dispatch with stale-event guard")[
+#procedure(caption: "Session event dispatch with stale-event guard")[
   #pseudocode-list[
     + *procedure* $"HandleSessionEvent"(Q: "EventQueue", u: cal(U), t_c: T, s: "Session", e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -360,7 +359,7 @@ The two variables that control the time between sessions and the session length 
 
 The `create` event behaves as a more traditional source of events, as it does not have relationships with other event sources or events. When a `create` event is assigned, the simulation searches the last `post_id`, augments it and makes the current user $u$ its author. The @proc-create showcases the event.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Create event dispatch with stale-event and max-posts guard")[
+#procedure(caption: "Create event dispatch with stale-event and max-posts guard")[
   #pseudocode-list[
     + *procedure* $"HandleCreate"(Q: "EventQueue", u: cal(U), t_c: T, e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -383,7 +382,7 @@ The `create` event behaves as a more traditional source of events, as it does no
 
 A noticeable fact is that the `create` type does not contain any payload, as the user that creates it is at that point information known by the program and the `post_id` will be selected if the event is created. Preselecting which `post_id` would the post have when the create event is scheduled is, again, the naive approach, but breaks when interacting with the possibility of an event being stale.
 
-Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` are not going to be monotonically increasing, which has performance and logic consequences on their storing (see @sec-impl-performance) #todo[check this]
+Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` sequence will have gaps, which breaks the power-of-two indexing scheme used by the paginated post storage (see @sec-impl-posts) #todo[check this]
 
 Apart from the staleness nuance, the three real and direct consequences this action has are 
 1. A post gets created and stores (see @sec-impl-datastructures)
@@ -400,7 +399,7 @@ To simulate the user decision making, a Categorical (or a generalized Bernoulli)
 
 The @proc-action-handle showcases the logic of the dispatch action event, draining the timeline until a non-interacted post surfaces. When a fresh post is found, processing delegates to @proc-action-on-post; when the timeline is exhausted, the user is forced offline via @proc-go-offline, described in @sec-design-sources-sessions.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Action event dispatch with stale-event guard and timeline drain")[
+#procedure(caption: "Action event dispatch with stale-event guard and timeline drain")[
   #pseudocode-list[
     + *procedure* $"HandleActionEvent"(Q: "EventQueue", u: cal(U), t_c: T, a: "Action", e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -422,7 +421,7 @@ The @proc-action-handle showcases the logic of the dispatch action event, draini
   ]
 ] <proc-action-handle>
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Per-action processing after a non-interacted post is found")[
+#procedure(caption: "Per-action processing after a non-interacted post is found")[
   #pseudocode-list[
     + *procedure* $"HandleActionOnPost"(Q: "EventQueue", u: cal(U), t_c: T, a: "Action", i: cal(I))$
       + $"mark" i "as seen by" u$
@@ -463,7 +462,7 @@ The warm-up phase consists of assuming every user is online, and each one starts
 The @proc-stageone shows the pseudocode of stage one, which is a small simulation in itself. The for in line 2 starts the loop of creating events, one scheduled creation per user, giving space to the main loop at line 6. There, the queue $Q$ just contains `create` events, so there is really no need for an check of which type is the event, but it can be seen from lines 10 to 17 that the function is the same that HandleCreate (@proc-create) but using the create warm-up event generate function instead of the standard create.
 
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Stage One: warm-up phase that fills user timelines with propagated posts before the active simulation begins")[
+#procedure(caption: "Stage One: warm-up phase that fills user timelines with propagated posts before the active simulation begins")[
   #pseudocode-list[
     + *procedure* $"StageOne"(Q: "EventQueue", t_c: T, t_"warmup": T, "metrics": "SimMetrics")$
       + *for* $u in cal(U)$
@@ -500,7 +499,7 @@ If the model was not an activity driven network, this section would not be neces
 
 The @proc-initsession shows how the users are classified between online and offline by the use of a Uniform random variable (line 3), and if the user is online, generates when the session should end and an event `action`. 
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Init: assigns initial online/offline state to every user and primes the event queue")[
+#procedure(caption: "Init: assigns initial online/offline state to every user and primes the event queue")[
   #pseudocode-list[
     + *procedure* $"Init"(Q: "EventQueue", t_c: T)$
       + *for* $u in cal(U)$
@@ -524,7 +523,7 @@ Notice also that in the user online branch there is just the `action` event gene
 
 The pseudocode @proc-lifecycle shows the lifecycle of the simulation as a big overview. The topology and the configuration are loaded before starting, that is why they are arguments of the procedure (line 1), but the queue is created inside the procedure, and it's shared by all the subprocedures that have been described so far. To showcase this, the "address-of" operator & has been used (lines 4, 5 and 6), to showcase it's not a copy, but the same queue for all the procedures.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Simulation Lifecycle")[
+#procedure(caption: "Simulation Lifecycle")[
   #pseudocode-list[
     + *procedure* Simulation(c: Config, topo: Graph)
       + $Q <- "MinHeap"{}$
@@ -546,7 +545,7 @@ The simulation is orchestrated by a single event loop that lasts until the simul
 
 Once primed, the main loop dispatches each event type — create, session, action, or propagate — to `HandleCreate`, `HandleSessionEvent`, `HandleActionEvent`, or `PropagatePost` respectively, as can be seen in the @proc-mainloop.
 
-#figure(kind: "proc", supplement: [Procedure], caption: "Simulation: main event loop that dispatches each popped event to its corresponding handler")[
+#procedure(caption: "Simulation: main event loop that dispatches each popped event to its corresponding handler")[
   #pseudocode-list[
     + *procedure* $"MainLoop"(Q: "*EventQueue", c: "Config", "topo": "Graph", t_c: T )$
       + *while* $t_c <= t_h$ *and* $Q != emptyset$
@@ -632,6 +631,7 @@ Opposite to the Global Queue, the estimation of the timeline amount of events is
 
 
 === Follower Topology
+<sec-design-datastructures-topology>
 
 The Graph data structure is traditionally a performance killer structure, difficult to get right. Luckily, several of the assumptions (see @sec-method-des-assumptions) facilitates the election of the data representation, specifically the non changing users and followers.
 
@@ -648,7 +648,7 @@ When representing an adjacency matrix $A$, the `values` array is just full of on
 
 === User Storage
 
-The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is defnietly not performance aware in lots of cases. This is approached in @sec-impl-performance and specifically regarding user storage in @sec-impl-users.
+The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is defnietly not performance aware in lots of cases. This is approached in @sec-impl-users.
 
 === Post Storage
 <sec-design-datastructrues-post>

@@ -85,7 +85,7 @@
 #include "src/methodology.typ"
 
 #pagebreak()
-= Simulation Design 
+= Design 
 <sec-design>
 
 #include "src/design.typ"
@@ -97,14 +97,26 @@
 #include "src/implementation.typ"
 
 #pagebreak()
-= Data Analysis and Calibration
+= Bluesky Data Analysis
 <sec-data>
 
 #include "src/data.typ"
 
+#pagebreak()
+= Calibration
+<sec-calibration>
+
+#include "src/calibration.typ"
 
 #pagebreak()
-= Simulation Execution 
+= Execution 
+<sec-exec>
+
+#include "src/execution.typ"
+
+#pagebreak()
+= Results
+<sec-results> 
 
 #include "src/results.typ"
 
@@ -121,7 +133,7 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/futurework.yml"),
+  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml"),
   title: "References",
 )
 
@@ -129,15 +141,61 @@
 
 #counter(heading).update(0)
 #heading(numbering: none)[Appendix]
-#set heading(numbering: "A.")
+#set heading(numbering: "A.1", supplement: "Appendix")
 
-= Additional Mechanics: Quoting and Notifications 
+= Code Structure and Technical Guide
+<apx-code>
 
+#include "src/annex/code.typ"
+
+#pagebreak()
+= Post Lifetime Analysis
+<apx-lifetime>
+
+#include "src/annex/lifetime.typ"
+
+#pagebreak()
+= Additional Evaluation Metrics
+<apx-metrics>
+
+#include "src/annex/metrics.typ"
+
+#pagebreak()
+= Quoting and Notifications 
 #include "src/annex/mechanics.typ"
 
 #pagebreak()
+= Software Stack
+<apx-software-stack>
+
+#include "src/annex/software-stack.typ"
+
+#pagebreak()
 = Twitter Session Mechanics Threshold 
+<apx-threshold>
 
 #include "src/annex/threshold.typ"
+
+#pagebreak()
+= Database Specification
+<apx-database>
+
+#include "src/annex/database.typ"
+
+#pagebreak()
+= Topology Ingestion and Sampling 
+<apx-topology>
+
+#include "src/annex/topology.typ"
+
+#pagebreak()
+= Performance Analysis 
+<apx-performance>
+
+#include "src/annex/hardware.typ"
+
+<apx-space>
+
+#include "src/annex/space-analysis.typ"
 
 

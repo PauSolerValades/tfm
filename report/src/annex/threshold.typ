@@ -1,7 +1,7 @@
 Kooti et al @kooti2016twitter studied how often Twitter users engage with content by modelling active sessions, which are contiguous bursts of activity separated by periods of absence. The central question is: given two consecutive actions by the same user, how long can the pause between them be before we consider the user to have logged off?
 
 #figure(
-  image("../figures/session_elbow_175000.png", width: 80%),
+  image("../images/annex/A-1_session_elbow.png", width: 80%),
   caption: [Inter-arrival gap distribution of the dominant user stratum
     (101--500 core events, $N = 95{,}795$ users, $16.3 times 10^6$ gaps).
     The red dashed line marks the Kneedle-detected elbow at $Delta t = 265$ s
