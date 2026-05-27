@@ -348,6 +348,7 @@ The engagement rate is sensitive to the assumed inter-action time. With $1/lambd
 The simulation engine (`config.zig`) expects specific distribution types for each calibrated quantity. This section maps every empirical finding to its exact Zig type and initialization.
 
 === Per-User Pareto Sampling
+<sec-cal-summary-pareto>
 
 The simulation natively supports Pareto distributions for `session_duration`, `inter_session_time`, and `inter_creation_time` — three `Pareto(f64)` fields on the `User` struct. Rather than using fixed population-median parameters, each synthetic user receives a unique $(alpha, x_min)$ pair sampled from the empirical ECDF of per-user MLE fits. The sampled parameters are written to three text files that the simulation reads at startup via `fillPareto()`:
 

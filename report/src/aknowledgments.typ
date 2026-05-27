@@ -1,0 +1,6 @@
+This project has been a big endevaour for me to undertake, and I would like to give a special thanks to Jana for sharing their time at the `IDea_lab` at UniGraz, where all this thesis has been written. I'd like to give a very warm hug at everyone at the lab that nudged me gently, both with feedback and support, into finishing this piece of work. Thank you Ruggero, Mathias, Kirill, Hussam, Thomas and Joyojeet, as well as Sila and Jasmine for their moral support.
+
+
+Ara canviant a la llengua en la que de debó parlo, moltes gràcies a l'Esteve, el meu tutor, per aguantar els meus deliris de grandesa i moments de feblesa al intentar fer dues tesis en una. Com a mínim ha estat entretingut ---bé, si més no per mi. Especials gràcies a l'Héctor per a llegir-se l'apartat d'implementació a últim moment; pensava que no trobaria ningú per a fer-ho. 
+
+Per últim, que el document ja és molt llarg de per si, gràcies als meus pares pel patronatge i recolzament que m'han permès anar físicament a Graz, els quals els hi dedico aquesta memòria. En especial, i posant-me un puntet més carrincló, no puc evitar sinó mencionar al meu difunt avi Jaume, sense el qual n'estic segur que no hagués arrivat fins aquí. Som-hi.

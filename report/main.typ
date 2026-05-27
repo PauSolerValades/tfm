@@ -1,4 +1,3 @@
-
 #let margins = (
   top: 3.5cm,
   bottom: 3cm,
@@ -58,7 +57,33 @@
 #include "src/abstract.typ"
 
 #pagebreak()
-#outline()
+#heading(outlined: false, numbering: none)[Aknowledgments]
+
+#include "src/aknowledgments.typ"
+
+#pagebreak()
+#outline(title: "Table of Contents")
+
+#show outline.entry.where(level: 1): it => {
+  v(1em, weak: true)
+  it
+}
+
+#pagebreak()
+#heading(outlined: true, numbering: none)[List of Figures]
+#outline(title: none, target: figure.where(kind: image))
+
+#pagebreak()
+#heading(outlined: true, numbering: none)[List of Tables]
+#outline(title: none, target: figure.where(kind: table))
+
+#pagebreak()
+#heading(outlined: true, numbering: none)[List of Procedures]
+#outline(title: none, target: figure.where(kind: "procedure"))
+
+#pagebreak()
+#heading(outlined: true, numbering: none)[List of Codes]
+#outline(title: none, target: figure.where(kind: "code"))
 
 #set page(numbering: "1")
 #counter(page).update(1)
@@ -138,9 +163,7 @@
 )
 
 #pagebreak()
-
 #counter(heading).update(0)
-#heading(numbering: none)[Appendix]
 #set heading(numbering: "A.1", supplement: "Appendix")
 
 = Code Structure and Technical Guide
