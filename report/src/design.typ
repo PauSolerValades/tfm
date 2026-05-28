@@ -1,6 +1,6 @@
 #import "@preview/lovelace:0.3.0": *
 
-#import "utils.typ": todo, comment, procedure
+#import "utils.typ": todo, comment, procedure, flex-caption
 
 This chapter covers the design of the simulation: the entities and data model (see @sec-design-entities), the semantics of each event source (see @sec-design-sources), the overall simulation lifecycle (see @sec-design-lifecycle), and the trace schema that captures all state transitions (see @sec-design-traces). For every data structure referenced here, only the algorithmic motivation is provided; the concrete realization, memory layout, and performance considerations are treated separately in @sec-impl.
 
@@ -179,7 +179,7 @@ The `propagate` event therefore contains two critical pieces of information:
 
 The @proc-propagate showcases the implementation of the propagation, which is the same as the one described in @eq-proc-propagate at section the description of the DES simulation (see @sec-method-des-mechanics).
 
-#procedure(caption: "Procedure of propagation of a post")[
+#procedure(caption: flex-caption([Procedure of propagation of a post.], [Procedure of propagation of a post]))[
   #pseudocode-list[
     + *procedure* $"PropagatePost"(u: cal(U), i: cal(I), t_c: T)$
       + *for* $v in cal(N)_"in" (u)$
@@ -193,7 +193,7 @@ The @proc-propagate showcases the implementation of the propagation, which is th
 
 When a propagate event reaches the head of $Q$, the main event loop dispatches it to the handler below, as can be seen in @proc-propagate-switch. So, propagation event is not technically a source, but a result of any propagation of posts needed.
 
-#procedure(caption: "Propagate event dispatch in the main simulation loop")[
+#procedure(caption: flex-caption([Propagate event dispatch in the main simulation loop.], [Propagate event dispatch in the main simulation loop]))[
   #pseudocode-list[
     + *procedure* $"HandlePropagate"(Q: "EventQueue", t: T, u: cal(U), p: cal(I))$
       + $"pop"(Q) arrow.r (t, u, "propagate"(p))$
@@ -214,7 +214,7 @@ The second event of the simulation are technically two events, but they behave c
 
 When the simulation processes the event `online` for an offline user $u$, it has to start the whole simulation again. To do that, it needs to create an `action` event to start checking the timeline, and a `create` event, both according to their distributions, so the characteristic loop of DES can start with both of the real sources. Additionally, this also appends a session event with `end` payload, as the session needs to end eventually.
 
-#procedure(caption: "Session start: puts a user back online and primes the event loop")[
+#procedure(caption: flex-caption([Session start: puts a user back online.], [Session start: puts a user back online and primes the event loop]))[
   #pseudocode-list[
     + *procedure* $"HandleGoOnline"(Q: "EventQueue", t: T, u: cal(U))$
       + $u."is_online" arrow.l "true"$
@@ -237,7 +237,7 @@ If an `end` event is processed, the user is marked as offline, and the new sessi
 
 If the user timeline is empty, it's interpreted as the user seeing posts it has already seen, so logs off the platform. #todo[we should not bother with interpretations here, check if it's in the interpretation section.]. It still does the same as going offline normally.
 
-#procedure(caption: "Session end: marks the user offline, clears the timeline, and schedules the next session")[
+#procedure(caption: flex-caption([Session end: marks the user offline.], [Session end: marks the user offline, clears the timeline, and schedules the next session]))[
   #pseudocode-list[
     + *procedure* $"HandleGoOffline"(Q: "EventQueue", t: T, u: cal(U))$
       + $u."is_online" arrow.l "false"$
@@ -250,7 +250,7 @@ If the user timeline is empty, it's interpreted as the user seeing posts it has 
 Both of this options are nested under a check when the event type is a `session`, shown in the @proc-session-handle:
 
 
-#procedure(caption: "Session handle")[
+#procedure(caption: flex-caption([Session handle.], [Session handle]))[
   #pseudocode-list[
     + *procedure* $"HandleSession"(Q: "EventQueue", u: cal(U), t_c: T, s: "Session")$
       + *if* s == start *then*
@@ -336,7 +336,7 @@ $ Q = [(u, "action", 13, 1), (u, "create", 14, 1), (u, "session.start", 16, 2)] 
 
 Knowing that the mechanism exists, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_"gen"$ is the `session_gen` of the current event, which we already know it's a session
 
-#procedure(caption: "Session event dispatch with stale-event guard")[
+#procedure(caption: flex-caption([Session event dispatch with stale-event guard.], [Session event dispatch with stale-event guard]))[
   #pseudocode-list[
     + *procedure* $"HandleSessionEvent"(Q: "EventQueue", u: cal(U), t_c: T, s: "Session", e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -359,7 +359,7 @@ The two variables that control the time between sessions and the session length 
 
 The `create` event behaves as a more traditional source of events, as it does not have relationships with other event sources or events. When a `create` event is assigned, the simulation searches the last `post_id`, augments it and makes the current user $u$ its author. The @proc-create showcases the event.
 
-#procedure(caption: "Create event dispatch with stale-event and max-posts guard")[
+#procedure(caption: flex-caption([Create event dispatch.], [Create event dispatch with stale-event and max-posts guard]))[
   #pseudocode-list[
     + *procedure* $"HandleCreate"(Q: "EventQueue", u: cal(U), t_c: T, e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -399,7 +399,7 @@ To simulate the user decision making, a Categorical (or a generalized Bernoulli)
 
 The @proc-action-handle showcases the logic of the dispatch action event, draining the timeline until a non-interacted post surfaces. When a fresh post is found, processing delegates to @proc-action-on-post; when the timeline is exhausted, the user is forced offline via @proc-go-offline, described in @sec-design-sources-sessions.
 
-#procedure(caption: "Action event dispatch with stale-event guard and timeline drain")[
+#procedure(caption: flex-caption([Action event dispatch.], [Action event dispatch with stale-event guard and timeline drain]))[
   #pseudocode-list[
     + *procedure* $"HandleActionEvent"(Q: "EventQueue", u: cal(U), t_c: T, a: "Action", e_"gen": bb(N))$
       + $"is_stale" arrow.l e_"gen" != u."session_gen"$
@@ -421,7 +421,7 @@ The @proc-action-handle showcases the logic of the dispatch action event, draini
   ]
 ] <proc-action-handle>
 
-#procedure(caption: "Per-action processing after a non-interacted post is found")[
+#procedure(caption: flex-caption([Per-action processing.], [Per-action processing after a non-interacted post is found]))[
   #pseudocode-list[
     + *procedure* $"HandleActionOnPost"(Q: "EventQueue", u: cal(U), t_c: T, a: "Action", i: cal(I))$
       + $"mark" i "as seen by" u$
@@ -462,7 +462,7 @@ The warm-up phase consists of assuming every user is online, and each one starts
 The @proc-stageone shows the pseudocode of stage one, which is a small simulation in itself. The for in line 2 starts the loop of creating events, one scheduled creation per user, giving space to the main loop at line 6. There, the queue $Q$ just contains `create` events, so there is really no need for an check of which type is the event, but it can be seen from lines 10 to 17 that the function is the same that HandleCreate (@proc-create) but using the create warm-up event generate function instead of the standard create.
 
 
-#procedure(caption: "Stage One: warm-up phase that fills user timelines with propagated posts before the active simulation begins")[
+#procedure(caption: flex-caption([Stage One: warm-up phase.], [Stage One: warm-up phase that fills user timelines with propagated posts before the active simulation begins]))[
   #pseudocode-list[
     + *procedure* $"StageOne"(Q: "EventQueue", t_c: T, t_"warmup": T, "metrics": "SimMetrics")$
       + *for* $u in cal(U)$
@@ -499,7 +499,7 @@ If the model was not an activity driven network, this section would not be neces
 
 The @proc-initsession shows how the users are classified between online and offline by the use of a Uniform random variable (line 3), and if the user is online, generates when the session should end and an event `action`. 
 
-#procedure(caption: "Init: assigns initial online/offline state to every user and primes the event queue")[
+#procedure(caption: flex-caption([Init: assigns initial online/offline state.], [Init: assigns initial online/offline state to every user and primes the event queue]))[
   #pseudocode-list[
     + *procedure* $"Init"(Q: "EventQueue", t_c: T)$
       + *for* $u in cal(U)$
@@ -523,7 +523,7 @@ Notice also that in the user online branch there is just the `action` event gene
 
 The pseudocode @proc-lifecycle shows the lifecycle of the simulation as a big overview. The topology and the configuration are loaded before starting, that is why they are arguments of the procedure (line 1), but the queue is created inside the procedure, and it's shared by all the subprocedures that have been described so far. To showcase this, the "address-of" operator & has been used (lines 4, 5 and 6), to showcase it's not a copy, but the same queue for all the procedures.
 
-#procedure(caption: "Simulation Lifecycle")[
+#procedure(caption: flex-caption([Simulation Lifecycle.], [Simulation Lifecycle]))[
   #pseudocode-list[
     + *procedure* Simulation(c: Config, topo: Graph)
       + $Q <- "MinHeap"{}$
@@ -545,7 +545,7 @@ The simulation is orchestrated by a single event loop that lasts until the simul
 
 Once primed, the main loop dispatches each event type — create, session, action, or propagate — to `HandleCreate`, `HandleSessionEvent`, `HandleActionEvent`, or `PropagatePost` respectively, as can be seen in the @proc-mainloop.
 
-#procedure(caption: "Simulation: main event loop that dispatches each popped event to its corresponding handler")[
+#procedure(caption: flex-caption([Simulation: main event loop.], [Simulation: main event loop that dispatches each popped event to its corresponding handler]))[
   #pseudocode-list[
     + *procedure* $"MainLoop"(Q: "*EventQueue", c: "Config", "topo": "Graph", t_c: T )$
       + *while* $t_c <= t_h$ *and* $Q != emptyset$

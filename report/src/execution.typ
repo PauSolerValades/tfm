@@ -29,7 +29,10 @@ As explained in @sec-data-topology, the full Bluesky social graph ($1.47 times 1
     table.hline(stroke: 0.5pt),
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Datasets used for evaluation. All three are Forest Fire samples of the full Bluesky follower graph. Average degree declines with sample size (1208 $arrow.r$ 654) because larger samples include more peripheral low-degree nodes from the heavy tail. The power-law exponent $gamma approx 1.17$ is near-identical across scales, confirming Forest Fire preserves the scale-free structure, but the tail exponent $alpha$ for $x > 1000$ steepens in smaller samples due to finite-size truncation. The number of runs was allocated proportionally to the available compute budget (see @tbl-execution-time).]
+  caption: flex-caption(
+    [Datasets used for evaluation.],
+    [Datasets used for evaluation. All three are Forest Fire samples of the full Bluesky follower graph. Average degree declines with sample size (1208 $arrow.r$ 654) because larger samples include more peripheral low-degree nodes from the heavy tail. The power-law exponent $gamma approx 1.17$ is near-identical across scales, confirming Forest Fire preserves the scale-free structure, but the tail exponent $alpha$ for $x > 1000$ steepens in smaller samples due to finite-size truncation. The number of runs was allocated proportionally to the available compute budget (see @tbl-execution-time).],
+  )
 ) <tbl-datasets>
 
 While all three samples share the same underlying graph and sampling method, their topological properties diverge in ways that affect simulation dynamics. The declining median degree ($203 arrow.r 111$) and diverging tail behaviour ($alpha = 1.94 arrow.r 1.16$) mean the three samples are not simply scaled copies of each other — the 1M sample has a heavier tail but a lower median degree, which contributes to the non-monotonic results observed in @sec-results.
@@ -40,7 +43,10 @@ Before presenting the simulation results, a brief execution performance characte
 
 #figure(
   image("images/results/execution_time_scaling.png", width: 85%),
-  caption: [Simulation execution time vs. network size. Points show the mean and observed range across all runs of each dataset. The dashed line is a linear regression ($R^2 = 1.000$ over the three points), with slope $1.42$ s per thousand users ($1.4$ ms per user). Doubling the number of users doubles the execution time —-a textbook example of linear scalability-— meaning the simulation can grow to larger networks without collapsing under its own weight.]
+  caption: flex-caption(
+    [Simulation execution time vs. network size.],
+    [Simulation execution time vs. network size. Points show the mean and observed range across all runs of each dataset. The dashed line is a linear regression ($R^2 = 1.000$ over the three points), with slope $1.42$ s per thousand users ($1.4$ ms per user). Doubling the number of users doubles the execution time —-a textbook example of linear scalability-— meaning the simulation can grow to larger networks without collapsing under its own weight.],
+  )
 ) <fig-execution-time>
 
 #figure(
@@ -56,7 +62,10 @@ Before presenting the simulation results, a brief execution performance characte
     [DS-1M],   [1,320 -- 1,390], [1,355], [800 -- 900],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Execution time and peak memory per dataset. Time grows linearly with node count; memory grows superlinearly due to the $N times M$ impression matrices (see @sec-impl-impressions). All runs executed on the same server (see @apx-performance-hardware).]
+  caption: flex-caption(
+    [Execution time and peak memory per dataset.],
+    [Execution time and peak memory per dataset. Time grows linearly with node count; memory grows superlinearly due to the $N times M$ impression matrices (see @sec-impl-impressions). All runs executed on the same server (see @apx-performance-hardware).],
+  )
 ) <tbl-execution-time>
 
 #todo[this i don't like it that much, rewrite ]
@@ -78,17 +87,26 @@ Before committing to the full batch execution, a single representative run from 
 
 #figure(
   image("images/execution/100K_session_trace_stationary.png", width: 90%),
-  caption: [Stationary analysis for DS-100K (99,834 users, 450,605 session events). Stationary state reached at $t approx 2385$; average online fraction 7.7%.]
+  caption: flex-caption(
+    [Stationary analysis for DS-100K.],
+    [Stationary analysis for DS-100K (99,834 users, 450,605 session events). Stationary state reached at $t approx 2385$; average online fraction 7.7%.],
+  )
 ) <fig-stationary-100K>
 
 #figure(
   image("images/execution/500K_session_trace_stationary.png", width: 90%),
-  caption: [Stationary analysis for DS-500K (499,197 users, 2,213,374 session events). Stationary state reached at $t approx 2222$; average online fraction 8.5%.]
+  caption: flex-caption(
+    [Stationary analysis for DS-500K.],
+    [Stationary analysis for DS-500K (499,197 users, 2,213,374 session events). Stationary state reached at $t approx 2222$; average online fraction 8.5%.],
+  )
 ) <fig-stationary-500K>
 
 #figure(
   image("images/execution/1M_session_trace_stationary.png", width: 90%),
-  caption: [Stationary analysis for DS-1M (997,779 users, 4,549,885 session events). Stationary state reached at $t approx 2436$; average online fraction 7.6%.]
+  caption: flex-caption(
+    [Stationary analysis for DS-1M.],
+    [Stationary analysis for DS-1M (997,779 users, 4,549,885 session events). Stationary state reached at $t approx 2436$; average online fraction 7.6%.],
+  )
 ) <fig-stationary-1M>
 
 #figure(
@@ -104,7 +122,10 @@ Before committing to the full batch execution, a single representative run from 
     [DS-1M],   [7.6%], [2436],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Stationary distribution summary across datasets. The online fraction is stable across scales; stationary state is reached well within the active simulation window ($t in [1000, 5000]$).]
+  caption: flex-caption(
+    [Stationary distribution summary across datasets.],
+    [Stationary distribution summary across datasets. The online fraction is stable across scales; stationary state is reached well within the active simulation window ($t in [1000, 5000]$).],
+  )
 ) <tbl-stationarity>
 
 Three observations become obvious giving the data a glance. First, the online fraction converges to a consistent value across all three scales, between 7.6% and 8.5% of users are simultaneously active at any moment in the steady state. This is a direct consequence of the calibrated session parameters: the Pareto distributions governing session duration and inter-session gaps are sampled from the same empirical ECDF regardless of network size, so the aggregate proportion of online users is scale-invariant.
@@ -147,7 +168,10 @@ The main objective of this dataset was not to provide results for itself, but to
     [`burstiness_B`], [f64], [Burstiness parameter $B \in [-1, 1]$ from inter-repost times],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Schema of `out_posts.parquet`. One row per post created during steady state. Lifetime and burstiness metrics are computed from the full repost sequence of each post.]
+  caption: flex-caption(
+    [Schema of `out_posts.parquet`.],
+    [Schema of `out_posts.parquet`. One row per post created during steady state. Lifetime and burstiness metrics are computed from the full repost sequence of each post.],
+  )
 ) <tbl-posts>
 
 #figure(
@@ -167,7 +191,10 @@ The main objective of this dataset was not to provide results for itself, but to
     [`max_out_degree`], [i64], [Max direct children for any node in the tree],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Schema of `out_cascades.parquet`. One row per post with cascade size $N >= 3$ ($>= 2$ reposts). Only posts created during steady state are included; cascade trees are reconstructed via batch parent-matching over repost and propagation traces.]
+  caption: flex-caption(
+    [Schema of `out_cascades.parquet`.],
+    [Schema of `out_cascades.parquet`. One row per post with cascade size $N >= 3$ ($>= 2$ reposts). Only posts created during steady state are included; cascade trees are reconstructed via batch parent-matching over repost and propagation traces.],
+  )
 ) <tbl-cascades>
 
 #figure(
@@ -193,7 +220,10 @@ The main objective of this dataset was not to provide results for itself, but to
     [`empty_timeline_exit`], [bool], [True if session ended with backlog $= 0$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Schema of `out_sessions.parquet`. One row per session during steady state. Session boundaries are determined by the `session_trace.jsonl` start/end events; actions are assigned to sessions via temporal join.]
+  caption: flex-caption(
+    [Schema of `out_sessions.parquet`.],
+    [Schema of `out_sessions.parquet`. One row per session during steady state. Session boundaries are determined by the `session_trace.jsonl` start/end events; actions are assigned to sessions via temporal join.],
+  )
 ) <tbl-sessions>
 
 #figure(
@@ -212,7 +242,10 @@ The main objective of this dataset was not to provide results for itself, but to
     [`gamma_reposts`], [f64], [Power-law exponent $gamma$ (MLE, Clauset et al.)],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Schema of `out_run_summary.parquet`. One row per simulation replication, aggregating all sessions and posts within the run. The power-law exponent is estimated from the per-run `total_reposts` distribution via discrete MLE with $x_min = 1$.]
+  caption: flex-caption(
+    [Schema of `out_run_summary.parquet`.],
+    [Schema of `out_run_summary.parquet`. One row per simulation replication, aggregating all sessions and posts within the run. The power-law exponent is estimated from the per-run `total_reposts` distribution via discrete MLE with $x_min = 1$.],
+  )
 ) <tbl-summary>
 
 Tables @tbl-posts, @tbl-cascades, @tbl-sessions, and @tbl-summary showcase every metric obtained from the simulation. Each dataset is computed independently per run and concatenated across replications, ensuring that the statistical analysis in @sec-results operates on the full 1746-run corpus. The specific explanation and interpretation of each metric will be found in @sec-results.

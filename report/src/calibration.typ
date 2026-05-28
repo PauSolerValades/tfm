@@ -1,5 +1,5 @@
 #import "@preview/lovelace:0.3.0": *
-#import "utils.typ": todo, comment, def, procedure
+#import "utils.typ": todo, comment, def, procedure, flex-caption
 
 This chapter continues @sec-data findings into the definitions of the parameter values required by the simulation configuration. The rationale behind the following parameters is explained: `session_duration`, `user_inter_session` (in @sec-cal-sessions and @sec-cal-dist), `post_inter_creation` (@sec-cal-interpost), `user_inter_action` (@sec-cal-interaction), `user_policy` (@sec-cal-policy), and the `propagation_delay` as reference metric to remove the time units in the analysis results. 
 
@@ -50,7 +50,10 @@ where $"IQR"(u) = Q_3(u) - Q_1(u)$ is the user's interquartile range, and $k=1.5
     [Likes-only sessions], [59.2], [—], [%],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Session-level summary statistics for the two Tukey IQR session tables. `sessions_all` captures rapid-fire browsing (median 23 s); `sessions_engagement` captures content creation sessions (median 4.8 min).]
+  caption: flex-caption(
+    [Session-level summary statistics for the two Tukey IQR session tables.],
+    [Session-level summary statistics for the two Tukey IQR session tables. `sessions_all` captures rapid-fire browsing (median 23 s); `sessions_engagement` captures content creation sessions (median 4.8 min).],
+  )
 ) <tbl-sessions-summary>
 
 The distribution fitting described below uses `sessions_all` for durations (representing the browsing rhythm) and inter-session gaps (representing return-to-platform intervals), as these quantities must capture the complete activity pattern including passive engagement.
@@ -80,43 +83,64 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
     [Gamma], [2.1], [$< 0.01$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Distribution fitting results for $1.16 times 10^6$ users with $>= 10$ sessions from `sessions_all`. Power-law wins for both session durations (53%) and inter-session gaps (51%). Exponential is effectively absent for gaps (1 user).]
+  caption: flex-caption(
+    [Distribution fitting results for $1.16 times 10^6$ users with $>= 10$ sessions.],
+    [Distribution fitting results for $1.16 times 10^6$ users with $>= 10$ sessions from `sessions_all`. Power-law wins for both session durations (53%) and inter-session gaps (51%). Exponential is effectively absent for gaps (1 user).],
+  )
 ) <tbl-cal-dist-fit>
 
 *Power-law dominates.* For session durations, the median exponent is $alpha = 2.47$ with $x_min = 98$ s (1.6 min). For inter-session gaps, $alpha = 2.05$ with $x_min = 5,806$ s (1.6 h). Both lie in the $2$–$3$ range — finite mean, infinite variance. The $x_min$ values reveal a two-regime structure: the power-law only governs the tail; the body of short sessions and brief gaps follows a different regime.
 
 #figure(
   image("images/calibration/7-1_duration_pareto_params.png", width: 70%),
-  caption: [Pareto parameter densities for session durations ($alpha$ left, $x_min$ right). Median $alpha = 2.47$, $x_min = 98$ s (1.6 min).]
+  caption: flex-caption(
+    [Pareto parameter densities for session durations.],
+    [Pareto parameter densities for session durations ($alpha$ left, $x_min$ right). Median $alpha = 2.47$, $x_min = 98$ s (1.6 min).],
+  )
 ) <fig-cal-dur-pareto>
 
 #figure(
   image("images/calibration/7-1_gap_pareto_params.png", width: 70%),
-  caption: [Pareto parameter densities for inter-session gaps. Median $alpha = 2.05$, $x_min = 5,806$ s (1.6 h). The gap $x_min$ is substantially higher than duration $x_min$, reflecting the longer timescales of inter-session pauses.]
+  caption: flex-caption(
+    [Pareto parameter densities for inter-session gaps.],
+    [Pareto parameter densities for inter-session gaps. Median $alpha = 2.05$, $x_min = 5,806$ s (1.6 h). The gap $x_min$ is substantially higher than duration $x_min$, reflecting the longer timescales of inter-session pauses.],
+  )
 ) <fig-cal-gap-pareto>
 
 *Lognormal is the credible alternative for gaps.* 25.9% of users have log-normally distributed inter-session gaps, with median $mu = 9.84$, $sigma = 0.96$, corresponding to a central tendency of $approx 5.2$ h with wide spread. For session durations, lognormal users have median $mu = 5.21$, $sigma = 0.63$, corresponding to $approx 3.1$ min.
 
 #figure(
   image("images/calibration/7-1_duration_lognormal_params.png", width: 70%),
-  caption: [Lognormal parameter densities for session durations ($mu$ left, $sigma$ right). Median $mu = 5.21$, $sigma = 0.63$, corresponding to a central tendency of $approx 3.1$ min.]
+  caption: flex-caption(
+    [Lognormal parameter densities for session durations.],
+    [Lognormal parameter densities for session durations ($mu$ left, $sigma$ right). Median $mu = 5.21$, $sigma = 0.63$, corresponding to a central tendency of $approx 3.1$ min.],
+  )
 ) <fig-cal-dur-lognormal>
 
 #figure(
   image("images/calibration/7-1_gap_lognormal_params.png", width: 70%),
-  caption: [Lognormal parameter densities for inter-session gaps. Median $mu = 9.84$, $sigma = 0.96$, central tendency $approx 5.2$ h. Greater dispersion than durations.]
+  caption: flex-caption(
+    [Lognormal parameter densities for inter-session gaps.],
+    [Lognormal parameter densities for inter-session gaps. Median $mu = 9.84$, $sigma = 0.96$, central tendency $approx 5.2$ h. Greater dispersion than durations.],
+  )
 ) <fig-cal-gap-lognormal>
 
 *Weibull hazard interpretation.* For session durations, the Weibull shape has median $k = 1.58$ — mildly increasing hazard (sessions tend to end on a schedule). 24% of duration-Weibull users have $k < 1$ (decreasing hazard — the longer you browse, the more engaged you get). For inter-session gaps, median $k = 1.08$ — nearly exponential, with 46% of users showing $k < 1$ (decreasing hazard: the longer you've been away, the *less* likely you are to return — abandonment or sleep).
 
 #figure(
   image("images/calibration/7-1_duration_weibull_params2.png", width: 70%),
-  caption: [Weibull parameter densities for session durations (shape $k$ left, scale $lambda$ right). Median $k = 1.58$, median $lambda = 258$ s (4.3 min).]
+  caption: flex-caption(
+    [Weibull parameter densities for session durations.],
+    [Weibull parameter densities for session durations (shape $k$ left, scale $lambda$ right). Median $k = 1.58$, median $lambda = 258$ s (4.3 min).],
+  )
 ) <fig-cal-dur-weibull>
 
 #figure(
   image("images/calibration/7-1_gap_weibull_params2.png", width: 70%),
-  caption: [Weibull parameter densities for inter-session gaps. Median $k = 1.08$ — 46% of users have $k < 1$ (decreasing hazard, abandonment). Median $lambda = 35,229$ s (9.8 h).]
+  caption: flex-caption(
+    [Weibull parameter densities for inter-session gaps.],
+    [Weibull parameter densities for inter-session gaps. Median $k = 1.08$ — 46% of users have $k < 1$ (decreasing hazard, abandonment). Median $lambda = 35,229$ s (9.8 h).],
+  )
 ) <fig-cal-gap-weibull>
 
 *Exponential is definitively ruled out* for inter-session gaps (1 user out of 1.16M). Inter-session absences are structured, not memoryless. For durations, 12.6% of users are exponential — the only credible use of memoryless behaviour.
@@ -140,14 +164,17 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
     [Exponential], [mean $1/lambda$], [172 s (2.9 min)], [—], [Only 12.6% of users for durations; absent for gaps],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Full parameter estimates for all four distribution families from `sessions_all` ($1.16 times 10^6$ users). Medians are reported as they are robust to extreme outliers. Generated by `fit_distributions.R`.]
+  caption: flex-caption(
+    [Full parameter estimates for all four distribution families from `sessions_all`.],
+    [Full parameter estimates for all four distribution families from `sessions_all` ($1.16 times 10^6$ users). Medians are reported as they are robust to extreme outliers. Generated by `fit_distributions.R`.],
+  )
 ) <tbl-cal-dist-params>
 
 *Simulation mapping.* The `session_duration` and `inter_session_time` fields on the `User` struct are `Pareto(f64)` — the simulation natively supports power-law distributions. Per-user $(alpha, x_min)$ pairs are sampled from the ECDF and loaded from `params/session_duration_params.txt` and `params/inter_session_params.txt` at startup (see @sec-calibration-summary). The Pareto is the best fit for 53% of users (durations) and 51% (gaps); the remaining lognormal, Weibull, and exponential users are approximated by Pareto draws from the same ECDF, preserving the observed per-user heterogeneity in a single distribution family.
 
 This allows to properly characterize how both the user `session_duration` and `inter_session_time` should be characterized.
 
-#procedure(caption: "Assign session duration to a synthetic user")[
+#procedure(caption: flex-caption([Assign session duration to a synthetic user.], [Assign session duration to a synthetic user]))[
   #pseudocode-list[
     + *procedure* $"AssignSessionDuration"(u)$
       + *Input:* per-user MLE parameter pools from $1.16 times 10^6$ users in `sessions_all`
@@ -175,7 +202,7 @@ This allows to properly characterize how both the user `session_duration` and `i
   ]
 ] <proc-cal-session-duration>
 
-#procedure(caption: "Assign inter-session gap to a synthetic user")[
+#procedure(caption: flex-caption([Assign inter-session gap to a synthetic user.], [Assign inter-session gap to a synthetic user]))[
   #pseudocode-list[
     + *procedure* $"AssignInterSessionGap"(u)$
       + *Input:* per-user MLE parameter pools from $1.16 times 10^6$ users in `sessions_all`
@@ -217,7 +244,10 @@ The data was analyzed in two ways: global (gap to the immediately preceding post
     [$P_99$ gap], [62.1 h], [37.4 h],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Inter-post gap summary statistics. Within-session gaps are $2.0 times$ smaller than global gaps (median 4.8 min vs 9.7 min), confirming that users post in bursts during sessions.]
+  caption: flex-caption(
+    [Inter-post gap summary statistics.],
+    [Inter-post gap summary statistics. Within-session gaps are $2.0 times$ smaller than global gaps (median 4.8 min vs 9.7 min), confirming that users post in bursts during sessions.],
+  )
 ) <tbl-cal-interpost-summary>
 
 @tbl-cal-interpost-fits gives the best-fit distribution breakdown of both modes.
@@ -237,24 +267,33 @@ The data was analyzed in two ways: global (gap to the immediately preceding post
     [Gamma], [0.1], [0.2], [Negligible],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Best-fit distribution breakdown for inter-post gaps ($N = 50{,}000$ users). Power-law dominates in both modes (53% global, 63% within-session). Exponential is effectively absent.]
+  caption: flex-caption(
+    [Best-fit distribution breakdown for inter-post gaps.],
+    [Best-fit distribution breakdown for inter-post gaps ($N = 50{,}000$ users). Power-law dominates in both modes (53% global, 63% within-session). Exponential is effectively absent.],
+  )
 ) <tbl-cal-interpost-fits>
 
 #figure(
   image("images/calibration/7-2_interpost_best_dist2.png", width: 85%),
-  caption: [Best-fit distribution per gap type. Power-law dominates.]
+  caption: flex-caption(
+    [Best-fit distribution per gap type.],
+    [Best-fit distribution per gap type. Power-law dominates.],
+  )
 ) <fig-cal-interpost-best>
 
 Power-law users have median $alpha = 1.80$ (global) and $alpha = 2.39$ (within-session). For the global case, $alpha < 2$ means infinite variance — extreme burstiness. The median $x_min$ is 44 min (global) and 11 min (within-session).
 
 #figure(
   image("images/calibration/7-2_interpost_alpha_hist2.png", width: 75%),
-  caption: [Histogram of power-law exponent $alpha$ for inter-post gaps. ]
+  caption: flex-caption(
+    [Histogram of power-law exponent $alpha$ for inter-post gaps.],
+    [Histogram of power-law exponent $alpha$ for inter-post gaps. ],
+  )
 ) <fig-cal-interpost-alpha>
 
 *Simulation mapping.* The `post_inter_creation` config field is calibrated with a Pareto, sampling $(alpha, x_min)$ per synthetic user from the ECDF shown in @fig-cal-interpost-pareto-ecdf. The median global gap of 9.7 min serves as a sanity check on the central tendency. The within-session median (4.8 min) is an alternative for simulations that explicitly model session boundaries, but the current architecture does not distinguish global vs within-session creation, so the global mode is the appropriate target.
 
-#procedure(caption: "Assign inter-post creation gap to a synthetic user")[
+#procedure(caption: flex-caption([Assign inter-post creation gap to a synthetic user.], [Assign inter-post creation gap to a synthetic user]))[
   #pseudocode-list[
     + *procedure* $"AssignInterCreationGap"(u)$
       + *Input:* per-user MLE parameter pools from $N = 50{,}000$ users in `engaged_events` (global mode)
@@ -304,7 +343,10 @@ On a mobile microblogging client, a user can flick past a post in under a second
     [Posts per minute of browsing], [$approx 20$], [Consistent with microblogging UX],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Inter-action time calibration. The exponential distribution with mean 3 s is chosen as a justified estimate; sensitivity analysis varying this value from 1 s to 10 s should accompany simulation runs.]
+  caption: flex-caption(
+    [Inter-action time calibration.],
+    [Inter-action time calibration. The exponential distribution with mean 3 s is chosen as a justified estimate; sensitivity analysis varying this value from 1 s to 10 s should accompany simulation runs.],
+  )
 ) <tbl-cal-interaction>
 
 *Simulation mapping.* The `user_inter_action` config expects an exponential with mean. A value of 3 s is recommended. Given that this parameter is an educated assumption rather than a direct measurement, sensitivity analysis should vary it across the 1–10 s range to assess its impact on diffusion outcomes.
@@ -360,12 +402,18 @@ Each file is a newline-separated list of `shape scale` pairs (where `shape = alp
 
 #figure(
   image("images/calibration/7-1_pareto_param_ecdf.png", width: 85%),
-  caption: [Empirical CDF of Pareto parameters $alpha$ (top) and $x_min$ (bottom) for session durations (left) and inter-session gaps (right), fitted per-user to `sessions_all`. These distributions are sampled to generate `params/session_duration_params.txt` and `params/inter_session_params.txt`.]
+  caption: flex-caption(
+    [Empirical CDF of Pareto parameters for sessions.],
+    [Empirical CDF of Pareto parameters $alpha$ (top) and $x_min$ (bottom) for session durations (left) and inter-session gaps (right), fitted per-user to `sessions_all`. These distributions are sampled to generate `params/session_duration_params.txt` and `params/inter_session_params.txt`.],
+  )
 ) <fig-cal-pareto-ecdf>
 
 #figure(
   image("images/calibration/7-2_pareto_inter_post_ecdf.png", width: 75%),
-  caption: [Empirical CDF of Pareto parameters for inter-post creation gaps (global mode), fitted per-user to `engaged_events`. Sampled to generate `params/inter_creation_params.txt`.]
+  caption: flex-caption(
+    [Empirical CDF of Pareto parameters for inter-post creation gaps.],
+    [Empirical CDF of Pareto parameters for inter-post creation gaps (global mode), fitted per-user to `engaged_events`. Sampled to generate `params/inter_creation_params.txt`.],
+  )
 ) <fig-cal-interpost-pareto-ecdf>
 
 
@@ -398,6 +446,9 @@ Although the procedures in @proc-cal-session-duration, @proc-cal-inter-session a
     [`horizon`], [5000], [@sec-exec-stationary],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Consolidated simulation calibration as implemented in `config.zig` and `graph_network.zig`. The three Pareto-distributed fields use per-user parameter sampling from ECDF text files; `user_inter_action` uses a global exponential; delays are constant 1 s. The warmup post creation is uniform over the warmup window.]
+  caption: flex-caption(
+    [Consolidated simulation calibration.],
+    [Consolidated simulation calibration as implemented in `config.zig` and `graph_network.zig`. The three Pareto-distributed fields use per-user parameter sampling from ECDF text files; `user_inter_action` uses a global exponential; delays are constant 1 s. The warmup post creation is uniform over the warmup window.],
+  )
 ) <tbl-cal-sim-mapping>
 

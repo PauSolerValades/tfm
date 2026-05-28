@@ -108,3 +108,35 @@ duckdb:
     serial-number:
       isbn: "978-1-4503-5643-5"
 
+wiki-syscall:
+  type: Web
+  title: System call
+  url:
+    value: https://en.wikipedia.org/wiki/System_call
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-context-switch:
+  type: Web
+  title: Context switch
+  url:
+    value: https://en.wikipedia.org/wiki/Context_switch
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-serialization:
+  type: Web
+  title: Serialization
+  url:
+    value: https://en.wikipedia.org/wiki/Serialization
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-cache:
+  type: Web
+  title: CPU cache
+  url:
+    value: https://en.wikipedia.org/wiki/Cache_(computing)
+    date: 2026-05-27
+  organization: Wikipedia
+

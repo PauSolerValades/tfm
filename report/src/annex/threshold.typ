@@ -1,11 +1,16 @@
+#import "../utils.typ": flex-caption
+
 Kooti et al @kooti2016twitter studied how often Twitter users engage with content by modelling active sessions, which are contiguous bursts of activity separated by periods of absence. The central question is: given two consecutive actions by the same user, how long can the pause between them be before we consider the user to have logged off?
 
 #figure(
   image("../images/annex/A-1_session_elbow.png", width: 80%),
-  caption: [Inter-arrival gap distribution of the dominant user stratum
+  caption: flex-caption(
+    [Inter-arrival gap distribution of the dominant user stratum.],
+    [Inter-arrival gap distribution of the dominant user stratum
     (101--500 core events, $N = 95{,}795$ users, $16.3 times 10^6$ gaps).
     The red dashed line marks the Kneedle-detected elbow at $Delta t = 265$ s
-    ($4.4$ min).]
+    ($4.4$ min).],
+  )
 ) <fig:elbow>
 
 
@@ -24,7 +29,10 @@ Kooti et al. model user activity with three event types: original content (tweet
     [Retweet], [Repost record], [`app.bsky.feed.repost`],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Twitter event analogous to the Bluesky equivalent.]
+  caption: flex-caption(
+    [Twitter events mapped to Bluesky AT Protocol equivalents.],
+    [Twitter event analogous to the Bluesky equivalent.],
+  )
 ) <tbl-twitter-bsky-events>
 
 Quote-posts on Bluesky are regular `app.bsky.feed.post` records that embed a reference to another post in their JSON payload. They fall naturally into the `post` (top-level) or `reply` category depending on whether they carry a `reply_root_uri`, requiring no special handling.
@@ -57,7 +65,10 @@ The detected elbow is 265 s (4.4 min). This is the gap duration that best separa
     [*101–500 events (dominant)*], [*265 s (4.4 min)*], [*Data-driven filter — used*],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Elbow threshold sensitivity to the source population. The dominant-stratum result (265 s) is the most principled, as it applies the Kneedle algorithm to the population that objectively drives the gap distribution (37.4% of gaps), without manual bucket boundaries.]
+  caption: flex-caption(
+    [Elbow threshold sensitivity to the source population.],
+    [Elbow threshold sensitivity to the source population. The dominant-stratum result (265 s) is the most principled, as it applies the Kneedle algorithm to the population that objectively drives the gap distribution (37.4% of gaps), without manual bucket boundaries.],
+  )
 ) <tbl-elbow>
 
 @tbl-elbow shows the sensitivity of the elbow to the filtering strategy. Unfiltered data compress the elbow downward (195 s) due to the 501+ bot bucket, whose artificially tight posting intervals dominate the short-gap region. Manual cut-offs ($>= 6$, $<= 100$/day; 35–100/day) bracket the result at 255–285 s, confirming that the dominant-stratum approach is stable.

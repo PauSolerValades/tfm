@@ -1,5 +1,7 @@
 This appendix documents the complete pipeline from raw firehose JSONL files to simulation-ready graph samples. It covers the data source, the three-phase DuckDB ingestion architecture, the SCD2 design, known data gaps, and the Go Forest Fire sampling implementation.
 
+#import "../utils.typ": flex-caption
+
 == Data Source
 
 The social graph is reconstructed from `app.bsky.graph.follow` and `app.bsky.graph.block` events in the Bluesky firehose. The dataset spans 14 months (February 3, 2025 to May 12, 2026) with 88.4% calendar-day coverage.
@@ -24,7 +26,10 @@ Two collection outages were identified from the directory tree:
     [2], [2026-03-25], [2026-04-01], [8 days], [Shorter outage],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Known data gaps. Total missing: 54 days (11.6%).]
+  caption: flex-caption(
+    [Known data gaps.],
+    [Known data gaps. Total missing: 54 days (11.6%).],
+  )
 ) <tbl-topo-gaps>
 
 The gaps affect the SCD2 tables as follows: edges created and deleted entirely within a gap are lost forever; edges deleted during a gap remain marked as active ($"valid_to" = "NULL"$); users who only appeared during a gap are absent. For the end-of-window snapshot used by the simulation, these gaps have negligible impact — any edge active in April–May 2026 was almost certainly recorded after the March 2026 outage ended.
@@ -48,7 +53,10 @@ The JSONL files were initially ingested into a StarRocks `bsky_topology.graph_ev
     [`action_type`], [`VARCHAR(16)`], [`follow`, `unfollow`, `block`, or `unblock`],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`bsky_topology.graph_events` schema. $1.79 times 10^9$ rows spanning 14 months.]
+  caption: flex-caption(
+    [`bsky_topology.graph_events` schema.],
+    [`bsky_topology.graph_events` schema. $1.79 times 10^9$ rows spanning 14 months.],
+  )
 ) <tbl-topo-starrocks>
 
 == Graph Extraction (Three-Phase DuckDB Pipeline)
@@ -68,7 +76,10 @@ The StarRocks event log is too large for direct analysis. A three-phase DuckDB p
     [3. Materialize], [SCD2 Parquet], [`bsky_topology.db` (130 GB, indexed)], [$approx 5$ min],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Three-phase DuckDB pipeline. Total runtime $approx 42$ min.]
+  caption: flex-caption(
+    [Three-phase DuckDB pipeline.],
+    [Three-phase DuckDB pipeline. Total runtime $approx 42$ min.],
+  )
 ) <tbl-topo-phases>
 
 === Phase 1: Export
@@ -114,7 +125,10 @@ The target schema matches `bluesky_db_specification.md`:
     [`block_edges`], [`uri`], [Block relationships with `valid_from` / `valid_to`],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [SCD2 schema. Each edge is one row. `valid_to = NULL` means still active.]
+  caption: flex-caption(
+    [SCD2 schema.],
+    [SCD2 schema. Each edge is one row. `valid_to = NULL` means still active.],
+  )
 ) <tbl-topo-scd2>
 
 === Final Graph Snapshot (May 12, 2026)
@@ -137,7 +151,10 @@ The active follow graph at the end of the observation window:
     [Avg follows per active user], [$approx 68$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Final graph snapshot. 75% of DIDs follow at least one user; 25% are lurkers appearing only as targets of follows/blocks.]
+  caption: flex-caption(
+    [Final graph snapshot.],
+    [Final graph snapshot. 75% of DIDs follow at least one user; 25% are lurkers appearing only as targets of follows/blocks.],
+  )
 ) <tbl-topo-snapshot>
 
 The active follow graph is extracted via:

@@ -1,4 +1,4 @@
-#import "utils.typ": todo, comment, def, code
+#import "utils.typ": todo, comment, def, code, flex-caption
 
 This chapter details the concrete engineering decisions that realize the simulation design described in @sec-design. While the previous chapter established what the simulation models and why specific algorithmic choices were made, this chapter addresses how those choices are realized in code: the performance strategies, the input/output pipeline, and the data structures that make the simulation scale to millions of users within practical execution times. The technology stack (Zig, distributions library, auxiliary Python scripts) is documented in @apx-software-stack.
 
@@ -43,7 +43,7 @@ Every program needs memory where to hold the data it operates on. Every program 
 - *Stack*: is all allocated by the OS when the program starts. Functions and variables are stored there.
 - *Heap*: Memory not reserved by default, but given on request to the programmer with the use of certain functions; in C would be `malloc, callor, realloc`, and this mechanism is hidden in non memory managed languages, such as Python. Every byte asked to the heap must be freed before the program ends.
 
-As the simulation needs to hold a massive amount of data, the need of heap memory is the only way forward. Every new memory allocation is a `SYSCALL`, which will imply program execution halting to get the reserved addresses of memory back, which is an unavoidable part of the program: getting the memory addresses to work. What is a far worse performance concern is the reallocation of memory. Let's take C `malloc` vs `realloc` functions.
+As the simulation needs to hold a massive amount of data, the need of heap memory is the only way forward. Every new memory allocation is a `SYSCALL` @wiki-syscall, which will imply program execution halting to get the reserved addresses of memory back, which is an unavoidable part of the program: getting the memory addresses to work. What is a far worse performance concern is the reallocation of memory. Let's take C `malloc` vs `realloc` functions.
 
 `malloc` will return a pointer to a chunk of contiguous memory, ready for the program to use. Imagine we want to store an array of 32 unsigned integers on to the heap, we can ask `malloc` for $32·4 = 128$ bytes of memory with a `SYSCALL`, and the OS will provide that to use, in a contiguuos manner. Now, the list contained 40 numbers, instead of 32, so we have to ask for more memory, with the requisite we still want the previous memory to be contigouos with the new one. Now we have to call `realloc` to give us 32 more integers (as good principled programmers ask the memory in powers of two...), to get a $64 · 4 = 256$ bytes. The catch is that `realloc` will make sure the memory is still contingous, so when reallocating the memory one of two things can happen:
 1. Good path: the OS just extends previous memory to 64 integers without problem, as the next 128 byte chunk was empty.
@@ -72,7 +72,7 @@ Despite assuming that memory reallocation is necessary, there are strategies to 
 
 I/O is the most important feature of the simulation, as the traces are the main method of obtaining the output needed to generalize the results. At the same time, opening and writing to files can be one of the biggest bottlenecks when taking performance into account. 
 
-As well as with memory, a `SYSCALL` is needed to both open a file and to write to it.which interrupts the program execution. As an interruption is performance expensive, it is clear that the number of `SYSCALL` to write to file must be reduced. The most efficient way to do that is trough the use of a buffer.
+As well as with memory, a `SYSCALL` is needed to both open a file and to write to it, which interrupts the program execution via a context switch @wiki-context-switch. As an interruption is performance expensive, it is clear that the number of `SYSCALL` to write to file must be reduced. The most efficient way to do that is trough the use of a buffer.
 
 A buffer is an array of stack memory, with compile time fixed size. The idea is, instead of every `write` call to be fired inmediatley, fill the buffer. When the buffer is full, call the `write` call with all the contents inside the buffer! This is called to `flush` the buffer.
 
@@ -81,7 +81,7 @@ Almost all languages implement printing as an inner buffer, which gets flushed i
 
 Zig lets the programmer chose between a streaming I/O (the system decides when to write) or buffered I/O, which allows the programmer to create a buffer where to store everything that needs to be written to a file, and when the `flush()` function is invoked it interrupts the program flow, writes to file and resumes execution @zig-std-io.
 
-There are four different traces, one per event, therefore there are four different file descriptors with 64KB buffers associated to them. They keep filling until they are full, and then when they are, they are dumped into memory. This guarantees very few interruptions, as a 64KB buffer is pretty large especially taking into account the next section performance strategy: the buffers do not contain characters, but bytes of the trace struct (see @sec-design-traces for the different traces) which is going to be much faster and smaller than serializing into text, as @sec-impl-config.
+There are four different traces, one per event, therefore there are four different file descriptors with 64KB buffers associated to them. They keep filling until they are full, and then when they are, they are dumped into memory. This guarantees very few interruptions, as a 64KB buffer is pretty large especially taking into account the next section performance strategy: the buffers do not contain characters, but bytes of the trace struct (see @sec-design-traces for the different traces) which is going to be much faster and smaller than serializing @wiki-serialization into text, as @sec-impl-config.
 
 Writing raw binary has one obvious drawback however: the resulting trace files are not human readable and need to be deserialized into strings. Zig std provides with a JSON api @zig-std-json, which allows conversion between structs and strings without any inconvenient. Therefore, one the simulation has finished, the binary traces are loaded into memory, and using the struct alignment definiton, tuned into the original `TraceType` struct, converted into a JSON with the standard library utility and dumped into a file.
 
@@ -96,7 +96,7 @@ The simulation's behavior is governed by a set of tunable parameters: probabilit
 
 The first three versions of the simulation accepted a JSON configuration file at startup, enabling parameter changes without recompilation. The file defines every tunable quantity: the duration of the simulation, the user behaviour policy, the inter-action time, and whether traces are written to disk. A loading function reads the file into memory and deserializes it into a `SimConfig` struct — the exact mechanism is standard JSON parsing and not particularly relevant to the simulation itself; what matters is the schema it enforces.
 
-#figure(kind: "code", supplement: [Code], caption: "Example JSON configuration (subset of the full schema; illustrative, not calibrated)")[
+#figure(kind: "code", supplement: [Code], caption: flex-caption([JSON configuration example.], [Example JSON configuration (subset of the full schema; illustrative, not calibrated)]))[
   ```json
   {
     "seed": null,
@@ -125,7 +125,7 @@ The configuration file contains a flat set of top-level fields. Each field that 
 
 The JSON schema is only half the story. The other half is how the `distributions` library makes a single `SimConfig` struct hold *any* distribution without knowing at compile time which one will be chosen. The JSON example above deserializes into:
 
-#figure(kind: "code", supplement: [Code], caption: [The `SimConfig` struct. Each distribution field uses a generic wrapper type — not a concrete distribution — so any valid distribution from the JSON can occupy the same field at runtime.])[
+#figure(kind: "code", supplement: [Code], caption: flex-caption([The `SimConfig` struct.], [The `SimConfig` struct. Each distribution field uses a generic wrapper type — not a concrete distribution — so any valid distribution from the JSON can occupy the same field at runtime.]))[
   ```zig
   pub const SimConfig = struct {
       seed: ?u64,
@@ -153,7 +153,10 @@ The supported distribution families are:
     [Discrete], [`DiscreteDistribution(f64, T)`], [Categorical, ECDF],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Supported distribution families in the `distributions` library. The continuous wrapper unifies nine distributions behind a single `.sample(rng)` interface; the discrete wrapper unifies two. The JSON parser maps the distribution name (e.g., `"exponential"`) to the corresponding concrete type.]
+  caption: flex-caption(
+    [Supported distribution families in the `distributions` library.],
+    [Supported distribution families in the `distributions` library. The continuous wrapper unifies nine distributions behind a single `.sample(rng)` interface; the discrete wrapper unifies two. The JSON parser maps the distribution name (e.g., `"exponential"`) to the corresponding concrete type.],
+  )
 ) <tbl-dist-types>
 
 When the JSON parser encounters `"exponential"`, it constructs an `Exponential` and wraps it inside a `ContinuousDistribution` whose vtable points to the Exponential's `.sample()` function. From that point on, the simulation only ever calls `.sample(rng)` on the wrapper — it never knows which concrete type sits behind it. The same field could hold a Pareto in one run and a Normal in the next, decided entirely by the JSON file.
@@ -182,7 +185,7 @@ The simulation consumes a single JSON file describing the network topology, deco
 - `users[]`: each entry specifies a user `id`, a list of `actions` (string labels for the actions the user can perform), a `policy` (probability vector aligned with the actions list), and an optional `max_posts` cap. Under the homogeneous-user assumption, all user policies are identical, but the schema permits heterogeneity for future use.
 - `followers[]`: each entry defines a directed edge with `follower_id` and `followed_id`. The graph is directed: a follower sees the posts of the users they follow.
 
-#figure(kind: "code", supplement: [Code], caption: "Example topology JSON fragment (illustrative).")[
+#figure(kind: "code", supplement: [Code], caption: flex-caption([Example topology JSON fragment.], [Example topology JSON fragment (illustrative).]))[
   ```json
   {
     "users": [
@@ -216,7 +219,7 @@ There is exactly one realistic path to reading Parquet from Zig: linking the Duc
 
 The resulting `network.bin` uses a simple little-endian layout with no header:
 
-#figure(kind: "code", supplement: [Code], caption: "Binary layout of `network.bin`. All integers are little-endian `u32`.")[
+#figure(kind: "code", supplement: [Code], caption: flex-caption([Binary layout of `network.bin`.], [Binary layout of `network.bin`. All integers are little-endian `u32`.]))[
   ```
   u32  num_users
   u32  user_ids[num_users]
@@ -237,7 +240,7 @@ This section complements the design data structures section is @sec-design-datas
 
 To propretly understand the next section, the concept of cache and cache locality must be introduced.
 
-#def(name: "Cache")[ A cache is a hardware or software component that stores data so future requests can be stored faster. ]
+#def(name: "Cache")[ A cache @wiki-cache is a hardware or software component that stores data so future requests can be stored faster. ]
 
 Modern CPUs have around 4 caches, varying sizes depending on the generation and arquitecture. When a CPU wants to operate on some piece of data on memory, it first checks the L1 cache. If the data is there, the operation will happen very fast, as to load data from the L1 cache is the faster memory can arrive to the CPU. This is called a Cache Hit. If the data is not found there, called a Cache Miss, it will need to be fetched from the pevious caches (L2, L3 or L4) or directly fetched from RAM.
 
@@ -274,7 +277,7 @@ A discussion of alternative queue data structures — which would achieve $O(1)$
 As established in @sec-design-datastructures-topology, the static follower graph maps cleanly onto a Compressed Sparse Row representation: the graph is unchanging, the adjacency matrix is sparse, and CSR provides $O(1)$ range lookup with $O("degree")$ iteration — all argued in the design chapter. Here we show the concrete Zig realization. The @code-topology-struct shows how CSR materializes in the `Topology` and `User` structs.
 
 
-#code(caption: "Topology and User Struct from v4")[
+#code(caption: flex-caption([Topology and User Struct from v4.], [Topology and User Struct from v4]))[
   #columns(2)[
   
     ```zig 
@@ -314,7 +317,7 @@ The CSR layout replaces per-node adjacency lists with two flat arrays:
 
 The end of a user's follower block is implicitly the `follower_start` of the *next* user in the `MultiArrayList`. To iterate over user $u_i$'s followers, it's just a matter as knowing where the followers of this user start (`User.follower_start`), when they end `topology.users.items(.follower_start)[i+1]` and then access those ids in the array, as showed in @code-neighbors-example.
 
-#code(caption: "Showcase of accessing the neighbors of the i-th user")[
+#code(caption: flex-caption([Showcasing neighbour iteration for user i.], [Showcase of accessing the neighbors of the i-th user]))[
   ```zig
   const start = users.items(.follower_start)[i];
   const end   = users.items(.follower_start)[i + 1];
@@ -339,7 +342,7 @@ Consider the `User` struct shown in @code-topology-struct. It contains an `id`, 
 
 The solution is the Structure of Arrays (SoA) pattern. Rather than storing `[User0, User1, ...]` as contiguous structs, each field gets its own contiguous array: all `id`s together, all `follower_start`s together, all `is_online` flags together, and so on. Zig's `MultiArrayList(User)` @zig-std-multi-array-list implements exactly this: internally it is a collection of per-field slices.
 
-#code(caption: [Struct representation of what the Struct of Array is for the `User` concrete example. Each field becomes a separate contiguous array.])[
+#code(caption: flex-caption([Struct of Array representation for `User`.], [Struct representation of what the Struct of Array is for the `User` concrete example. Each field becomes a separate contiguous array.]))[
   ```zig
   const Users = struct {
     ids:               []Index,       // N × 4 bytes, contiguous
@@ -371,11 +374,11 @@ On modern x86-64 CPUs, a 64-bit integer division (`div`) takes anywhere from 20 
 
 Both structures exploit the same algebraic identity to identify the page a post is in and in which position of the page: when the capacity $C$ is a power of two, $C = 2^n$:
 
-$ "page" = floor(i / C) = i >> n quad text(and) quad "offset" = i % C = i & (C - 1) <==> C = 2^n quad n in NN $ <eq-binary-division>
+$ "page" = floor(i / C) = i >> n quad text(and) quad "offset" = i % C = i \& (C - 1) <==> C = 2^n quad n in NN $ <eq-binary-division>
 
-The @code-pow2-indexing uses the bookshelf metaphor used in @sec-design-datastructrues-post to @eq-binary-division.
+Where $>>$ is a bit-shift operation and $\&$ is the bitwise `AND` operation. The @code-pow2-indexing uses the bookshelf metaphor used in @sec-design-datastructrues-post to @eq-binary-division.
 
-#code(caption: [The power-of-two indexing used by `SegmentedMultiArrayList` and `PagedBitSet`. The shelf (page) is found by shifting right $n$ bits; the book (offset) is found by masking with $C - 1$.])[
+#code(caption: flex-caption([Power-of-two indexing for SegmentedMultiArrayList and PagedBitSet.], [The power-of-two indexing used by `SegmentedMultiArrayList` and `PagedBitSet`. The shelf (page) is found by shifting right $n$ bits; the book (offset) is found by masking with $C - 1$.]))[
   ```zig
   const shelf_count = @as(usize, 1 << n);    // C = 2^n
   const shelf       = i >> n;                // i / C,  1 cycle
@@ -405,7 +408,7 @@ A scheduling quirk arises with dynamic creation: a post might be scheduled in th
 
 The impression and interaction matrices $cal(E)$ and $cal(H)$ — central to the CTIC desensitization check (see @sec-design-sources-propagate) — are modelled in @sec-design-datastructrues-post as paginated bitsets. The implementation realizes this via the `PagedBitSet` from the `ds` package, applying the same power-of-two indexing from @sec-impl-pow2. The column dimension (posts) is partitioned into pages of $2^n$ columns each; the row dimension (users) is packed bitwise within each page, producing the indexing shown in @code-pagedbitset.
 
-#code(caption: [The `PagedBitSet` indexing logic. Finding the page uses the same shift-and-mask pattern as the `SegmentedMultiArrayList`; the bit address within the page packs the user row via an additional shift.])[
+#code(caption: flex-caption([PagedBitSet indexing logic.], [The `PagedBitSet` indexing logic. Finding the page uses the same shift-and-mask pattern as the `SegmentedMultiArrayList`; the bit address within the page packs the user row via an additional shift.]))[
   ```zig
   const page_count  = @as(usize, 1 << n);     // C = 2^n
   const page        = j >> n;                 // which page

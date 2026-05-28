@@ -1,4 +1,4 @@
-#import "../utils.typ": todo, comment
+#import "../utils.typ": todo, comment, flex-caption
 
 This appendix documents the complete StarRocks database schema used throughout the data analysis pipeline. All tables reside in two schemas: `bsky` (read-only, raw firehose dump) and `data` (derived and result tables).
 
@@ -26,7 +26,10 @@ Normalised post content extracted from `app.bsky.feed.post` records.
     [`reply_parent_cid`], [`VARCHAR(64)`], [Immediate parent content ID],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`bsky.posts` schema. $28.1 times 10^6$ rows, $1.45 times 10^6$ unique authors.]
+  caption: flex-caption(
+    [`bsky.posts` schema.],
+    [`bsky.posts` schema. $28.1 times 10^6$ rows, $1.45 times 10^6$ unique authors.],
+  )
 ) <tbl-schema-posts>
 
 ==== `bsky.records`
@@ -57,7 +60,10 @@ All AT Protocol record events from the firehose.
     [`record_json`], [`JSON`], [Full record payload as JSON],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`bsky.records` schema. $212.5 times 10^6$ rows, $2.84 times 10^6$ unique DIDs.]
+  caption: flex-caption(
+    [`bsky.records` schema.],
+    [`bsky.records` schema. $212.5 times 10^6$ rows, $2.84 times 10^6$ unique DIDs.],
+  )
 ) <tbl-schema-records>
 
 Record type breakdown (creates only): `app.bsky.feed.like` ($159.7 times 10^6$, 76.1%), `app.bsky.feed.repost` ($25.4 times 10^6$, 12.4%), `app.bsky.graph.follow` ($16.2 times 10^6$, 8.8%), `app.bsky.graph.block` ($1.6 times 10^6$, 0.8%), and 12 minor collections.
@@ -84,7 +90,10 @@ Per-user activity summary, contains all users in the dataset. One row per unique
     [`primary_lang`], [`VARCHAR(16)`], [Modal language on posts, or NULL],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`data.users` — $3.09 times 10^6$ rows.]
+  caption: flex-caption(
+    [`data.users` schema.],
+    [`data.users` — $3.09 times 10^6$ rows.],
+  )
 ) <tbl-schema-users>
 
 ==== `data.all_events`
@@ -125,7 +134,10 @@ Session clustering from `all_events` using per-user adaptive Tukey IQR threshold
     [`user_threshold_fallback`], [`TINYINT`], [1 if fallback used (< 4 gaps)],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`data.sessions_all` schema. Populated by `cluster_all.py`.]
+  caption: flex-caption(
+    [`data.sessions_all` schema.],
+    [`data.sessions_all` schema. Populated by `cluster_all.py`.],
+  )
 ) <tbl-schema-sessions-all>
 
 ==== `data.sessions_engagement`
@@ -159,7 +171,10 @@ One row per top-level post, precomputing engagement timestamps and counts. $15.3
     [`last_engagement_us`], [`BIGINT`], [Latest of all engagement timestamps],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [`data.post_lifetime` schema. Populated by `populate_post_lifetime.sql`.]
+  caption: flex-caption(
+    [`data.post_lifetime` schema.],
+    [`data.post_lifetime` schema. Populated by `populate_post_lifetime.sql`.],
+  )
 ) <tbl-schema-lifetime>
 
 ==== `data.post_engagement_events`

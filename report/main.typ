@@ -47,6 +47,19 @@
   v(0.6em)
 }
 
+// Track when Typst is generating the outline (List of Figures/Tables/etc.)
+#let in-outline = state("in-outline", false)
+
+// Flip the state to true ONLY inside outlines
+#show outline: it => {
+  in-outline.update(true)
+  it
+  in-outline.update(false)
+}
+
+// Custom caption: short version in lists, long version in main body
+#let flex-caption(short, long) = context if in-outline.get() { short } else { long }
+
 // ----------------------------------------------------------
 #include "src/cover.typ"
 
@@ -95,6 +108,7 @@
 
 #pagebreak()
 = Social Networks State of the Art
+<sec-sota>
 
 #include "src/sota.typ"
 
@@ -106,6 +120,7 @@
 
 #pagebreak()
 = Methodology
+<sec-method>
 
 #include "src/methodology.typ"
 
@@ -148,7 +163,7 @@
 #pagebreak()
 = Conclusions
 
-// #include "src/conclusions.typ"
+#include "src/conclusions.typ"
 
 #pagebreak()
 = Future Work
@@ -158,7 +173,7 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml"),
+  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml", "refs/annex.yml"),
   title: "References",
 )
 
@@ -166,6 +181,12 @@
 #counter(heading).update(0)
 #set heading(numbering: "A.1", supplement: "Appendix")
 
+= Disclaimer About Generative AI Use
+<apx-ai>
+
+#include "src/annex/ai.typ"
+
+#pagebreak()
 = Code Structure and Technical Guide
 <apx-code>
 
@@ -184,7 +205,7 @@
 #include "src/annex/metrics.typ"
 
 #pagebreak()
-= Quoting and Notifications 
+= Additional Mechanics 
 #include "src/annex/mechanics.typ"
 
 #pagebreak()

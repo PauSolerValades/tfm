@@ -1,4 +1,11 @@
-#import "../utils.typ": *
+#import "../utils.typ": def 
+
+This annex contains discarded material of the post lifetime analysis. Specifically, the following two sections cover the analysis of how the three main parts of the model (the CTIC, the queue and the activity) will influence the lifetime, and how could we explain them analytically. This sections were discarded despite it's research interest due to three facts:
+1. Length: as the report was getting unbarely long, it was decided to cut some detail
+2. Specificity: this reads more as a mathematical idea than a formal lifetime analysis.
+3. Time: with more time it could have been framed as one crucial part of the work.
+
+== Lifetime Descritpion
 
 To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-method-model, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
 
@@ -18,12 +25,9 @@ These components behave strictly according to the LIFO (Last-In, First-Out) natu
 
 This reverse-chronological dynamic introduces a somewhat survival mechanism for the posts, perfectly mirroring the hazard functions of the CTIC model. If a post arrives early in a long offline period, a massive volume of newer posts will pile on top of it. When the user logs in, the required $Delta_"scroll"$ to reach the post will be exceptionally high. 
 
-If the user's active session duration $Delta_k$ is shorter than the time required to scroll past the newer content ($Delta_"scroll" > Delta_k$), the transmission opportunity is lost entirely. In our simulation, timelines are purged upon session termination, meaning buried, unread posts fail to propagate ($tau -> oo$). Because $X$ dynamically depends on the instantaneous influx of competing posts and overlapping temporal session boundaries, it is mathematically intractable to solve via closed-form equations #todo[I am quite sure I wrote this, and I think it really is the case, but well], which justifies the use of a Discrete Event Simulation (DES), which allows us to natively resolve $X$ by simulating reverse-chronological consumption step-by-step.
+If the user's active session duration $Delta_k$ is shorter than the time required to scroll past the newer content ($Delta_"scroll" > Delta_k$), the transmission opportunity is lost entirely. In our simulation, timelines are purged upon session termination, meaning buried, unread posts fail to propagate ($tau -> oo$). Because $X$ dynamically depends on the instantaneous influx of competing posts and overlapping temporal session boundaries, it is mathematically intractable to solve via closed-form equations, which justifies the use of a Discrete Event Simulation (DES), which allows us to natively resolve $X$ by simulating reverse-chronological consumption step-by-step.
 
-#comment[Continuation of the TODO from the previous paragraph: what I mean here is that if we tried to model this model analytically it is super complicated to solve, not that an analytical solution does not exist (I don't know that) but just thinking about formalizing it analytically makes me dizzy, that is the intention. Tangentially, this justifies the use of DES super super well!
-]
-
-=== Post Lifetime Analysis
+== Post Lifetime Analysis
 
 To formally synthesize this dynamic, the probability of post $i$ surviving the queue and being seen by user $v$ is fundamentally dictated by the volume of competing information. We can define a timeline influx rate, $mu_v$:
 

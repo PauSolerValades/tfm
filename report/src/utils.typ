@@ -39,4 +39,8 @@
   )
 }
 
+// Custom caption: short version in List of Figures/Tables, long in main body.
+// Requires the outline show-rule (see main.typ) that toggles state("in-outline").
+#let flex-caption(short, long) = context if state("in-outline", false).get() { short } else { long }
+
 

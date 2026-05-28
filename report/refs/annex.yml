@@ -1,0 +1,38 @@
+upc-ia-guia:
+  type: Web
+  title: "IA generativa: IA per als teus estudis"
+  url:
+    value: https://guies.bibliotecnica.upc.edu/intelligencia-artificial/estudis
+    date: 2026-05-27
+  organization: Universitat Politècnica de Catalunya — Bibliotècnica
+
+gemini-3-1-pro:
+  type: Web
+  title: "Gemini 3.1 Pro Model Card"
+  url:
+    value: https://deepmind.google/models/model-cards/gemini-3-1-pro/
+    date: 2026-05-27
+  organization: Google DeepMind
+
+deepseek-v4:
+  type: Web
+  title: "DeepSeek-V4 Model Card"
+  url:
+    value: https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf
+    date: 2026-05-27
+  organization: DeepSeek
+
+gemini-app:
+  type: Web
+  title: Gemini
+  url:
+    value: https://gemini.google.com/app
+    date: 2026-05-27
+  organization: Google
+
+pi-dev:
+  type: Web
+  title: pi — Coding Agent
+  url:
+    value: https://pi.dev/
+    date: 2026-05-27

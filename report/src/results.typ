@@ -1,4 +1,4 @@
-#import "utils.typ": todo, comment, def
+#import "utils.typ": todo, comment, def, flex-caption
 
 This chapter presents the empirical evaluation of the Continuous-Time Independent Cascade (CTIC) model. Utilizing the discrete-event simulation pipeline over the generated Bluesky topologies, we analyze the resulting event traces across three scales: 100K, 500K, and 1M nodes. The analysis follows a top-down framework: we first establish the macroscopic stability of the simulation, then descend into the microscopic user experience (platform congestion), before analyzing the meso-scale dynamics of information spread (engagement lifetimes and cascade morphology). We conclude by bridging these scales through non-dimensional coupling ratios and assessing the model against empirical data.
 
@@ -23,7 +23,10 @@ Here we shift focus from within-run time convergence to *cross-run* statistical 
     [Power-law exponent $gamma$], [$1.730 plus.minus 0.0004$], [$1.723 plus.minus 0.0007$], [$1.736 plus.minus 0.0015$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Batch means $plus.minus$ 95% confidence interval of stationary-state indicators across all replications. All four metrics converge tightly; the online fraction and $gamma$ exponent are scale-invariant, while empty-timeline exits and median backlog reveal a non-monotonic network-size effect.]
+  caption: flex-caption(
+    [Batch means of stationary-state indicators across replications.],
+    [Batch means $plus.minus$ 95% confidence interval of stationary-state indicators across all replications. All four metrics converge tightly; the online fraction and $gamma$ exponent are scale-invariant, while empty-timeline exits and median backlog reveal a non-monotonic network-size effect.],
+  )
 ) <tbl-stationary-results>
 
 @tbl-stationary-results reports batch means and 95% confidence intervals across the full replication set. Two key observations anchor the entire chapter. First, the online fraction converges to a consistent value across all three scales ($0.113$–$0.126$). This is a direct consequence of the calibrated session parameters: Pareto distributions governing duration and inter-session gaps are sampled from the same empirical ECDF regardless of network size, so the aggregate proportion of simultaneously active users is scale-invariant. The exceptionally tight confidence intervals —-standard deviations of $0.001$ at 100K and $0.0007$ at 1M-— confirm that the Activity-Driven session generation effectively balances concurrency without destabilizing the scheduler.
@@ -32,14 +35,20 @@ Second, the stationarity indicators show a non-monotonic pattern across network 
 
 #figure(
   image("images/results/s1_convergence.png", width: 100%),
-  caption: [Cumulative mean of the per-run average online fraction across replications. The x-axis indexes simulation runs (1 to $n$), not simulation time. Each run contributes its own stationary-average `avg_online_frac` (pre-computed via sweep-line integration over $t >= 1000$, see @sec-exec-stationary). The cumulative mean converges rapidly: at 100K, 1600 replications pin the estimate to $0.1154$ with a 95% CI of $5 times 10^(-5)$; at 1M, even with only 10 runs, the estimate settles at $0.1133 plus.minus 0.0004$. The shaded band is $plus.minus$ 1 SD of the per-run values.]
+  caption: flex-caption(
+    [Cumulative mean of per-run average online fraction.],
+    [Cumulative mean of the per-run average online fraction across replications. The x-axis indexes simulation runs (1 to $n$), not simulation time. Each run contributes its own stationary-average `avg_online_frac` (pre-computed via sweep-line integration over $t >= 1000$, see @sec-exec-stationary). The cumulative mean converges rapidly: at 100K, 1600 replications pin the estimate to $0.1154$ with a 95% CI of $5 times 10^(-5)$; at 1M, even with only 10 runs, the estimate settles at $0.1133 plus.minus 0.0004$. The shaded band is $plus.minus$ 1 SD of the per-run values.],
+  )
 ) <fig-s1-convergence>
 
 @fig-s1-convergence shows how the estimator of the online fraction sharpens with replication count. The cumulative mean at 100K stabilizes to its final value within the first 100 runs (the shaded band narrows and the line goes flat), meaning the 1600-run budget is far more than needed for this metric —-the surplus replications serve other, higher-variance metrics. At 500K, 136 runs are sufficient; at 1M, 10 runs already yield a usable estimate, albeit with a wider confidence band. This is the statistical analogue of the time-domain stationarity established in @sec-exec-stationary: the system is not only in equilibrium within each run, but the equilibrium itself is reproducible across independent runs with different random seeds.
 
 #figure(
   image("images/results/s1_histograms.png", width: 100%),
-  caption: [Distribution of stationary indicators across runs: online fraction, empty-timeline exit percentage, and power-law exponent $gamma$. All three metrics form tight, unimodal distributions around their means, confirming convergence and the absence of multi-modal or chaotic regimes.]
+  caption: flex-caption(
+    [Distribution of stationary indicators across runs.],
+    [Distribution of stationary indicators across runs: online fraction, empty-timeline exit percentage, and power-law exponent $gamma$. All three metrics form tight, unimodal distributions around their means, confirming convergence and the absence of multi-modal or chaotic regimes.],
+  )
 ) <fig-s1-histograms>
 
 @fig-s1-histograms shows the per-run distribution of the three key indicators. All are unimodal and tightly concentrated, with no evidence of multi-stability or phase transitions within the explored parameter space. The power-law exponent $gamma approx 1.73$ deserves particular mention: it is invariant to network size, seed, and replication count, suggesting it is a universal constant of the simulation at this parameterization. The real Bluesky $gamma$ is $2.21$ (@tbl-powerlaw-counts) — significantly steeper — indicating that the simulation's homogeneous repost policy produces heavier tails than observed empirically. This discrepancy is addressed in @sec-results-validation.
@@ -72,7 +81,10 @@ The boredom mechanism (@sec-design-sources-sessions) terminates a session as soo
     [Mean posts created per session], [0.40], [0.45], [0.40],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Platform congestion metrics across network scales. The 500K dataset shows the lowest starvation and highest engagement, while 1M has a median backlog of zero and 53% empty exits — worse than 100K, despite having 10× the users. Whether this is a network-size effect or a structural artifact of the specific Forest Fire samples is not resolved by these metrics alone.]
+  caption: flex-caption(
+    [Platform congestion metrics across network scales.],
+    [Platform congestion metrics across network scales. The 500K dataset shows the lowest starvation and highest engagement, while 1M has a median backlog of zero and 53% empty exits — worse than 100K, despite having 10× the users. Whether this is a network-size effect or a structural artifact of the specific Forest Fire samples is not resolved by these metrics alone.],
+  )
 ) <tbl-congestion>
 
 The data reveals a clear bimodal behaviour depending on dataset size. At 1M, $21.8%$ of sessions record zero actions: the user comes online, finds an empty timeline, and immediately goes offline as there is not new content to see. The remaining $31.2%$ of empty-exit sessions (totaling $53.0%$) had at least one action but still exhausted the feed before the session ended —-they consumed what little content was available and then hit the boredom exit. At 500K the picture is healthier: only $19.0%$ of sessions are truly starved (zero actions) and $45.9%$ end empty overall, the lowest across all scales. Therefore, it can be concluded that content starvation is a real phenomena in our executions. It happens also across all scales, as roughly half of all sessions end because the timeline runs dry, but at a lesser degree in the 500K nodes size.
@@ -112,14 +124,20 @@ One possible explanation could be a heavy in-degree imbalance: users with very f
     [1K+], [136.2K], [45.0%], [47%], [146], [636],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Per-user empty-exit rate stratified by indegree (follower count). The result is unequivocal: follower count has no effect on timeline starvation. Zero-follower users starve at the same rate as users with 10K+ followers. Mean session duration and total actions per user are also flat across all buckets. The bimodal empty-exit distribution observed in @fig-s2-user-empty is not explained by network position.]
+  caption: flex-caption(
+    [Per-user empty-exit rate stratified by indegree.],
+    [Per-user empty-exit rate stratified by indegree (follower count). The result is unequivocal: follower count has no effect on timeline starvation. Zero-follower users starve at the same rate as users with 10K+ followers. Mean session duration and total actions per user are also flat across all buckets. The bimodal empty-exit distribution observed in @fig-s2-user-empty is not explained by network position.],
+  )
 ) <tbl-empty-by-indegree>
 
 This finding rules out the in-degree imbalance hypothesis. Users who happen to be online during active periods receive content regardless of how many followers they have; users who log in during quiet periods find empty timelines regardless of their follower count.
 
 #figure(
   image("images/results/s2_empty_by_indegree.png", width: 90%),
-  caption: [Per-user empty-exit rate by indegree bucket. The distributions are nearly identical across all follower-count buckets at every scale, confirming that timeline starvation is a timing effect, not a topological one.]
+  caption: flex-caption(
+    [Per-user empty-exit rate by indegree bucket.],
+    [Per-user empty-exit rate by indegree bucket. The distributions are nearly identical across all follower-count buckets at every scale, confirming that timeline starvation is a timing effect, not a topological one.],
+  )
 ) <fig-s2-empty-by-indegree>
 
 The root cause lies in how the simulation manages timelines across sessions: when a user goes offline, their timeline is cleared (@sec-design-sources-sessions), purging all content accumulated during that session. However, propagations from followed users continue to arrive throughout the offline period — the timeline repopulates with whatever was posted while the user was away. When the user returns, they see only content from the most recent offline gap, not from prior sessions. This means content availability at session start depends entirely on whether other users were active during that specific offline window, which is a stochastic timing effect unrelated to the user's own degree. This session-purging design, combined with the propagation delay $Delta_p = 1$ tick, means a session can start with content (if the offline gap coincided with active periods) or with an empty feed (if it did not). 
@@ -127,7 +145,10 @@ The root cause lies in how the simulation manages timelines across sessions: whe
 
 #figure(
   image("images/results/s2_backlog_hist.png", width: 90%),
-  caption: [Distribution of backlog at session end (log-log scale) for all three network sizes. The spike at zero dominates all three distributions: backlog zero is the mode at every scale. The 500K network shows the strongest rightward shift, with a visible mass between 10 and $10^3$ items, while 100K and 1M collapse almost entirely onto the zero backlog spike.]
+  caption: flex-caption(
+    [Distribution of backlog at session end.],
+    [Distribution of backlog at session end (log-log scale) for all three network sizes. The spike at zero dominates all three distributions: backlog zero is the mode at every scale. The 500K network shows the strongest rightward shift, with a visible mass between 10 and $10^3$ items, while 100K and 1M collapse almost entirely onto the zero backlog spike.],
+  )
 ) <fig-s2-backlog>
 
 @fig-s2-backlog confirms the bimodal structure: the zero-backlog spike dominates all three scales, but 500K develops a distinct secondary mode with a heavy right tail, visible as mass between $10^1$ and $10^3$ backlog items. This secondary mode represents sessions that end with substantial unread content. At 1M, this mode collapses and the distribution concentrates almost entirely at zero. The cause of this difference — whether it is inherent to network size or a property of this particular 1M sample — is not resolved by the backlog distribution alone.
@@ -156,7 +177,10 @@ The boredom mechanic not just interacts with the queue, but it will also shift t
     [Actions per session], [$28.1 plus.minus 0.01$], [$31.6 plus.minus 0.03$], [$28.2 plus.minus 0.13$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Session metrics — batch means $plus.minus$ 95% CI across replications. The 500K network achieves the highest engagement (129 ticks mean duration, 32 actions per session). All values are scale-stable within tight confidence bands.]
+  caption: flex-caption(
+    [Session metrics — batch means across replications.],
+    [Session metrics — batch means $plus.minus$ 95% CI across replications. The 500K network achieves the highest engagement (129 ticks mean duration, 32 actions per session). All values are scale-stable within tight confidence bands.],
+  )
 ) <tbl-session-dur>
 
 #figure(
@@ -172,19 +196,28 @@ The boredom mechanic not just interacts with the queue, but it will also shift t
     [1M],   [2], [8], [38], [125], [429], [1194],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Session duration percentiles (pooled across all runs). The distribution is heavily right-skewed at every scale: the median is 35–50 ticks, but $P_99$ reaches $approx 1200$ ticks. The intended Pareto tail (which extends past 4000 ticks) is truncated by the boredom mechanism — no session lives as long as its Pareto distribution theoretically permits.]
+  caption: flex-caption(
+    [Session duration percentiles.],
+    [Session duration percentiles (pooled across all runs). The distribution is heavily right-skewed at every scale: the median is 35–50 ticks, but $P_99$ reaches $approx 1200$ ticks. The intended Pareto tail (which extends past 4000 ticks) is truncated by the boredom mechanism — no session lives as long as its Pareto distribution theoretically permits.],
+  )
 ) <tbl-session-percentiles>
 
 #figure(
   image("images/results/s2_duration_hist.png", width: 90%),
-  caption: [Session duration distribution (log-log scale) across network sizes. All three follow a heavy-tailed shape consistent with the underlying Pareto mixture, but the mass below $10^1$ ticks reflects boredom-truncated sessions that exit almost immediately.]
+  caption: flex-caption(
+    [Session duration distribution (log-log scale).],
+    [Session duration distribution (log-log scale) across network sizes. All three follow a heavy-tailed shape consistent with the underlying Pareto mixture, but the mass below $10^1$ ticks reflects boredom-truncated sessions that exit almost immediately.],
+  )
 ) <fig-s2-duration-hist>
 
 @fig-s2-duration-hist shows the impact of the boredom is prominent on Pareto's heavy tail, as it should smoothly decrease. Instead, gets instantly trucated in both the 100K and 500K users. In the 1M dataset it is slowly decreasing, which could be significant. Unfortunately, to say that the dynamic is different in the 1M dataset, a significant more amount of runs would be needed to diferentate the behaviour from the other two graphs in a statistically significant way.
 
 #figure(
   image("images/results/s2_duration_vs_empty.png", width: 90%),
-  caption: [Session duration for empty-exit versus non-empty-exit sessions. At every scale, empty-exit sessions are dramatically shorter: the median empty-exit session lasts 12 ticks, while the median non-empty session lasts 105–114 ticks — a $9.5 times$ difference. Long sessions almost never end empty.]
+  caption: flex-caption(
+    [Session duration for empty-exit vs non-empty-exit sessions.],
+    [Session duration for empty-exit versus non-empty-exit sessions. At every scale, empty-exit sessions are dramatically shorter: the median empty-exit session lasts 12 ticks, while the median non-empty session lasts 105–114 ticks — a $9.5 times$ difference. Long sessions almost never end empty.],
+  )
 ) <fig-s2-duration-vs-empty>
 
 @fig-s2-duration-vs-empty reveals the clearest signal of the boredom mechanism's impact. Across all scales, empty-exit sessions have a median duration of 12 ticks, while non-empty sessions have a median of 105 ticks — a factor of $9.5$. Long sessions of 300+ ticks end empty only 13–18% of the time, confirming that when content is available, users stay engaged and naturally reach their Pareto timeout. The boredom mechanism bifurcates the user population into two regimes: fast-exiting starvers and content-saturated engagers.
@@ -208,7 +241,10 @@ To quantify how far the empirical durations depart from the intended distributio
     [$P_99$], [4142], [1194], [552], [1478],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Intended Pareto mixture versus empirical session duration percentiles (1M network, single run). The boredom mechanism does not shift the median ($31 arrow.r 38$) but severely truncates the tail: $P_99$ drops from 4142 to 1194 ticks (3.5×). Zero-backlog sessions are an order of magnitude shorter at every percentile.]
+  caption: flex-caption(
+    [Intended Pareto mixture vs empirical session duration percentiles.],
+    [Intended Pareto mixture versus empirical session duration percentiles (1M network, single run). The boredom mechanism does not shift the median ($31 arrow.r 38$) but severely truncates the tail: $P_99$ drops from 4142 to 1194 ticks (3.5×). Zero-backlog sessions are an order of magnitude shorter at every percentile.],
+  )
 ) <tbl-pareto-compare>
 
 === Per-User Engaged Analysis
@@ -231,24 +267,36 @@ Beyond session-level aggregates, per-user summaries would ideally reveal whether
     [Mean total reposts], [1.1], [1.3], [1.2],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Per-user aggregated metrics from a single random run per scale. The average user experiences 3.3 sessions, with mean session durations of $approx 200$ ticks. Per-user empty-exit rates ($28$–$34%$) are substantially lower than the session-level rate ($46$–$53%$), because most users experience a mix of empty and non-empty sessions rather than starving consistently.]
+  caption: flex-caption(
+    [Per-user aggregated metrics.],
+    [Per-user aggregated metrics from a single random run per scale. The average user experiences 3.3 sessions, with mean session durations of $approx 200$ ticks. Per-user empty-exit rates ($28$–$34%$) are substantially lower than the session-level rate ($46$–$53%$), because most users experience a mix of empty and non-empty sessions rather than starving consistently.],
+  )
 ) <tbl-per-user>
 
 #figure(
   image("images/results/s2_user_empty_hist.png", width: 90%),
-  caption: [Per-user empty-exit fraction histogram. The distribution is bimodal: a concentration near zero (users who almost never starve) and a secondary mode near 50–60%. Few users starve in every session, and few users never starve —-most experience a mix.]
+  caption: flex-caption(
+    [Per-user empty-exit fraction histogram.],
+    [Per-user empty-exit fraction histogram. The distribution is bimodal: a concentration near zero (users who almost never starve) and a secondary mode near 50–60%. Few users starve in every session, and few users never starve —-most experience a mix.],
+  )
 ) <fig-s2-user-empty>
 
 @fig-s2-user-empty shows that the starvation burden is neither uniform nor perfectly concentrated. A substantial fraction of users have low empty-exit rates ($< 20%$), indicating they consistently find content. Another cluster sits at 50–60%, and a thin tail extends to 100%. This suggests that timeline starvation is partially structural (driven by network position — low-degree users receive less content) and partially stochastic (driven by session timing overlaps). A user who comes online during a content lull may starve regardless of their follower count.
 
 #figure(
   image("images/results/s2_actions_hist.png", width: 90%),
-  caption: [Actions per session distribution (log-log). The mode is at 1 action, and the heavy tail —-reaching $10^3$ actions in the longest sessions-— reflects the Pareto-driven engagement of the content-saturated minority. Users are net consumers: the created-to-consumed ratio is approximately $0.014$ across all scales.]
+  caption: flex-caption(
+    [Actions per session distribution.],
+    [Actions per session distribution (log-log). The mode is at 1 action, and the heavy tail —-reaching $10^3$ actions in the longest sessions-— reflects the Pareto-driven engagement of the content-saturated minority. Users are net consumers: the created-to-consumed ratio is approximately $0.014$ across all scales.],
+  )
 ) <fig-s2-actions>
 
 #figure(
   image("images/results/s2_reposters_vs_non.png", width: 90%),
-  caption: [Session duration for users who ever repost versus those who never repost. Reposters have significantly longer sessions: their median session duration is 2–3$times$ that of non-reposters. Engagement depth and propagation activity are tightly coupled —-users who repost are also users who stay online longer.]
+  caption: flex-caption(
+    [Session duration for reposters vs non-reposters.],
+    [Session duration for users who ever repost versus those who never repost. Reposters have significantly longer sessions: their median session duration is 2–3$times$ that of non-reposters. Engagement depth and propagation activity are tightly coupled —-users who repost are also users who stay online longer.],
+  )
 ) <fig-s2-reposters>
 
 @fig-s2-reposters reveals a coupling between engagement depth and session persistence: users who ever perform a repost have substantially longer sessions (median 2–3$times$ that of never-reposters). This is mechanistically expected — reposting requires the user to encounter a post and choose to propagate it, so reposters must have sessions long enough to consume content — but it also has a feedback implication: the users driving cascade propagation are the same users sustaining platform engagement, forming a virtuous cycle where content sustains attention and attention sustains content.
@@ -276,7 +324,10 @@ The post lifetime $tau_"raw"$ measures the time from creation to the last engage
     [Median $tau_"raw"$ (w/ reposts)], [471], [613], [750],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Post lifetime statistics for posts that received at least one repost. Mean lifetimes grow modestly with network size ($843 arrow.r 1107$ ticks), but the fraction of posts that attract any reposts declines ($25.1% arrow.r 19.4%$) — content dilution increases with scale.]
+  caption: flex-caption(
+    [Post lifetime statistics (posts with at least one repost).],
+    [Post lifetime statistics for posts that received at least one repost. Mean lifetimes grow modestly with network size ($843 arrow.r 1107$ ticks), but the fraction of posts that attract any reposts declines ($25.1% arrow.r 19.4%$) — content dilution increases with scale.],
+  )
 ) <tbl-lifetimes>
 
 #figure(
@@ -293,7 +344,10 @@ The post lifetime $tau_"raw"$ measures the time from creation to the last engage
     [Median $tau_"raw"$ (zero engagement)], [2.4], [2.3], [2.2],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Lifetime statistics for posts with zero reposts. Among these, 29–39% also receive zero engagement (no likes). The truly dead posts have median lifetimes of $approx 2$ ticks: created, propagated to followers, and never interacted with again.]
+  caption: flex-caption(
+    [Lifetime statistics for posts with zero reposts.],
+    [Lifetime statistics for posts with zero reposts. Among these, 29–39% also receive zero engagement (no likes). The truly dead posts have median lifetimes of $approx 2$ ticks: created, propagated to followers, and never interacted with again.],
+  )
 ) <tbl-lifetimes-zero>
 
 Three conclusions can be extracted from both tables. First, the fraction of posts that attract any reposts declines with network size ($25.1% arrow.r 21.3% arrow.r 19.4%$). More users produce more content, but the same total propagation budget is spread thinner, therefore competition for attention grows with scale. 
@@ -304,7 +358,10 @@ Third, the zero-engagement subset (posts that receive neither likes nor reposts,
 
 #figure(
   image("images/results/s3_lifetime_ccdf.png", width: 90%),
-  caption: [CCDF of normalized lifetime $tau_"norm"$ for posts with at least one repost (sampled). The distributions are heavy-tailed at all scales, with approximate power-law decay in the mid-range. Large networks shift the distribution rightward: posts survive longer as the pool of potential reposters grows.]
+  caption: flex-caption(
+    [CCDF of normalized lifetime for posts with at least one repost.],
+    [CCDF of normalized lifetime $tau_"norm"$ for posts with at least one repost (sampled). The distributions are heavy-tailed at all scales, with approximate power-law decay in the mid-range. Large networks shift the distribution rightward: posts survive longer as the pool of potential reposters grows.],
+  )
 ) <fig-s3-lifetime-ccdf>
 
 === Repost Power-Law Exponent
@@ -315,7 +372,10 @@ The empirical Bluesky repost exponent is $gamma = 2.21$ (@tbl-powerlaw-counts), 
 
 #figure(
   image("images/results/s3_reposts_ccdf.png", width: 90%),
-  caption: [CCDF of total reposts per post (sampled, posts with at least one repost). The distribution follows an approximate power law at all scales with $gamma approx 1.73$, slightly heavier-tailed than the empirical Bluesky $gamma = 2.21$. The 1M run's sparse tail reflects the limited replication count (10 runs), not a genuine difference in the exponent.]
+  caption: flex-caption(
+    [CCDF of total reposts per post.],
+    [CCDF of total reposts per post (sampled, posts with at least one repost). The distribution follows an approximate power law at all scales with $gamma approx 1.73$, slightly heavier-tailed than the empirical Bluesky $gamma = 2.21$. The 1M run's sparse tail reflects the limited replication count (10 runs), not a genuine difference in the exponent.],
+  )
 ) <fig-s3-reposts-ccdf>
 
 === Burstiness Analysis
@@ -344,7 +404,10 @@ The burstiness coefficient $B in [-1, 1]$
     [1M], [$-0.164$], [0.429],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Global burstiness and time-to-peak across all reposted posts. The mean $dash(B)$ is slightly negative ($approx -0.18$), with high dispersion ($sigma_B approx 0.43$), and the median is zero at all scales — over half of reposted posts receive only one repost. The mean time to 50% of peak reposts grows linearly with network size (7.0 $arrow.r$ 15.0 ticks), while the median remains zero (the first repost accounts for most of the total).]
+  caption: flex-caption(
+    [Global burstiness and time-to-peak across all reposted posts.],
+    [Global burstiness and time-to-peak across all reposted posts. The mean $dash(B)$ is slightly negative ($approx -0.18$), with high dispersion ($sigma_B approx 0.43$), and the median is zero at all scales — over half of reposted posts receive only one repost. The mean time to 50% of peak reposts grows linearly with network size (7.0 $arrow.r$ 15.0 ticks), while the median remains zero (the first repost accounts for most of the total).],
+  )
 ) <tbl-burstiness-global>
 
 The global stats mask a strong dependence on cascade size. @tbl-burstiness-bucket stratifies $B$ by repost count bucket.
@@ -364,12 +427,18 @@ The global stats mask a strong dependence on cascade size. @tbl-burstiness-bucke
     [50+], [$+0.572$], [0.100], [$+0.538$], [0.107], [$+0.521$], [0.112],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Burstiness stratified by repost count bucket. Mean $dash(B)$ is near-identical across network sizes, confirming burstiness is a scale-invariant property of the CTIC model. The standard deviation decreases with bucket size: large cascades are consistently bursty ($sigma_B approx 0.1$), mid-size cascades have high variance ($sigma_B approx 0.44$). The transition from negative to positive $dash(B)$ occurs at 5–9 reposts.]
+  caption: flex-caption(
+    [Burstiness stratified by repost count bucket.],
+    [Burstiness stratified by repost count bucket. Mean $dash(B)$ is near-identical across network sizes, confirming burstiness is a scale-invariant property of the CTIC model. The standard deviation decreases with bucket size: large cascades are consistently bursty ($sigma_B approx 0.1$), mid-size cascades have high variance ($sigma_B approx 0.44$). The transition from negative to positive $dash(B)$ occurs at 5–9 reposts.],
+  )
 ) <tbl-burstiness-bucket>
 
 #figure(
   image("images/results/s3_burstiness.png", width: 90%),
-  caption: [Mean burstiness $B$ by repost count bucket, with error bars. The transition from negative to positive $B$ occurs between 2–4 reposts (anti-bursty) and 5–9 reposts (weakly bursty). The monotonically increasing $B$ with cascade size confirms that repost timing is not scale-free: larger cascades accelerate.]
+  caption: flex-caption(
+    [Mean burstiness by repost count bucket.],
+    [Mean burstiness $B$ by repost count bucket, with error bars. The transition from negative to positive $B$ occurs between 2–4 reposts (anti-bursty) and 5–9 reposts (weakly bursty). The monotonically increasing $B$ with cascade size confirms that repost timing is not scale-free: larger cascades accelerate.],
+  )
 ) <fig-s3-burstiness>
 
 First conclusion to extract from @tbl-burstiness-global and @tbl-burstiness-bucket is that burstiness is basically invariant scale-wise: it does not matter the amount of nodes in a dataset, its a fundamental property of the CTIC model, so it shows regardless of the dataset. The second one is that there is a relationship between the 
@@ -392,14 +461,20 @@ The time required for a post to accumulate 50% of its total reposts ($"time_to_p
     [Median $t_"peak 50"$ (ticks)], [0.0], [0.0], [0.0],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Time to 50% of total reposts (posts with $>= 1$ repost). The median is 0 at all scales —-half of all reposted posts receive their first repost instantly (the author's followers are notified at $t = 0$ of creation). The mean grows with network size, reflecting the increased latency of multi-hop propagation through larger topologies.]
+  caption: flex-caption(
+    [Time to 50% of total reposts.],
+    [Time to 50% of total reposts (posts with $>= 1$ repost). The median is 0 at all scales —-half of all reposted posts receive their first repost instantly (the author's followers are notified at $t = 0$ of creation). The mean grows with network size, reflecting the increased latency of multi-hop propagation through larger topologies.],
+  )
 ) <tbl-ttp50>
 
 The median $t_"peak 50"$ is zero across all scales: for half of all reposted posts, the first repost accounts for at least 50% of total reposts. This is a consequence of the heavy-tailed repost distribution — most posts get only one or two reposts total, so the first repost inherently constitutes the majority. The mean $t_"peak 50"$ grows linearly from 7.0 to 15.0 ticks as network size increases 10×, reflecting the additional topological hops required for a post to propagate through a larger follower graph. This linear scaling of temporal latency with network diameter is a direct mechanistic consequence of the hop-by-hop CTIC propagation.
 
 #figure(
   image("images/results/s3_ttp50_hist.png", width: 90%),
-  caption: [Distribution of time to 50% of peak reposts (log-binned, posts with $>= 2$ reposts and $t_"peak 50" > 0$). The mode is near zero at all scales, and the distribution spans several orders of magnitude. Larger networks extend the right tail, reflecting the additional propagation hops required to reach distant reposters.]
+  caption: flex-caption(
+    [Distribution of time to 50% of peak reposts.],
+    [Distribution of time to 50% of peak reposts (log-binned, posts with $>= 2$ reposts and $t_"peak 50" > 0$). The mode is near zero at all scales, and the distribution spans several orders of magnitude. Larger networks extend the right tail, reflecting the additional propagation hops required to reach distant reposters.],
+  )
 ) <fig-s3-ttp50>
 
 == Independent Cascade Analysis
@@ -432,7 +507,10 @@ The climax of the meso-scale analysis lies in the shape of the cascades. A casca
     [% branching ($"max_out_degree" >= 2$)], [$45.8%$], [$42.0%$], [$35.6%$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Global cascade morphology metrics. The median cascade (4 nodes, depth 2–3, $nu approx 1.67$) is modest: a small star or short chain. But the tails are heavy: maximum cascade sizes reach 1632 nodes, maximum depth reaches 106 hops, and maximum virality reaches 34.9. Larger networks amplify the tail without shifting the median.]
+  caption: flex-caption(
+    [Global cascade morphology metrics.],
+    [Global cascade morphology metrics. The median cascade (4 nodes, depth 2–3, $nu approx 1.67$) is modest: a small star or short chain. But the tails are heavy: maximum cascade sizes reach 1632 nodes, maximum depth reaches 106 hops, and maximum virality reaches 34.9. Larger networks amplify the tail without shifting the median.],
+  )
 ) <tbl-cascades-global>
 
 The table has a lot to unpack, let's analyze by facts:
@@ -451,14 +529,20 @@ This section has computed the structural virality of every post in every simulat
 
 #figure(
   image("images/results/s4_virality_hist.png", width: 90%),
-  caption: [Structural virality distribution (binned, excluding minimal $nu = 1.33$). The distribution is unimodal with a heavy right tail. At 1M, $13.6%$ of cascades have $nu >= 4$, indicating genuine multi-generational branching rather than flat broadcast.]
+  caption: flex-caption(
+    [Structural virality distribution.],
+    [Structural virality distribution (binned, excluding minimal $nu = 1.33$). The distribution is unimodal with a heavy right tail. At 1M, $13.6%$ of cascades have $nu >= 4$, indicating genuine multi-generational branching rather than flat broadcast.],
+  )
 ) <fig-s4-virality>
 
 Additionally, the log-log plot of the histrogram, thats the complementary cumulative distribution funciton, is provided at @fig-s4-virality-ccdf as the histograms were very steep.
 
 #figure(
   image("images/results/s4_virality_ccdf.png", width: 90%),
-  caption: [CCDF of structural virality $nu$, sampled. The heavy tail extends to $nu approx 10$ at 100K ($alpha=5.3$), $nu approx 20$ at 500K ($alpha=4.1$), and $nu approx 30$ at 1M ($alpha=3.5$). Larger networks enable more structurally complex propagation trees, but the bulk of the distribution ($nu <= 4$) is scale-invariant.]
+  caption: flex-caption(
+    [CCDF of structural virality.],
+    [CCDF of structural virality $nu$, sampled. The heavy tail extends to $nu approx 10$ at 100K ($alpha=5.3$), $nu approx 20$ at 500K ($alpha=4.1$), and $nu approx 30$ at 1M ($alpha=3.5$). Larger networks enable more structurally complex propagation trees, but the bulk of the distribution ($nu <= 4$) is scale-invariant.],
+  )
 ) <fig-s4-virality-ccdf>
 
 As we can see, structural virality follows a power-law distribution, with bigger the alpha the smaller the dataset. This is not due to a topology problem, but a lack of sampling: 100K with 1600 runs has much more posts that sampled more for the heavy tail, while the 1M dataset did not, so the graph does not follow the red dotted line equally.
@@ -478,7 +562,10 @@ As we can see, structural virality follows a power-law distribution, with bigger
     [1M],   [2.10], [1.67], [1.33], [2.33], [4.33], [$40.3%$], [$35.6%$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Structural virality percentiles. The median $nu = 1.67$ is stable across scales. The upper tail ($P_95$) grows from 3.33 (100K) to 4.33 (1M), consistent with larger networks enabling deeper branching structures. Approximately 40% of all cascades are minimal chains with no branching at all.]
+  caption: flex-caption(
+    [Structural virality percentiles.],
+    [Structural virality percentiles. The median $nu = 1.67$ is stable across scales. The upper tail ($P_95$) grows from 3.33 (100K) to 4.33 (1M), consistent with larger networks enabling deeper branching structures. Approximately 40% of all cascades are minimal chains with no branching at all.],
+  )
 ) <tbl-virality-dist>
 
 The fraction of minimal cascades ($nu <= 1.34$, pure chains) is remarkably stable at $approx 39%$ across all scales. These are cascades where the propagation tree is a simple chain or a two-hop fan with negligible branching ---structurally uninteresting, but numerically dominant. The branching fraction ($"max_out_degree" >= 2$) declines slightly with scale ($45.8% arrow.r 35.6%$), indicating that while larger networks produce more extreme cascades, the bulk of the distribution shifts toward simpler structures, a consequence of content dilution: posts in larger networks have more competitors and are less likely to find multiple reposters at any given hop. Additionally, the $P_95$ is consistent with the scalar topology found beforehand, the bigger the dataset the bigger can the cascades be.
@@ -502,19 +589,28 @@ Cascade depth grows sub-linearly with cascade size. @tbl-depth-size stratifies c
     [50+], [6.2K], [8.45], [20.2], [27.2],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Cascade morphology by size bucket for the 1M network. Depth grows sub-linearly with size: a 50+ cascade has mean depth 20.2 but mean max-out 27.2 —-large cascades achieve their size through extreme branching at individual nodes, not through deep chains. The 100K and 500K tables show identical structure; data available in @apx-metrics.]
+  caption: flex-caption(
+    [Cascade morphology by size bucket for the 1M network.],
+    [Cascade morphology by size bucket for the 1M network. Depth grows sub-linearly with size: a 50+ cascade has mean depth 20.2 but mean max-out 27.2 —-large cascades achieve their size through extreme branching at individual nodes, not through deep chains. The 100K and 500K tables show identical structure; data available in @apx-metrics.],
+  )
 ) <tbl-depth-size>
 
 #figure(
   image("images/results/s4_depth_vs_size.png", width: 90%),
-  caption: [Hexbin density of cascade depth versus cascade size (log-log). The bulk traces a sub-linear scaling: depth grows approximately as $N^0.6$. The diffuse cloud at small sizes ($<= 10$) represents shallow cascades with varied depth, while the sparse high-size tail is populated by deep, heavily branched trees.]
+  caption: flex-caption(
+    [Hexbin density of cascade depth versus cascade size.],
+    [Hexbin density of cascade depth versus cascade size (log-log). The bulk traces a sub-linear scaling: depth grows approximately as $N^0.6$. The diffuse cloud at small sizes ($<= 10$) represents shallow cascades with varied depth, while the sparse high-size tail is populated by deep, heavily branched trees.],
+  )
 ) <fig-s4-depth-vs-size>
 
 The sub-linear depth–size scaling is a robust finding. A cascade of 50+ nodes achieves its size through branching (mean max-out-degree 27.2) rather than depth (mean depth 20.2). @fig-s4-broadcast-vs-viral reinforces this: cascade depth in the CTIC model is fundamentally a broadcast phenomenon, not deep chaining.
 
 #figure(
   image("images/results/s4_broadcast_vs_viral.png", width: 90%),
-  caption: [Hexbin density of max-out-degree (broadcast) versus cascade depth (viral chaining). The distribution is dominated by low-depth, moderate-broadcast cascades. Deep cascades exist but are rare; the typical cascade is a wide fan-out from one or two influential reposters.]
+  caption: flex-caption(
+    [Hexbin density of max-out-degree vs cascade depth.],
+    [Hexbin density of max-out-degree (broadcast) versus cascade depth (viral chaining). The distribution is dominated by low-depth, moderate-broadcast cascades. Deep cascades exist but are rare; the typical cascade is a wide fan-out from one or two influential reposters.],
+  )
 ) <fig-s4-broadcast-vs-viral>
 
 The largest simulated cascade (1632 nodes at 1M) has depth 87 and max-out 24 — it is simultaneously deep and broad, but the breadth-to-depth ratio remains high. This is consistent with the CTIC model's broadcast-dominant mechanics: one influential reposter fans out to hundreds of followers, each of whom may propagate further, but the fan-out at each hop dwarfs the hop count. Social media cascades in the CTIC framework are wide, shallow trees — not long chains.
@@ -556,7 +652,10 @@ The largest simulated cascade (1632 nodes at 1M) has depth 87 and max-out 24 —
     [5], [74], [62], [24.3], [14],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Top 5 most structurally viral cascades per network size. The most viral cascade (1M, $nu = 34.9$) has 150 nodes, depth 87, and an author with only 107 followers. At 500K, the top four cascades all originate from the same author (degree 612), suggesting that specific topological positions (not raw follower count alone) enable extreme virality. At 100K, the top five cascades all come from authors with just 14 followers.]
+  caption: flex-caption(
+    [Top 5 most structurally viral cascades per network size.],
+    [Top 5 most structurally viral cascades per network size. The most viral cascade (1M, $nu = 34.9$) has 150 nodes, depth 87, and an author with only 107 followers. At 500K, the top four cascades all originate from the same author (degree 612), suggesting that specific topological positions (not raw follower count alone) enable extreme virality. At 100K, the top five cascades all come from authors with just 14 followers.],
+  )
 ) <tbl-top-cascades>
 
 The top cascades have something in common ---or rather, the lack of something in common is what they actually share. There is no correlation which the users with bigger degree connections make more viral posts. 
@@ -580,7 +679,10 @@ The statistical absence of any degree–virality relationship is confirmed by co
     [$R^2$ ($nu$ from deg)], [$2 times 10^(-5)$], [$8 times 10^(-6)$], [$-0.000$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Correlation between an author's in-degree (follower count) and the structural virality of the posts they create. All coefficients are effectively zero: Pearson and Spearman correlations are below $0.005$, and $R^2$ values are on the order of $10^(-5)$–$10^(-6)$. An author's follower count explains none of the variance in how viral their posts become.]
+  caption: flex-caption(
+    [Correlation between author in-degree and structural virality.],
+    [Correlation between an author's in-degree (follower count) and the structural virality of the posts they create. All coefficients are effectively zero: Pearson and Spearman correlations are below $0.005$, and $R^2$ values are on the order of $10^(-5)$–$10^(-6)$. An author's follower count explains none of the variance in how viral their posts become.],
+  )
 ) <tbl-correlation>
 
 At 500K, a single author (degree 612) accounts for four of the top five, but at 1M, the top cascade comes from an author with only 107 followers ($PP(X=107) approx 0.45$). The most viral cascade at any scale ($nu = 34.9$, 1M) has 150 nodes, depth 87, and max-out 24 — a genuinely deep tree with balanced branching, and it's the same for the 1M dataset.
@@ -602,14 +704,20 @@ At 500K, a single author (degree 612) accounts for four of the top five, but at 
     [10K+], [289K], [5.42], [2.97], [1.94],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Cascade metrics by author follower count (100K network). Values are near-identical across all buckets. A post from a 10K+ follower author has mean cascade size 5.42 versus 5.21 for a zero-follower author —-a 4% difference. There is no influencer effect in the CTIC model with homogeneous behavioral policies.]
+  caption: flex-caption(
+    [Cascade metrics by author follower count.],
+    [Cascade metrics by author follower count (100K network). Values are near-identical across all buckets. A post from a 10K+ follower author has mean cascade size 5.42 versus 5.21 for a zero-follower author —-a 4% difference. There is no influencer effect in the CTIC model with homogeneous behavioral policies.],
+  )
 ) <tbl-influencer>
 
 The influencer effect is absent. Mean cascade size varies from 5.21 (zero followers) to 5.42 (10K+ followers) — a 4% difference that is dwarfed by the variance within each bucket. @fig-s4-influencer visualizes this flat relationship directly.
 
 #figure(
   image("images/results/s4_influencer_scatter.png", width: 90%),
-  caption: [Hexbin density of author in-degree versus cascade size (log-log, sampled). The cloud is horizontally flat across all three scales: cascade size does not trend upward with author follower count. The density is highest at low author degrees simply because most users have few followers — but the cascade outcomes are statistically identical at every degree level.]
+  caption: flex-caption(
+    [Hexbin density of author in-degree vs cascade size.],
+    [Hexbin density of author in-degree versus cascade size (log-log, sampled). The cloud is horizontally flat across all three scales: cascade size does not trend upward with author follower count. The density is highest at low author degrees simply because most users have few followers — but the cascade outcomes are statistically identical at every degree level.],
+  )
 ) <fig-s4-influencer>
 
 This is a direct mathematical consequence of the homogeneous policy and the CTIC model structure. In the CTIC framework, the cascade dies or lives based on the second-hop structure: if a first-hop reposter has many followers, the cascade explodes; if the first-hop reposters have few followers, the cascade dies regardless of the author's degree. The author merely provides the initial spark; the subsequent propagation structure is determined by the degree distribution of the reposters, not the author. This finding validates a core theoretical property of the CTIC model and has important implications: heterogeneous policies (power users with higher $p_"repost"$) would be necessary to reproduce the influencer effects observed in real social media.
@@ -632,14 +740,20 @@ This is a direct mathematical consequence of the homogeneous policy and the CTIC
     [3 (1000+)], [4], [7.66], [44.2], [592.2],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Cascade size distribution by log scale (1M network). The exponential drop-off with size is consistent with the $gamma approx 1.73$ power-law exponent: each order of magnitude reduces the count by approximately $10^3$. Only 4 cascades in the entire 1M corpus reach size $>= 1000$.]
+  caption: flex-caption(
+    [Cascade size distribution by log scale (1M network).],
+    [Cascade size distribution by log scale (1M network). The exponential drop-off with size is consistent with the $gamma approx 1.73$ power-law exponent: each order of magnitude reduces the count by approximately $10^3$. Only 4 cascades in the entire 1M corpus reach size $>= 1000$.],
+  )
 ) <tbl-cascade-log>
 
 The distribution spans four orders of magnitude: 1.14 million cascades of size 3–9, dropping to 179K at size 10–99, 897 at size 100–999, and just 4 at size 1000+. @fig-s4-cascade-ccdf shows the CCDF. This is not a smooth power law — the steep drop from $log_10 = 1$ to $log_10 = 2$ (a 200× reduction) reflects the simulation's finite-size cutoff, where the pool of available reposters (at most $N$ users, with $approx 11%$ online) imposes a hard upper bound on cascade growth that a true power law would not encounter. As this is equally promominent in the three datasets, it's dismissed from being caused by missing data.
 
 #figure(
   image("images/results/s4_cascade_size_ccdf.png", width: 90%),
-  caption: [CCDF of cascade size (sampled). The distribution follows the $gamma approx 1.73$ power law through the mid-range but drops sharply at the high end due to the finite network size. The 1M network supports the largest cascades ($N approx 10^3$) before hitting the finite-size cutoff.]
+  caption: flex-caption(
+    [CCDF of cascade size.],
+    [CCDF of cascade size (sampled). The distribution follows the $gamma approx 1.73$ power law through the mid-range but drops sharply at the high end due to the finite network size. The 1M network supports the largest cascades ($N approx 10^3$) before hitting the finite-size cutoff.],
+  )
 ) <fig-s4-cascade-ccdf>
 
 == Micro-Macro Coupling
@@ -684,7 +798,10 @@ The @tbl-coupling reports batch means $plus.minus$ 95% CI for all three ratios a
     [$omega$], [$1.90 plus.minus 0.003$], [$2.22 plus.minus 0.006$], [$2.51 plus.minus 0.023$],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Micro-macro coupling ratios (batch means $plus.minus$ 95% CI). All three grow with network size, driven by longer post lifetimes in larger topologies. Posts outlive sessions by 7–10× ($pi$), compete with 42–55 new posts during their lifespan ($tau_c$), and survive 2–3 offline cycles ($omega$).]
+  caption: flex-caption(
+    [Micro-macro coupling ratios.],
+    [Micro-macro coupling ratios (batch means $plus.minus$ 95% CI). All three grow with network size, driven by longer post lifetimes in larger topologies. Posts outlive sessions by 7–10× ($pi$), compete with 42–55 new posts during their lifespan ($tau_c$), and survive 2–3 offline cycles ($omega$).],
+  )
 ) <tbl-coupling>
 
 == Empirical Validation and Discussion
@@ -700,7 +817,10 @@ The repost power-law exponent ($gamma_"sim" = 1.73$ vs $gamma_"real" = 2.21$) in
 
 #figure(
   image("images/results/powerlaw_comparison.png", width: 70%),
-  caption: [Log-log CCDF comparison of the simulated ($gamma = 1.73$) and empirical Bluesky ($gamma = 2.21$) repost cascade size distributions. The simulation's flatter slope means rare large cascades are more common than observed in reality — a direct consequence of the uniform $p_"repost" = 0.012$ policy.]
+  caption: flex-caption(
+    [Log-log CCDF comparison: simulated vs empirical repost cascade sizes.],
+    [Log-log CCDF comparison of the simulated ($gamma = 1.73$) and empirical Bluesky ($gamma = 2.21$) repost cascade size distributions. The simulation's flatter slope means rare large cascades are more common than observed in reality — a direct consequence of the uniform $p_"repost" = 0.012$ policy.],
+  )
 ) <fig-powerlaw-compare>
 
 The power-law finiding are consistent with user homogeneous policies: every user has the same repost probability, whereas real networks concentrate repost activity in a small fraction of power users depending on the content and similarities.
