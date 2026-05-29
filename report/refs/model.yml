@@ -1,0 +1,17 @@
+casteigts2012timevarying:
+  type: Article
+  title: "Time-Varying Graphs and Dynamic Networks"
+  author:
+    - Casteigts, Arnaud
+    - Flocchini, Paola
+    - Quattrociocchi, Walter
+    - Santoro, Nicola
+  date: 2012
+  page-range: 387-408
+  serial-number:
+    doi: "10.1080/17445760.2012.668546"
+  parent:
+    type: Periodical
+    title: "International Journal of Parallel, Emergent and Distributed Systems"
+    volume: 27
+    issue: 5

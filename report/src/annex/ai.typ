@@ -1,4 +1,4 @@
-Following the required convections of Universitat Politècnica de Catalunya @upc-ia-guia this annex specifies which tools that use generative AI and for which purpose have they been used.
+Following the required conventions of Universitat Politècnica de Catalunya @upc-ia-guia this annex specifies which tools that use generative AI and for which purpose have they been used.
 
 == Models
 

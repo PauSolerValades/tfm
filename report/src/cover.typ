@@ -31,7 +31,7 @@
   #v(4.5cm)
 
   #text(size: 14pt)[
-    Supervised by Jana Lasser, Esteve Codina, and Pau Fontseca\
+    Supervised by Esteve Codina, Jana Lasser and Pau Fontseca\
     #v(0.5em)
     29th of March, 2026 
   ]

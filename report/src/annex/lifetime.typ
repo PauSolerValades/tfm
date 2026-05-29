@@ -1,11 +1,11 @@
 #import "../utils.typ": def 
 
 This annex contains discarded material of the post lifetime analysis. Specifically, the following two sections cover the analysis of how the three main parts of the model (the CTIC, the queue and the activity) will influence the lifetime, and how could we explain them analytically. This sections were discarded despite it's research interest due to three facts:
-1. Length: as the report was getting unbarely long, it was decided to cut some detail
+1. Length: as the report was getting unbearably long, it was decided to cut some detail
 2. Specificity: this reads more as a mathematical idea than a formal lifetime analysis.
 3. Time: with more time it could have been framed as one crucial part of the work.
 
-== Lifetime Descritpion
+== Lifetime Description
 
 To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-method-model, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
 
@@ -35,7 +35,7 @@ To formally synthesize this dynamic, the probability of post $i$ surviving the q
 
 As a macroscopic variable, $mu_v$ is an aggregation of the network topology (the out-degree $|cal(N)_"out"(v)|$), the generative creation rates of those followees ($lambda$), and their reactive repost probabilities ($pi("repost")$), for which we do not attempt to derive a closed-form analytical expression.
 
-If post $i$ arrives at time $t_a$ while the user is offline, it will sit idle until the next session begins at $t_k$, resulting in an offline penalty $Delta_"idle" = t_k - t_a$. During this exact temporal window, newer posts continue to arrive at rate $mu_v$. 
+If post $i$ arrives at time $t_a$ while the user is offline, it will sit idle until the next session begins at $t_k$, resulting in an offline penalty $Delta_"offline" = t_k - t_a$. During this exact temporal window, newer posts continue to arrive at rate $mu_v$. 
 
 To find the exact probability of the post being seen, we must consider the processing time of every single newer post. Let $D_"action"^((m))$ be the random variable representing the time taken by user $v$ to process the $m$-th newer post. For post $i$ to be successfully seen, the cumulative time required to evaluate the $N_"newer"$ posts positioned above it must be strictly less than the user's active session duration $Delta_k$. The exact survival probability is therefore:
 

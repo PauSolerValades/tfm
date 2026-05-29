@@ -1,4 +1,4 @@
-#import "utils.typ": *
+#import "utils.typ": def, flex-caption
 
 This section introduces context to the project: what a microblogging social network is, how the phenomena of information diffusion has been studied, and why Bluesky is the chosen social network to simulate.
 
@@ -12,7 +12,7 @@ This section aims to provide with basic definitions and understanding of the Soc
 
 According to the definition then, any network that models any relationship between humans, groups of humans or human-made-organizations is classified as a social network.
 
-Online social newtorks (OSN) are a specific case of Social Networks, where the entities are users and posts, and the relationships are follow, followee, mute, block, create, repost, like, comment, quote, reply...
+Online social networks (OSN) are a specific case of Social Networks, where the entities are users and posts, and the relationships are follow, followee, mute, block, create, repost, like, comment, quote, reply...
 
 A social network is also considered a complex system. To describe the behaviour of this fact, ---and given that the definition of complex system is still debated up to date--- the Edgars Morin definition of complex system is used @choudhary2023impact as it showcases the complexity of the elements adequately.
 
@@ -31,10 +31,7 @@ This section aims to characterize the topology of social networks according to t
 
 While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is:
 
-#todo[Think how (and if) a figure explaing this could work]
-==== Definition (Multilayer Network @kivela2014multilayer)
-
-A multilayer network is a quadruplet $M = (V_M, E_M, V, L)$, where:
+A multilayer network @kivela2014multilayer is a quadruplet $M = (V_M, E_M, V, L)$, where:
 - $V$ is the set of all nodes in the system
 - $L = {L_a}_(a=1)^d$ is a sequence of sets of possible layers, where $d$ represents the number of distinct aspects (dimensions) of the network
 - $V_M subset.eq V times product_(a=1)^d L_a$ is the set of node-layer tuples, representing exactly which node exists in which layer
@@ -66,7 +63,7 @@ Social networks properties can be classified in three distinct levels of magnifi
 - *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. All the homophily based process affect
 - *Macro-scale* analysis of the global properties of the entire system. This includes the overarching scale-free degree distribution or the small-world average path length of the whole platform, such as structural virality. Macro-scale metrics treat the network as a single, unified entity.
 
-Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties rellevant to societal metrics ---an therefore rellevant for our case study--- are the meso and macro-scale of the network.
+Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties relevant to societal metrics ---an therefore relevant for our case study--- are the meso and macro-scale of the network.
 
 === Scale-Free Distribution
 <sec-sota-topo-scalefree>
@@ -107,15 +104,15 @@ In a Small-World network, the average distance $L$ between two random nodes has 
 $ L prop log |V| $
 
 In a small-world network, the edges can be classified into two types, according if they are edge inter-clustering or intra-clustering:
-1. Strong Ties: edges that connect people with simililarity or strong connections, such as local communities or familiy members.
-2. Weak Ties: casual acquaintances or work collogues form edges within the clusters, shortcuts between two potentially very different clusters.
+1. Strong Ties: edges that connect people with similarity or strong connections, such as local communities or family members.
+2. Weak Ties: casual acquaintances or work colleagues form edges within the clusters, shortcuts between two potentially very different clusters.
 
-The six-degree-separation theory is explained by this differentation. The theory states that any two individuals in a social network are, at most, separated by six other individuals. This fact is consequence of the existence of weak ties, as allows to move from a familiar homogeneous people to another cluster with very different individuals @centola2007complex.
+The six-degree-separation theory is explained by this differentiation. The theory states that any two individuals in a social network are, at most, separated by six other individuals. This fact is consequence of the existence of weak ties, as allows to move from a familiar homogeneous people to another cluster with very different individuals @centola2007complex.
 
 === Homophily Dynamics
 <sec-sota-topo-homophily>
 
-Humans tend to associate themselves with similar people, and this factor undelies all the connections within a social network. @easley2010contexts
+Humans tend to associate themselves with similar people, and this factor underlies all the connections within a social network. @easley2010contexts
 
 #def(name: "Homophily")[homophily (or assortativity) is the core sociological principle wherein human actors preferentially attach to others who possess similar attributes. @wiki-assortativity]
 
@@ -149,13 +146,19 @@ Once that a given topology of a social network is defined and we know which prop
 
 #def(name: "Information Diffusion")[Information diffusion refers to the process of spreading information through a network, whether it is desired or not @nettleton2013diffusion.]
 
-And what information diffusion tries to model are the information cascades the content produces when traversing the network topology. The form of this cascades is what inequivocally defines the social network 
+And what information diffusion tries to model are the information cascades the content produces when traversing the network topology. The form of this cascades is what unequivocally defines the social network 
 
 #def(name: "Information Cascade")[An information cascade is a phenomena in which a number of people make the same decision in a sequential fashion. It can be modeled as a temporal graph.] @duan2009informational
 
-Specifically, an information cascade can be defined as a graph, where the nodes are the actors (users) involved in the propagation, and the edges are the relationships of those users. A new level is added to the graph then the action of information propagation (_e.g_ a repost) happens at a certain time $t$. Despite most of them could be considered trees, some of the cascades may contain cycles.
+Specifically, an information cascade can be defined as a graph, where the nodes are the actors (users) involved in the propagation, and the edges are the relationships of those users. A new level is added to the graph when the action of information propagation (_e.g_ a repost) happens at a certain time $t$. 
 
-#todo[Add a figure here with cascade types (broadcast, normal cascade, something with a cylce.)]
+#figure(
+  image("images/sota/broadcast-vs-viral.jpg", width: 80%),
+  caption: flex-caption(
+    [Broadcast vs viral cascade structures.],
+    [Broadcast vs viral cascade structures. A broadcast cascade (left) radiates directly from a single source to many followers. A viral cascade (right) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]
+  )
+) <fig-broadcast-vs-viral>
 
 Traditionally, diffusion models are classified into three distinct mathematical paradigms based on their underlying mechanical rules: epidemic models driven by continuous global rates, cascading models driven by independent stochastic probabilities, and threshold models driven by cumulative fractional influence @singh2026survey. The latter is not used in the model of the work, so it's introduced as part of a proposed new architecture (see @sec-future).
 
@@ -181,29 +184,29 @@ frac(d I(t), d t) = beta S(t) I(t) - gamma I(t) \
 frac(d R(t), d t) = gamma I(t)
 $
 
-where $beta$ is the contact rate from $S$ to $I$ and $1 / gamma$ the avergae infectious period. $R$ is the critical value, if $R>1$ implies that an epidemic is possible.
+where $beta$ is the contact rate from $S$ to $I$ and $1 / gamma$ the average infectious period. $R$ is the critical value, if $R>1$ implies that an epidemic is possible.
 
 This models a single cascade of information, and there are ways to combine epidemiologic models to describe multiple cascades of information.
 
 While this type of models being elegant and computationally inexpensive compared with the alternatives (and being useful to model news spreading or rumours) @singh2026survey, they are usually not adequate to model diffusion in general in social network due to the cascades produced by the model differing from empirical data. In the article "The structural virality of online diffusion", Goel et al. introduced the concept of Structural Virality, quantified using the Wiener index of cascade trees @goel2016structural. Their analysis of real OSN data demonstrates that the vast majority of massive information cascades are actually incredibly shallow. Instead of spreading via deep contagion across dozens of generations (as SIS or SIRS models generated cascades), most large cascades are driven by massive hubs (e.g., users with millions of followers) broadcasting a single message that primarily propagates only one degree deep. Consequently, traditional epidemic models fail to accurately capture microblogging dynamics.
 
-The two other alternatives covered in the next sections reject the differential equations (which can be described as a macroscropic description) and embrace the discrete event mechanic (which can be described as microscropic approaches), where the OSNs are dirven by discrete individual user decisions to model interactions chronologically.
+The two other alternatives covered in the next sections reject the differential equations (which can be described as a macroscopic description) and embrace the discrete event mechanic (which can be described as microscopic approaches), where the OSNs are driven by discrete individual user decisions to model interactions chronologically.
 
 === Cascade Models
 <sec-sota-diffusion-cascade>
 
-The Cascade model is an stochastic process that describes the flow of information with discrete events at a time $t$. It has the following rules:
+The Cascade model is a stochastic process that describes the flow of information with discrete events at a time $t$. It has the following rules:
 + States: at a time $t$ a node can be inactive (not spreading the information) or active (spreading the information).
 + Monotonicity: Once a node $v$ activates, it cannot go back to inactive.
-+ One shot: every node can attempt the change of it's neighbors state once per edge.
++ One shot: every node can attempt the change of its neighbors state once per edge.
 + Probability: every edge has a probability $p_(u,v)$ for $u$ to successfully activate $v$.
-+ Independence: given a node $u$, multiple attempts to change node $u$ from their neigbours do not affect the probability of $u$ changing state.
++ Independence: given a node $u$, multiple attempts to change node $u$ from their neighbors do not affect the probability of $u$ changing state.
 
 The process then goes as follows: for every active node $v$ at step $t$, it attempts to change state of every inactive neighbors $u$ with probability $p_(u,v)$. If the attempt succeeds, $u$ will be active and transmit the information at time $t+1$. Regardless of the result of that operation, the edge gets discarded from future information spread.
 
 According how the probability is defined, we will have different cascade models. The most simple one, is the _Independent Cascade Model_, where the probability of $v$ activating $u$ at time $t$ $p_u (v)$ is constant, independent of the history of the history process so far. Another characteristic feature of the IC model is its order independence: the final integrated probability of a node being activated remains strictly invariant regardless of the temporal sequence in which its neighbors attempt transmission @zhang2014chapter1, or in other words, what matters is not the order of activations, but the amount of them.
 
-Crucially, regardless of whether the neighbor adopts the information, the original node can never attempt to activate that neighbor with that specific post again. This permanent refractory state perfectly encapsulates a simple contagion (see #todo[future work]), where a single exposure is entirely sufficient to trigger adoption @centola2007complex.
+Crucially, regardless of whether the neighbor adopts the information, the original node can never attempt to activate that neighbor with that specific post again. This permanent refractory state perfectly encapsulates a simple contagion (see @sec-future-content-contagion), where a single exposure is entirely sufficient to trigger adoption @centola2007complex.
 
 
 === Continuous-Time Independent Cascade Model
@@ -213,11 +216,11 @@ While the standard Independent Cascade (IC) model operates in discrete epochs, r
 
 The Continuous-Time Independent Cascade model preserves the core assumption of independent transmission across edges but replaces fixed step-based probabilities with a time-dependent transmission likelihood. Rather than assuming a neighbor attempts activation in the immediate next time step, the continuous formulation models the incubation time, which is the delay between a node $j$ becoming infected at time $t_j$ and subsequently infecting an uninfected neighbor $i$ at time $t_i > t_j$. @gomezrodriguez2011uncovering @gomezrodriguez2012inferring
 
-This temporal dynamic is mathematically expressed through survival analysis @gomezrodriguez2011uncovering. For every directed edge from $j$ to $i$, we define a pairwise transmission rate $alpha_{j,i}$. The transmission likelihood $f(t_i | t_j; alpha_{j,i})$ is governed by two primary functions:
-- *Survival Function* $S(t_i | t_j; alpha_{j,i})$: The probability that node $i$ is not infected by node $j$ by time $t_i$.
-- *Hazard Function* $H(t_i | t_j; alpha_{j,i})$: The instantaneous infection rate of the edge.
+This temporal dynamic is mathematically expressed through survival analysis @gomezrodriguez2011uncovering, which decomposes the transmission process into two complementary perspectives. For every directed edge from $j$ to $i$, we define a pairwise transmission rate $alpha_(j,i)$. The likelihood that $j$ infects $i$ at exactly time $t_i$, given that $j$ became infected at $t_j$, is governed by two functions that describe the same phenomenon from different angles:
+- *Survival Function* $S(t_i | t_j; alpha_(j,i))$: The probability that node $i$ has *not yet* been infected by node $j$ as of time $t_i$. It starts at 1 and decays toward 0 as time passes.
+- *Hazard Function* $H(t_i | t_j; alpha_(j,i))$: The instantaneous rate at which infection occurs at time $t_i$, conditioned on survival up to that moment. If the hazard is high, transmission is imminent; if it is low, the edge is dormant.
 
-The total conditional likelihood of transmission is computed using both the survival and hazard functions [cite: 1438, 1465] (Accessed: 2026-04-29). Because each edge operates independently, the probability that a node survives up to time $T$ without being infected by any of its already infected neighbors is the product of the individual survival functions across all infected nodes targeting it. @gomezrodriguez2011uncovering
+The total conditional likelihood of transmission is computed using both the survival and hazard functions. Because each edge operates independently, the probability that a node survives up to time $T$ without being infected by any of its already infected neighbors is the product of the individual survival functions across all infected nodes targeting it @gomezrodriguez2011uncovering.
 
 By varying the parametric model of the transmission likelihood, the continuous-time IC model can capture drastically different propagation behaviors: @gomezrodriguez2011uncovering
 - *Exponential Model*: A monotonic model that assumes a constant hazard rate, well-suited for standard memoryless diffusion. 
@@ -226,27 +229,24 @@ By varying the parametric model of the transmission likelihood, the continuous-t
 
 By allowing transmission at different rates $alpha_{j,i}$ across different edges, this continuous model can uncover the temporally heterogeneous interactions within a network using only the observed time-stamps of the cascades.@gomezrodriguez2011uncovering
 
-#comment[There is much more content here (simplex vs complex contagion, recent behaviour change findings in social network, attention competitive behaviour on a timeline) which has been moved as background in the Future Work section. I can add it back here, but i feel the Chekhov applies: if I talk about complex contagion, the read will expect my model to conatin it, which it does not in the end.
-]
 
 == Description of Microblogging Social Media 
 <sec-sota-description>
 
-#comment[I don't totally see this section here. Like, it feels weird in a way to talk about Bluesky and The description in the State of the Art section. But I also do not see an easy generalizable solution.]
+Despite social networks being a relatively new addition to modern life, they have fundamentally changed how information is consumed and spread in the modern age. To adequately understand the aims of this project, some definitions and context regarding social networks are provided.
 
-Despite social networks being a relatively new addition to normal modern life, they have fundamentally changed how information is consumed and spread in the modern age. To adequately understand the aims of this project, some definitions and context regarding social networks are provided.
-
-==== Definition
 
 A *Microblogging Social Network* (e.g., Twitter/$bb(X)$ or Bluesky) is a specialized type of social network where users publish and exchange short-form content. This is enforced by a limit on the maximum number of characters per entry, known as microblogs or posts. A post, while traditionally text-based, can also include up to four multimedia elements.
 
-#comment[The upper definitons are mine, should i search a definition of this? Is there a good source or am I overthinking this?]
+Bluesky, as an open platform, allows for user-made feeds with diverse rules and categories dictating which posts are shown. These include feeds focused on highly specific topics (such as technology, local events, or art). The two primary feeds provided by default are the _Discover_ feed and the _Following_ feed.
+
+The Discover feed uses a recommendation algorithm to suggest the most relevant posts to a user based on their tastes and the network of people they follow. This criterion usually excludes the temporal component of when posts were created or reposted, focusing instead on content similarity and engagement.
+
+The Following feed is a traditional social network timeline. It displays creations and reposts exclusively from the accounts the user follows, showing them in strict reverse-chronological order, from newest to oldest. 
 
 To model a microblogging social network, it is imperative to understand and describe all the features that compose the application. Specifically, the following description is of the microblogging platform Bluesky @wiki-bluesky, as it is the platform chosen to simulate (see @sec-sota-bluesky).
 
 The post is the fundamental building block of Bluesky, acting as the primary vehicle for the information that will be spread. A user sees these posts in a feed, which is a sorted collection of posts categorized by specific rules. For the feed to contain posts, we must explain the other fundamental relationship in a social network: the follow.
-
-#todo[picture of the bluesky feed]
 
 A user can follow other users, allowing the content of those users to appear to the "follower". That is, if user $u$ follows user $v$, all the posts that user $v$ creates will appear in the feed of user $u$. This is one mechanism for a user's feed to populate with posts. The other way for content to travel is how a user interacts with a post once it appears in their feed, this being the main source of post appearance in the user feed. Conversely, there are some actions a user can perform over other users which limit the posts that can appear on a user's feed: a user can block (preventing both users from seeing each other's activity) or mute (activity of a muted user is not shown to the user) another user, which will alter the posts that can appear on the timeline of the user who performed that action.
 
@@ -257,29 +257,11 @@ A user can meaningfully act on a post in four different ways:
 - *Reply:* This is a direct response to an original post. The reply will be shown in the followers' feed and clearly marked as a reply, though the original post usually won't be shown alongside it unless the follower also follows the original author.
 - *Repost:* If user $u$ reposts a post in their feed, that post will subsequently appear in the feeds of user $u$'s followers. 
 
-#todo[pictures of a quote, a reply and a repost]
 
 Among these actions, the repost is the primary engine of information diffusion. 
 
 Lastly, every user has a profile, which is customizable with a profile picture, a description, and a background image. The profile acts as a public ledger containing all posts the user has written or reposted, all replies made to other posts, and all likes given.
 
-Bluesky, as an open platform, allows for user-made feeds with diverse rules and categories dictating which posts are shown. These include feeds focused on highly specific topics (such as technology, local events, or art). The two primary feeds provided by default are the _Discover_ feed and the _Following_ feed.
-
-The Discover feed uses a recommendation algorithm to suggest the most relevant posts to a user based on their tastes and the network of people they follow. This criterion usually excludes the temporal component of when posts were created or reposted, focusing instead on content similarity and engagement.
-
-The Following feed is a traditional social network timeline. It displays creations and reposts exclusively from the accounts the user follows, showing them in strict reverse-chronological order, from newest to oldest. 
-
-#todo[Picture of the tabs showing the different feeds the Bluesky app has]
-
-#comment[
-  Here I need to add this two citations @hodas2014simple for the queue and simple contagion and @pozzana2017epidemic for the activity driven idea network, but this two paragraphs feel very not natural at the end of this section.
-
-As an alternative, I've added the sections 4.1.1 and 4.2.2, which explain the same without being based on this part of information. If you could give me feedback on which makes more sense would be nice :)
-]
-
-The literature usually approaches this strict chronological structure through the lens of attention economy @hirakura2023method, which is governed by queue-based visibility. Users possess finite cognitive bandwidth and temporal limits per session, and because the feed acts as a LIFO (Last In, First Out) queue, posts must constantly compete for screen space @hodas2014simple. As new creations and reposts arrive, older posts are pushed down the queue, causing their visibility to decay rapidly. Therefore, the probability of a user interacting with a cascade is not a static variable; it is heavily dependent on the competition from other content presented simultaneously, meaning the diffusion of one cascade actively cannibalizes another @hirakura2023method.
-
-Furthermore, because users interact with the platform in discrete, time-limited sessions—logging on, scrolling, posting, and logging off—they cannot be modeled simply as passive consumers waiting to be infected . To accurately simulate this environment, the literature utilizes Activity-Driven Dynamics @pozzana2017epidemic. In this framework, each user possesses an intrinsic activity rate that dictates how often they initiate a session to generate new original posts and consume the content that was generated when there were not on the platform. The Activity-Driven dynamic in an OSN is essentially allowing users to be offline or online, resembling the usage patters of real users, or at least a reasonable approach. When a user is offline, it does not see content, but this allows other content on the platform to be generated by other users, so when the user comes back, will have new content derived from the information diffusion mechanics. 
 
 == Why Bluesky? 
 <sec-sota-bluesky>
@@ -288,9 +270,8 @@ Bluesky @wiki-bluesky is a microblogging social network, built on the Authentica
 
 The ATP is a protocol and set of open standards for decentralized publishing and distribution of self-authenticating data within the social web. Adhering to the protocol separates the content produced by the user on a social media platform from the infrastructure of the social media platform, essentially defining a format for the characteristics of the data to be usable in any social media app that implements the ATP protocol. In other words: by establishing an existing format defining all the characteristics of how data should be structured and which data should be publicly available, the implementation of the application Bluesky (the program that runs on the browser or phone) is decoupled from where and how the data the user creates is stored. 
 
-The relevant side effect of this design decision is that the server that stores the Bluesky data, the firehose @atproto-repo, is open and all the data that is sent and received can be accessed and stored. Data for this study was collected and provided for analysis by the CS^2 research group at Universtiy of Graz (see @sec-data). 
-#comment[Idk how to cite the lab, I should keep the reference to lab here, cite them any other way or how to do it]
+The relevant side effect of this design decision is that the server that stores the Bluesky data, the firehose @atproto-repo, is open and all the data that is sent and received can be accessed and stored. Data for this study (see @sec-data) was collected and provided for analysis by the CS^2 research group at University of Graz . 
 
-Alternative microblogging platforms to X (formerly Twitter), such as Bluesky and Mastodon @mastodon-social-network, remain less widely adopted than mainstream platforms, despite their steady growth #todo[Cite a recent statistics database or tech report detailing active user counts to support the growth claim or change the sentence].
+Alternative microblogging platforms to X, such as Bluesky and Mastodon @mastodon-social-network, remain less widely adopted than mainstream platforms, despite their steady growth @blueskyfeeds-user-growth.
 
 A significant challenge in contemporary social media research is the increasing privatization of user data by major platforms. Proprietary metrics with high commercial value, such as session length, content views, and granular engagement statistics, are rarely published or made accessible to independent researchers. This trend toward restricted data access limits academic inquiry and the broader understanding of social media ecosystems—systems that impact millions of users. Initiatives like the ATP are a very welcomed change of pace, which gains more relevance the more users adopt Bluesky as their primary social network.

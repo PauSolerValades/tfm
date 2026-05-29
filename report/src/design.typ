@@ -1,6 +1,7 @@
 #import "@preview/lovelace:0.3.0": *
 
-#import "utils.typ": todo, comment, procedure, flex-caption
+#import "utils.typ": procedure, flex-caption //, todo, comment
+#import "@preview/cetz:0.4.2"
 
 This chapter covers the design of the simulation: the entities and data model (see @sec-design-entities), the semantics of each event source (see @sec-design-sources), the overall simulation lifecycle (see @sec-design-lifecycle), and the trace schema that captures all state transitions (see @sec-design-traces). For every data structure referenced here, only the algorithmic motivation is provided; the concrete realization, memory layout, and performance considerations are treated separately in @sec-impl.
 
@@ -41,20 +42,9 @@ While the previous section (@sec-design-experiential) gives a good idea of what 
 
 === Aims and Objectives
 
-The objective is to build a highly performant Discrete-Event Simulation which guarantees some degree of scalability while keeping itself in a reasonable time-frame execution. While off-the-shelf simulation software ---such as #todo[ask pau fontseca]--- is highly effective for localized queuing networks, evaluating the Continuous-Time Independent Cascade (CTIC) model across a microblogging topology requires simulating millions of highly interconnected nodes over continuous time. To achieve statistical convergence and properly explore the parameter space, the model must be replicated hundreds of times.
+The objective is to build a highly performant Discrete-Event Simulation which guarantees some degree of scalability while keeping itself in a reasonable time-frame execution. While off-the-shelf simulation software can be highly effective for localized queuing networks, evaluating the Continuous-Time Independent Cascade (CTIC) model across a microblogging topology requires simulating millions of highly interconnected nodes over continuous time. To achieve statistical convergence and properly explore the parameter space, the model must be replicated hundreds of times.
 
-Under these constraints, relying on traditional, object-heavy simulation tools would result in computationally intractable wall-clock execution times #todo[idk if this claim is true, but it definitely feels true], as well as the author of this work lack of experience with said software. Therefore, a custom, highly optimized simulation engine was developed from the ground up. To reduce the computational bottleneck of simulating a 1-million-user network to a practically executable timeframe, this custom architecture must explicitly control memory layout and enforce CPU cache locality, minimizing the overhead of stochastic event generation and state evaluation.
-
-=== Technology Approach 
-<sec-design-techology>
-
-#todo[Check this section once the results section is actually finished]
-
-Because the validity of any simulation can rely on sheer computational volume and repeated runs to achieve statistical significance, a suboptimal implementation can easily contradict the underlying assumptions needed to guarantee a successful process. Execution speed, deterministic behavior, and the tightly optimized computational loops mentioned above are paramount. 
-
-The first step in achieving this explicit memory control is choosing the appropriate tools for the job. Interpreted languages like Python #todo[cite] and R #todo[cite] are immediately discarded. Even on powerful hardware, the overhead of interpretation introduces unacceptable latency for massive, CPU-bound simulation loops. Moreover, they do not offer control over memory allocation---the most critical performance killer, since any garbage collector memory strategy will affect performance greatly. This is also why the excellent performance of Julia is discarded: despite being fast, its garbage collector introduces the same fundamental limitation. Following this logic, manual memory management becomes necessary to deeply optimize performance and take full advantage of CPU caching. With requirements pointing strictly toward a systems language with manual memory management, the engine was implemented in Zig @zig.
-
-Zig is a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (#todo[see @ sec-impl-dod] ). By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (#todo[see] @sec-impl-memory), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
+Under these constraints, relying on traditional, object-heavy simulation tools would result in less performant and slower executions, as well as the author of this work lack of experience with said software. Therefore, a custom, highly optimized simulation engine was developed from the ground up. To reduce the computational bottleneck of simulating a 1-million-user network to a practically executable timeframe, this custom architecture must explicitly control memory layout and enforce CPU cache locality, minimizing the overhead of stochastic event generation and state evaluation.
 
 
 == Data Model
@@ -67,9 +57,9 @@ The aim of this data model is to translate the mathematical rules of the describ
 === Event & Timeline Event
 <sec-design-dm-event>
 
-The fundamental entity of the simulation is the *Event*. It represents a unit of temporal state transition with the elements residing in the global priority queue $Q$. An Event is a composite structure containing the scheduled execution time ($t$), the targeted user, a session validation tracker, and the specific payload (`EventType`) dictating the transition. The type of an event can be a user state-change (`session`), a post creation (`create`), an interaction with a post (`action`), or an information propagation (`propagate`).  #todo[check if a citation to a posterior document is needed. If it is, remove the next paragraph]
+The fundamental entity of the simulation is the *Event*. It represents a unit of temporal state transition with the elements residing in the global priority queue $Q$. An Event is a composite structure containing the scheduled execution time ($t$), the targeted user, a session validation tracker, and the specific payload (`EventType`) dictating the transition. The type of an event can be a user state-change (`session`), a post creation (`create`), an interaction with a post (`action`), or an information propagation (`propagate`).
 
-These are the same event types described in @sec-method-des-mechanics, but with the extra `propagate`. The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$ (#todo[see] @sec-design-sources-propagate).
+These are the same event types described in @sec-method-des-mechanics, but with the extra `propagate`. The reasoning behind introducing the propagate event is to never break time causality, and to delay the propagation to the neighbors as much as possible. If an `action:repost` or a `create` event is processed at $t$, this will generate an event `propagate(i)` and be pushed in $Q$ to be attended at time $t+ tau$ and be propagated when it gets popped from the list $Q$ (see @sec-design-sources-propagate).
 
 The simulation needs to differentiate between what is an event that changes state ---such as the Event entity also described in this section--- and a smaller event to represent the contents of the timelines of a user, the *Timeline Event*. It is a highly specialized, minimalist tuple linking a continuous timestamp $t$ (when did the post arrive) with the `post_id` of the event the user sees. These events are stored in every user timeline $cal(T)_t (u)$, and are treated as the reverse-chronological storage: when a "pop" operation is performed, the event with the maximum time $t$ will be returned; this is the opposite of the main queue $Q$, where a "pop" will return the event with the minimum timestamp.
 
@@ -77,23 +67,90 @@ The simulation needs to differentiate between what is an event that changes stat
 
 Users and Posts are the protagonist entities of the simulation, as they are the main actors of it.
 
-A *User* is the logical representation of a node $u in cal(U)$. The entity tracks the dynamic variables necessary to evaluate activity and cognitive bottlenecks, which are
-- `id`: to identify itself from other users.
-- `followers`: list of `id`s of other users that the user follows.
-- `policy`: the categorical distribution for choosing an action (see #todo[categorical]). Despite the homogeneity of users assumption for simplification purposes (@sec-method-des-assumptions), every user still has its policy defined, but it is the same for everyone.
+A *User* is the logical representation of a node $u in cal(U)$. The entity tracks the dynamic variables necessary to evaluate activity and cognitive bottlenecks, which are:
+- `id`: unique identifier.
+- `follower_start`: integer offset into the global CSR follower array where this user's follower block begins (see @sec-design-datastructures-topology).
+- `is_online`: whether the user is currently in an active session.
+- `session_gen`: which session generation the user is currently in. Incremented on each login; used to invalidate stale events from previous sessions. See @sec-method-activity for why this is needed.
+- `session_duration`: Pareto-distributed random variable governing how long the user stays online per session.
+- `inter_session_time`: Pareto-distributed random variable governing the offline gap between consecutive sessions.
+- `inter_creation_time`: Pareto-distributed random variable governing the interval between post creations.
 - `num_posts`: how many posts the user has authored so far.
-- `max_posts`: maximum amount of the posts the user can author. It might be infinite.
-- `online_status`: if it's online or offline.
-- `session_gen`: in which session is the user in. See #todo[section about activity driven far in the future] to see why this is needed.
-- `timeline`: contains which posts are in the user timeline at time $t$ #todo[citar la secció on parlo de la timeline?]
+- `session_start_time`: the timestamp at which the current session began; used for analysis and validation.
 
 The *Post* is the logical representation of an item $i in cal(I)$. It requires only a unique, monotonically increasing identifier `id` and a pointer to its author's `author`. This entity remains highly open to new characteristics and features (see @sec-future)
 
 === Relationships between Entities 
 
-Once all the entities have been described, the data model can be defined by the relationships that link them together. #todo[THE FIGURE] @ fig-design-relationships summarizes these structural links; the following paragraphs walk through each one in detail.
+Once all the entities have been described, the data model can be defined by the relationships that link them together. @fig-design-relationships summarizes these structural links; the following paragraphs walk through each one in detail.
 
-A *User* *authors* a *Post*. The relationship is tracked through the `author` field stored in every post, linking it back to exactly one user. A user may author zero or more posts over their lifetime, but every post has a single author.
+#figure(
+  cetz.canvas({
+    import cetz.draw: *
+
+    // ── User (center) ──
+    // Increased radius slightly for breathing room
+    circle((0, 2), radius: 0.6, name: "user")
+    content("user", [*User*])
+
+    // ── Post (below) ──
+    // Widened rectangle
+    rect((-1.2, -0.4), (1.2, 0.4), name: "post")
+    content("post", [*Post*])
+    
+    line("user.south", "post.north", mark: (end: ">"))
+    // Shifted right to avoid striking through the vertical line
+    content((1.0, 1.0), [authors $1:N$])
+
+    // ── Timeline Event (right) ──
+    // Widened significantly to fit all 13 characters
+    rect((2.4, 1.5), (6.0, 2.5), name: "tle")
+    content("tle", [*TimelineEvent*])
+    
+    line("user.east", "tle.west", mark: (end: ">"))
+    // Centered neatly above the horizontal line
+    content((1.5, 2.3), [owns $1:1$])
+    
+    line("tle.south", "post.east", mark: (end: ">"))
+    // Offset to the right of the diagonal line
+    content((3.0, 0.9), [refs $N:1$])
+
+    // ── Event (left) ──
+    // Widened to fit the text comfortably
+    rect((-5.5, 1.5), (-3.5, 2.5), name: "event")
+    content("event", [*Event*])
+    
+    line("event.east", "user.west", mark: (end: ">"))
+    // Centered neatly above the horizontal line
+    content((-2.0, 2.3), [targets $N:1$])
+
+    // ── Event → Post (dashed, optional) ──
+    line("event.south", "post.west", stroke: (dash: "dashed"), mark: (end: ">"))
+    // Offset to the left of the diagonal line
+    content((-3.2, 0.9), [may ref.])
+
+    // ── Topology / CSR (top) ──
+    // Widened significantly to fit the longest string in the diagram
+    rect((-2.4, 3.5), (2.4, 4.5), name: "csr")
+    content("csr", [*Follower graph* (CSR)])
+    
+    line("csr.south", "user.north", mark: (end: ">"))
+    // Shifted right to avoid the vertical line
+    content((1.3, 3.0), [$N$:$N$ follows])
+
+    // ── Queue label ──
+    // Centered below the event box
+    content((-4.5, 1.0), [$Q$])
+
+    // ── Timeline label ──
+    // Centered above the timeline box
+    content((4.2, 3.0), [$cal(T)(u)$])
+  }),
+  caption: flex-caption(
+    [Entity-Relationship data model.],
+    [Entity-Relationship diagram of the simulation data model. A User authors Posts, owns a Timeline of TimelineEvents (each referencing a Post), and is targeted by Events from the global queue $Q$. The follower graph (CSR) stores the $N$:$N$ following relationships between Users. Dashed line indicates an optional reference (action/propagate events may carry a post).]
+  )
+) <fig-design-relationships>A *User* *authors* a *Post*. The relationship is tracked through the `author` field stored in every post, linking it back to exactly one user. A user may author zero or more posts over their lifetime, but every post has a single author.
 
 A *User* *owns a timeline* composed of *TimelineEvents*. Each user carries a reverse-chronological heap that stores every post arrival scheduled for that user. The timeline is emptied when the user goes offline and repopulated as propagations arrive.
 
@@ -102,8 +159,6 @@ A *TimelineEvent* *references* a *Post* via its `post_id`. A single post may app
 *Events* are *contained* in the global priority queue $Q$ and carry a `user_id` targeting the *User* whose state will be mutated when the event is extracted. Beyond this containment and the user target, events hold no further structural relationship with the other entities ---the effect of each event is dictated by its `EventType` payload and belongs to the processing logic (see @sec-design-sources), not to the data model.
 
 These relationships are entirely static. The data model describes what can be stored and how it connects, not when or why those connections are created. The dynamics — who sees a post, when a session starts, what action a user takes — belong to the event processing logic (see @sec-design-sources) and are not part of the data model itself.
-
-#todo[Here we need a figure like so bad]
 
 == Event Sources 
 <sec-design-sources> 
@@ -121,7 +176,44 @@ Refreshing the CTIC model (see @sec-sota-diffusion-ctic and @sec-method-model), 
 
 Consider a minimal microblogging network of three users forming a directed cycle:
 
-#todo[would be nice to have a picture of the graph]
+#figure(
+  cetz.canvas({
+    import cetz.draw: *
+
+    // ── Nodes (Users) ──
+    circle((0, 2), radius: 0.4, name: "A", stroke: blue)
+    content("A", [*A*])
+
+    circle((-1.5, -0.5), radius: 0.4, name: "B", stroke: green)
+    content("B", [*B*])
+
+    circle((1.5, -0.5), radius: 0.4, name: "C", stroke: red)
+    content("C", [*C*])
+
+    // ── Edges (Out-Neighbors / Following) ──
+    // A follows B
+    line("A", "B", name: "a-b", mark: (end: ">", fill: black))
+    // We can place the label roughly halfway along the line
+    content((-1.0, 1.0), text(size: 0.8em, gray)[follows])
+
+    // B follows C
+    line("B", "C", name: "b-c", mark: (end: ">", fill: black))
+    content((0, -0.8), text(size: 0.8em, gray)[follows])
+
+    // C follows A
+    line("C", "A", name: "c-a", mark: (end: ">", fill: black))
+    content((1.0, 1.0), text(size: 0.8em, gray)[follows])
+    
+    // ── Optional: Show Propagation (In-Neighbors) ──
+    // If you want to visually show propagation happening in reverse, 
+    // you could add dashed lines flowing the opposite way:
+    // line("B", "A", stroke: (dash: "dashed", paint: blue), mark: (end: ">", fill: blue))
+    // content((-0.4, 0.4), text(size: 0.7em, blue)[propagation])
+  }),
+  caption: [
+    Simple user network $cal(U) = {A, B, C}$. Arrows represent out-neighbor (following) relationships, forming a continuous cycle. Propagation naturally flows in reverse along the in-neighbor edges.
+  ]
+) <fig-simple-graph>
 
 $ cal(U) = {A, B, C} $
 
@@ -235,7 +327,7 @@ There are two ways for a user to go offline: by the simulation processing the ev
 
 If an `end` event is processed, the user is marked as offline, and the new session `start` event gets scheduled, as the @ pseudocode shows 
 
-If the user timeline is empty, it's interpreted as the user seeing posts it has already seen, so logs off the platform. #todo[we should not bother with interpretations here, check if it's in the interpretation section.]. It still does the same as going offline normally.
+If the user timeline is empty, it's interpreted as the user seeing posts it has already seen, so logs off the platform. It still does the same as going offline normally.
 
 #procedure(caption: flex-caption([Session end: marks the user offline.], [Session end: marks the user offline, clears the timeline, and schedules the next session]))[
   #pseudocode-list[
@@ -382,7 +474,7 @@ The `create` event behaves as a more traditional source of events, as it does no
 
 A noticeable fact is that the `create` type does not contain any payload, as the user that creates it is at that point information known by the program and the `post_id` will be selected if the event is created. Preselecting which `post_id` would the post have when the create event is scheduled is, again, the naive approach, but breaks when interacting with the possibility of an event being stale.
 
-Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` sequence will have gaps, which breaks the power-of-two indexing scheme used by the paginated post storage (see @sec-impl-posts) #todo[check this]
+Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` sequence will have gaps, which breaks the power-of-two indexing scheme used by the paginated post storage (see @sec-impl-posts).
 
 Apart from the staleness nuance, the three real and direct consequences this action has are 
 1. A post gets created and stores (see @sec-impl-datastructures)
@@ -395,7 +487,7 @@ Create has two random quantities associated to it, the time between creations (h
 
 The action source is the fundamental event in the simulation, as is how the actual content diffusion is achieved: the continuous flow of actions represents the current user $u$ checking their timeline. When an event is generated by the simulation, the source will generate another action.
 
-To simulate the user decision making, a Categorical (or a generalized Bernoulli) distribution $pi$ is used. We can define the used distribution with $k=3$ parameters, $p_1, p_2, p_3$ event probabilities and support $x in {"nothing", "repost", "like"}$, with pdf $PP(x=i) = p_i$. The values of $p_i$ are obtained with calibration (see #todo[@ sec-data-cal]). 
+To simulate the user decision making, a Categorical (or a generalized Bernoulli) distribution $pi$ is used. We can define the used distribution with $k=3$ parameters, $p_1, p_2, p_3$ event probabilities and support $x in {"nothing", "repost", "like"}$, with pdf $PP(x=i) = p_i$. The values of $p_i$ are obtained with calibration (see @sec-cal-policy). 
 
 The @proc-action-handle showcases the logic of the dispatch action event, draining the timeline until a non-interacted post surfaces. When a fresh post is found, processing delegates to @proc-action-on-post; when the timeline is exhausted, the user is forced offline via @proc-go-offline, described in @sec-design-sources-sessions.
 
@@ -571,7 +663,7 @@ Once primed, the main loop dispatches each event type — create, session, actio
 == Traces
 <sec-design-traces>
 
-Traces are the main objective for the result study of the simulation. Every action performed during the simulation is serialized into structured records ---trace events--- that are written to disk for posterior analysis. Each trace event is a flat tuple of scalars uniquely identifying the simulation tick, the user who performed the action, the post involved (if any), and the kind of transition executed. There are four distinct trace event types, one for each `EventType` variant described in @sec-design-dm-event, plus the propagation event. All trace events share a common metadata preamble:
+Traces are the main objective for the result study of the simulation. Every action performed during the simulation is serialized into structured records ---trace events--- that are written to disk for subsequent analysis. Each trace event is a flat tuple of scalars uniquely identifying the simulation tick, the user who performed the action, the post involved (if any), and the kind of transition executed. There are four distinct trace event types, one for each `EventType` variant described in @sec-design-dm-event, plus the propagation event. All trace events share a common metadata preamble:
 - `time`: the continuous simulation timestamp $t$ at which the event was processed.
 - `event_id`: a monotonically increasing, global identifier assigned to every event popped from $Q$.
 - `gen_id`: the random seed generation identifier used for stochastic decisions in the simulation run.
@@ -589,6 +681,85 @@ Beyond these common fields, each trace variant carries type-specific payload:
 
 By recording every state-transition in this structured format, the trace files provide a complete, auditable log of the simulation's execution. This enables offline reconstruction of user timelines, validation of the CTIC cascades (see @sec-impl-validation), and statistical analysis of the emergent macro-level dynamics without re-running the simulation.
 
+#figure(
+  cetz.canvas({
+    import cetz.draw: *
+
+    // ── 1. Start Node ──
+    rect((-1.8, 0.3), (1.8, 1.7), name: "start", radius: 0.2)
+    content("start", [*Start MainLoop*])
+
+    // ── 2. Loop Condition ──
+    rect((-2.8, -1.7), (2.8, -0.3), name: "cond")
+    content("cond", [$t_c <= t_h$ and $Q != emptyset$])
+    
+    line("start.south", "cond.north", mark: (end: ">"))
+
+    // ── 3. False Branch (End) ──
+    rect((4.6, -1.7), (7.4, -0.3), name: "end", radius: 0.2)
+    content("end", [*End \ Simulation*])
+    line("cond.east", "end.west", mark: (end: ">"))
+    content((3.7, -0.7), text(size: 0.9em)[False])
+
+    // ── 4. True Branch (Pop Event) ──
+    rect((-1.8, -3.7), (1.8, -2.3), name: "pop")
+    content("pop", [Pop Event from $Q$])
+    line("cond.south", "pop.north", mark: (end: ">"))
+    content((0.6, -2.0), text(size: 0.9em)[True])
+
+    // ── 5. Event Type Switch ──
+    rect((-1.8, -5.7), (1.8, -4.3), name: "dispatch")
+    content("dispatch", [*Switch* Event Type])
+    line("pop.south", "dispatch.north", mark: (end: ">"))
+
+    // ── 6. Handlers (Row of boxes) ──
+    // Width of each box is increased to 3.4 units. 
+    // Centers moved outward: X1=-5.7, X2=-1.9, X3=1.9, X4=5.7
+    
+    rect((-7.4, -7.7), (-4.0, -6.3), name: "h_create")
+    content("h_create", [`HandleCreate`])
+
+    rect((-3.6, -7.7), (-0.2, -6.3), name: "h_session")
+    content("h_session", [`HandleSessionEvent`])
+
+    rect((0.2, -7.7), (3.6, -6.3), name: "h_action")
+    content("h_action", [`HandleActionEvent`])
+
+    rect((4.0, -7.7), (7.4, -6.3), name: "h_propagate")
+    content("h_propagate", [`PropagatePost`])
+
+    // ── 7. Dispatch Routing (Orthogonal elbows to handlers) ──
+    // Create
+    line("dispatch.south", (0, -6.0), (-5.7, -6.0), "h_create.north", mark: (end: ">"))
+    content((-3.8, -5.7), text(size: 0.8em)[`create`])
+
+    // Session
+    line("dispatch.south", (0, -6.0), (-1.9, -6.0), "h_session.north", mark: (end: ">"))
+    content((-0.9, -6.2), text(size: 0.8em)[`session`])
+
+    // Action
+    line("dispatch.south", (0, -6.0), (1.9, -6.0), "h_action.north", mark: (end: ">"))
+    content((0.9, -6.2), text(size: 0.8em)[`action`])
+
+    // Propagate
+    line("dispatch.south", (0, -6.0), (5.7, -6.0), "h_propagate.north", mark: (end: ">"))
+    content((3.8, -5.7), text(size: 0.8em)[`propagate`])
+
+    // ── 8. Loop Back Mechanism ──
+    // Drop lines from each handler to a common horizontal collector line at Y = -8.7
+    line("h_create.south", (-5.7, -8.7))
+    line("h_session.south", (-1.9, -8.7))
+    line("h_action.south", (1.9, -8.7))
+    line("h_propagate.south", (5.7, -8.7))
+    
+    // Horizontal collector line
+    line((-5.7, -8.7), (5.7, -8.7))
+    
+    // Route from the collector back up to the loop condition
+    line((0, -8.7), (0, -9.3), (-8.2, -9.3), (-8.2, -1.0), "cond.west", mark: (end: ">"))
+  }),
+  caption: [Flowchart of the Main Loop discrete-event dispatching logic.]
+) <fig-mainloop-flow>
 
 == Algorithmic Data Structures
 <sec-design-datastructures>
@@ -600,7 +771,7 @@ This section summarizes the algorithmic reasoning behind each data structure sel
 
 The Future Event Set (FES) (referred to until now as $Q$) is the central bottleneck of any discrete-event simulation: every event processed requires one extraction and potentially multiple insertions. 
 
-A Heap #todo[citation from the MIT classic data structures book] is the traditional data structure to implementa a Priority Queue, which is exactly what the FES is. Assuming a binary heap, they have a $O(log n)$ deletion of the minimum and insertion cost, with a $O(n)$ space complexity. This is far better from the naive approach, which would be to keep a list sorted and inserting and deleting the elements. With a list, insertion and deletion would be $O(n)$: finding an element to know where to insert the next one would be a $O(log n)$ to find the index, but all the upper elements of the list have to be shifted by one position, giving an $O(n)$ cost. The same applies when removing the minimum.
+A Heap @cormen2022algorithms is the traditional data structure to implement a Priority Queue, which is exactly what the FES is. Assuming a binary heap, they have a $O(log n)$ deletion of the minimum and insertion cost, with a $O(n)$ space complexity. This is far better from the naive approach, which would be to keep a list sorted and inserting and deleting the elements. With a list, insertion and deletion would be $O(n)$: finding an element to know where to insert the next one would be a $O(log n)$ to find the index, but all the upper elements of the list have to be shifted by one position, giving an $O(n)$ cost. The same applies when removing the minimum.
 
 On the contrary, the heap uses its tree representation to sift up or sift down the element in the tree branches, making $O(log n)$ operations at most.
 
@@ -608,7 +779,7 @@ On the contrary, the heap uses its tree representation to sift up or sift down t
 
 Analyzing the simulation, a good heuristic can be given to know more or less to what the number of total events at a single time $t$ will be.
 
-A online user will have no more than four events enqueued at any time:
+An online user will have no more than four events enqueued at any time:
 - The next `action`
 - The next `creation`
 - The `session.end` event.
@@ -620,7 +791,7 @@ If the user is offline, it will have four events at most:
 - A stale `propagate`
 - The `session.start` event.
 
-Then the relationship of number of element on the queue to the input number of total users $N$ is, at most, $4N$. This is useful to validate the viability of the MinHeap election, as every operation will require approximately $log_2 (4 N)$ with a million users, we would need, at worst, $log_2 (4·10^6) approx 21.93$ comparisons, still a reasonable number. This approximation is also useful for the implementation, see @sec-impl-datastructures.
+Then the relationship of number of element on the queue to the input number of total users $N$ is, at most, $4N$. This is useful to validate the viability of the MinHeap selection, as every operation will require approximately $log_2 (4 N)$ with a million users, we would need, at worst, $log_2 (4·10^6) approx 21.93$ comparisons, still a reasonable number. This approximation is also useful for the implementation, see @sec-impl-datastructures.
 
 
 === User Timeline
@@ -637,25 +808,25 @@ The Graph data structure is traditionally a performance killer structure, diffic
 
 As the follower graph is static throughout the simulation, a Compressed Sparse Row structure is perfectly well suited for this simulation, as it is a known fact that social networks users adjacency matrix is sparse. 
 
-A Compressed Sparse Row (CSR) #todo[Citing this can be challengin] is a data storage techinque that represents a matrix $M$ with three different one dimension arrays:
+A Compressed Sparse Row (CSR) is a data storage technique that represents a matrix $M$ with three different one dimension arrays:
 - A row pointer array `row_ptr`, dimension $N+1$ which stores the start index for each row, and `row_ptr[i+1]` marks the end of row i.
-- A colum index array `col_idx`, which stores every non zero index.
+- A column index array `col_idx`, which stores every non zero index.
 - The actual values of the matrix in a `values` array.
 
 This storage method provides a $O(1)$ range look up and a $O("degree")$ iteration cost.
 
-When representing an adjacency matrix $A$, the `values` array is just full of ones, as it represents the existance of the directed edge, so with just the `row_ptr` and the `col_idx` it is enough. The way this is implemented then is that each user stores only a `start_index` and `end_index` of the followers; iterating over their followers becomes a single slice operation over the global array. Details in @sec-impl-csr.
+When representing an adjacency matrix $A$, the `values` array is just full of ones, as it represents the existence of the directed edge, so with just the `row_ptr` and the `col_idx` it is enough. The way this is implemented then is that each user stores only a `start_index` and `end_index` of the followers; iterating over their followers becomes a single slice operation over the global array. Details in @sec-impl-csr.
 
 === User Storage
 
-The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is defnietly not performance aware in lots of cases. This is approached in @sec-impl-users.
+The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is definitely not performance aware in lots of cases. This is approached in @sec-impl-users.
 
 === Post Storage
 <sec-design-datastructrues-post>
 
-Posts are created dynamically throughout the simulation and can be theoretically limitless. Also, any strategy to determine a potential upper bound with the number of users $N$, the distribution of `post_inter_creation` and the $t_h$ duration is information known at runtime ---not at compile time #todo[Do I need to explain this in the Implementation section?]--- so no stack memory structure can be used. #comment[well, you technically can do this, but it is just a pain due to the number of users and distributions making the upper bound just to big for the stack]
+Posts are created dynamically throughout the simulation and can be theoretically limitless. Also, any strategy to determine a potential upper bound with the number of users $N$, the distribution of `post_inter_creation` and the $t_h$ duration is information known at runtime ---not at compile time--- so no stack memory structure can be used. 
 
-The problem with using a flat dynamic array are periodic $O(n)$ reallocation costs. A dynamic array needs contiguous memory, and as the number of posts keeps growing, the more continguous memory needs to be found by the Operating System, and more data needs to be copied to a new location, which for a very common entity such as posts will really hurt performance.
+The problem with using a flat dynamic array are periodic $O(n)$ reallocation costs. A dynamic array needs contiguous memory, and as the number of posts keeps growing, the more contiguous memory needs to be found by the Operating System, and more data needs to be copied to a new location, which for a very common entity such as posts will really hurt performance.
 
 The strategy is to paginate the list into manageable chunks for the computer. Pagination is a memory strategy involving the purposeful segmentation of data into pages to avoid the contiguous memory requirement of arrays. When a page is full, memory for another page is allocated, making OS life easier as there is no need for bigger and bigger contiguous memory blocks, but lots of fixed size blocks.
 

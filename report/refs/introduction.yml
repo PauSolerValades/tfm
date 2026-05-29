@@ -1,0 +1,64 @@
+arrington2006twttr:
+  type: Article
+  title: "Odeo Releases Twttr"
+  author: Arrington, Michael
+  date: 2006-07-15
+  url:
+    value: https://web.archive.org/web/20190501115819/https://techcrunch.com/2006/07/15/is-twttr-interesting/
+    date: 2026-05-28
+  parent:
+    type: Periodical
+    title: TechCrunch
+    publisher:
+      name: AOL
+
+fishman2002simulation:
+  type: Book
+  title: "Discrete-event Simulation: Modeling, Programming, and Analysis"
+  author: Fishman, George
+  date: 2002-01
+  serial-number:
+    isbn: "9781441928924"
+    doi: "10.1007/978-1-4757-3552-9"
+
+maidstone2012discrete:
+  type: Article
+  title: "Discrete Event Simulation, System Dynamics and Agent Based Simulation: Discussion and Comparison"
+  author: Maidstone, Robert
+  date: 2012-03-07
+  url:
+    value: https://www.researchgate.net/publication/342073153_Discrete_Event_Simulation_System_Dynamics_and_Agent_Based_Simulation_Discussion_and_Comparison
+    date: 2026-05-23
+
+siebers2010discrete:
+  type: Article
+  title: "Discrete-event simulation is dead, long live agent-based simulation!"
+  author:
+    - Siebers, Peer-Olaf
+    - Macal, Charles M.
+    - Garnett, Jeremy
+    - Buxton, David
+    - Pidd, Michael
+  date: 2010-09
+  serial-number:
+    doi: "10.1057/jos.2010.14"
+  parent:
+    type: Periodical
+    title: Journal of Simulation
+    volume: 4
+    issue: 3
+    page-range: 204-210
+
+bonabeau2002agent:
+  type: Article
+  title: "Agent-based modeling: Methods and techniques for simulating human systems"
+  author: Bonabeau, Eric
+  date: 2002-05-14
+  serial-number:
+    doi: "10.1073/pnas.082080899"
+  parent:
+    type: Periodical
+    title: "Proceedings of the National Academy of Sciences (PNAS)"
+    volume: 99
+    issue: 3
+    page-range: 7280-7287

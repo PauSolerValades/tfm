@@ -1,6 +1,6 @@
 #import "../utils.typ": flex-caption
 
-This annex contains hardware information where the executions were performed aand provides additional detail on the simulation's memory footprint. 
+This annex contains hardware information where the executions were performed and provides additional detail on the simulation's memory footprint. 
 
 == Hardware Specifications
 <apx-performance-hardware>
@@ -28,7 +28,7 @@ All simulation runs were executed on the same dedicated server with the listed s
   )
 ) <tbl-hardware>
 
-It is rellevant to provide informaction about the caches cores on the system, listed in @tbl-cache.
+It is relevant to provide information about the caches cores on the system, listed in @tbl-cache.
 
 #figure(
   table(

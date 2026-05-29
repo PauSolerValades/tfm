@@ -24,3 +24,13 @@ kim2009mlist:
     title: Journal of the Korean Simulation Society
     volume: 18
     issue: 4
+
+oasis2024:
+  type: Repository
+  title: "OASIS: Open Agent Social Interaction Simulator"
+  author: CAMEL-AI
+  url:
+    value: https://github.com/camel-ai/oasis
+    date: 2026-05-28
+  parent:
+    title: GitHub

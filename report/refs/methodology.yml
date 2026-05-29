@@ -23,15 +23,6 @@ fishman2001des:
       type: Periodical
       title: Springer Series in Operations Research
 
-fishman2002simulation:
-  type: Book
-  title: "Discrete-event Simulation: Modeling, Programming, and Analysis"
-  author: Fishman, George
-  date: 2002-01
-  serial-number:
-    isbn: "9781441928924"
-    doi: "10.1007/978-1-4757-3552-9"
-
 soler2025distributions:
   type: Repository
   title: distributions
@@ -117,47 +108,6 @@ casella2002statistical:
   serial-number:
     isbn: "978-0-534-24312-8"
 
-maidstone2012discrete:
-  type: Article
-  title: "Discrete Event Simulation, System Dynamics and Agent Based Simulation: Discussion and Comparison"
-  author: Maidstone, Robert
-  date: 2012-03-07
-  url:
-    value: https://www.researchgate.net/publication/342073153_Discrete_Event_Simulation_System_Dynamics_and_Agent_Based_Simulation_Discussion_and_Comparison
-
-siebers2010discrete:
-  type: Article
-  title: "Discrete-event simulation is dead, long live agent-based simulation!"
-  author:
-    - Siebers, Peer-Olaf
-    - Macal, Charles M.
-    - Garnett, Jeremy
-    - Buxton, David
-    - Pidd, Michael
-  date: 2010-09
-  serial-number:
-    doi: "10.1057/jos.2010.14"
-  parent:
-    type: Periodical
-    title: Journal of Simulation
-    volume: 4
-    issue: 3
-    page-range: 204-210
-
-bonabeau2002agent:
-  type: Article
-  title: "Agent-based modeling: Methods and techniques for simulating human systems"
-  author: Bonabeau, Eric
-  date: 2002-05-14
-  serial-number:
-    doi: "10.1073/pnas.082080899"
-  parent:
-    type: Periodical
-    title: "Proceedings of the National Academy of Sciences (PNAS)"
-    volume: 99
-    issue: 3
-    page-range: 7280-7287
-
 barabási2005bursts:
   type: Article
   title: The origin of bursts and heavy tails in human dynamics
@@ -168,7 +118,9 @@ barabási2005bursts:
   serial-number:
       doi: "10.1038/nature03459"
       issn: "1476-4687"
-  url: https://doi.org/10.1038/nature03459
+  url:
+    value: https://doi.org/10.1038/nature03459
+    date: 2026-05-21
   parent:
       type: Periodical
       title: Nature

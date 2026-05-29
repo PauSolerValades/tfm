@@ -60,7 +60,7 @@ With the baseline environment stabilized, we evaluate the main flow of informati
 
 === Timeline Starvation
 
-The boredom mechanism (@sec-design-sources-sessions) terminates a session as soon as the user exhausts their feed. The mechanic represents the lack of new content to keep the user engaged, and represents the user seeing pasts posts that have already been seen. 
+The boredom mechanism (@sec-design-sources-sessions) terminates a session as soon as the user exhausts their feed. The mechanic represents the lack of new content to keep the user engaged, and represents the user seeing past posts that have already been seen. 
 
 @tbl-congestion summarises the key congestion indicators derived from the session trace analysis.
 
@@ -155,7 +155,7 @@ The root cause lies in how the simulation manages timelines across sessions: whe
 
 The boredom mechanic attempts to modelize the user "catching up" to past content, and therefore logging of: they see the most recent posts at the top of a reverse-chronological feed and stop long before reaching the older ones. The simulation approximates this by discarding older session content and retaining only what propagated during the most recent offline gap. This behaviour is not undesirable, but it does not reflect real life microblogging social networks nor the users behaviour entirely, so it would be worth that some amount of effort is redirected into modifying the model and the parameter calibration to make it behave more as its real counterpart.
 
-Specifically, the boredom predomincance factor can be mitigated by reducing the `propagation_delay`: the faster the content travels, the more full the timelines will be, making the end of sessions due to boredom less prominent. Additionally, having a more diversity of sessions (that is, acknowledging the session length, gap and inter-creation post argued in Calibration @sec-cal-summary-pareto) could make the behaviour less prominent. Last but not the least, an argument could be made that the model is incomplete, and the boredom mechanism needs another counterpart mechanism that complements it. For example, if some user catches up on old content, could try to check content that has arrived  
+Specifically, the boredom predominance factor can be mitigated by reducing the `propagation_delay`: the faster the content travels, the more full the timelines will be, making the end of sessions due to boredom less prominent. Additionally, having a more diversity of sessions (that is, acknowledging the session length, gap and inter-creation post argued in Calibration @sec-cal-summary-pareto) could make the behaviour less prominent. Last but not the least, an argument could be made that the model is incomplete, and the boredom mechanism needs another counterpart mechanism that complements it. For example, if some user catches up on old content, could try to check content that has arrived  
 
 In conclusion, the starvation rates reported can be considered a legitimate finding about the simulation's dynamics, not an artifact from data analysis.
 
@@ -210,7 +210,7 @@ The boredom mechanic not just interacts with the queue, but it will also shift t
   )
 ) <fig-s2-duration-hist>
 
-@fig-s2-duration-hist shows the impact of the boredom is prominent on Pareto's heavy tail, as it should smoothly decrease. Instead, gets instantly trucated in both the 100K and 500K users. In the 1M dataset it is slowly decreasing, which could be significant. Unfortunately, to say that the dynamic is different in the 1M dataset, a significant more amount of runs would be needed to diferentate the behaviour from the other two graphs in a statistically significant way.
+@fig-s2-duration-hist shows the impact of the boredom is prominent on Pareto's heavy tail, as it should smoothly decrease. Instead, gets instantly truncated in both the 100K and 500K users. In the 1M dataset it is slowly decreasing, which could be significant. Unfortunately, to say that the dynamic is different in the 1M dataset, a significant more amount of runs would be needed to differentiate the behaviour from the other two graphs in a statistically significant way.
 
 #figure(
   image("images/results/s2_duration_vs_empty.png", width: 90%),
@@ -521,11 +521,11 @@ Second, the tail fattens with network size: the fraction of cascades reaching si
 
 Third, maximum virality reaches 34.9 at 1M — substantially beyond the real Bluesky maximum of 80.7 (@tbl-virality-stats), but within the same order of magnitude.
 
-Fourth, the other característics from the table do change with the dataset scale, which is absolutely expected: the more amount of users and connections, the more chance for a cascade to grow big.
+Fourth, the other characteristics from the table do change with the dataset scale, which is absolutely expected: the more amount of users and connections, the more chance for a cascade to grow big.
 
 === Structural Virality Distribution
 
-This section has computed the structural virality of every post in every simulation per dataset. @fig-s4-virality shows the histrograms of structural virality $nu$, excluding cascades with the minimal $nu = 1.33$ (pure chains of 3 nodes).
+This section has computed the structural virality of every post in every simulation per dataset. @fig-s4-virality shows the histograms of structural virality $nu$, excluding cascades with the minimal $nu = 1.33$ (pure chains of 3 nodes).
 
 #figure(
   image("images/results/s4_virality_hist.png", width: 90%),
@@ -535,7 +535,7 @@ This section has computed the structural virality of every post in every simulat
   )
 ) <fig-s4-virality>
 
-Additionally, the log-log plot of the histrogram, thats the complementary cumulative distribution funciton, is provided at @fig-s4-virality-ccdf as the histograms were very steep.
+Additionally, the log-log plot of the histrogram, thats the complementary cumulative distribution function, is provided at @fig-s4-virality-ccdf as the histograms were very steep.
 
 #figure(
   image("images/results/s4_virality_ccdf.png", width: 90%),
@@ -572,7 +572,7 @@ The fraction of minimal cascades ($nu <= 1.34$, pure chains) is remarkably stabl
 
 === Depth–Size Scaling
 
-Cascade depth grows sub-linearly with cascade size. @tbl-depth-size stratifies cascade morphology by size bucket in the 1M dataset, as is the one which has more diviersity.
+Cascade depth grows sub-linearly with cascade size. @tbl-depth-size stratifies cascade morphology by size bucket in the 1M dataset, as is the one which has more diversity.
 
 #figure(
   table(
@@ -746,7 +746,7 @@ This is a direct mathematical consequence of the homogeneous policy and the CTIC
   )
 ) <tbl-cascade-log>
 
-The distribution spans four orders of magnitude: 1.14 million cascades of size 3–9, dropping to 179K at size 10–99, 897 at size 100–999, and just 4 at size 1000+. @fig-s4-cascade-ccdf shows the CCDF. This is not a smooth power law — the steep drop from $log_10 = 1$ to $log_10 = 2$ (a 200× reduction) reflects the simulation's finite-size cutoff, where the pool of available reposters (at most $N$ users, with $approx 11%$ online) imposes a hard upper bound on cascade growth that a true power law would not encounter. As this is equally promominent in the three datasets, it's dismissed from being caused by missing data.
+The distribution spans four orders of magnitude: 1.14 million cascades of size 3–9, dropping to 179K at size 10–99, 897 at size 100–999, and just 4 at size 1000+. @fig-s4-cascade-ccdf shows the CCDF. This is not a smooth power law — the steep drop from $log_10 = 1$ to $log_10 = 2$ (a 200× reduction) reflects the simulation's finite-size cutoff, where the pool of available reposters (at most $N$ users, with $approx 11%$ online) imposes a hard upper bound on cascade growth that a true power law would not encounter. As this is equally prominent in the three datasets, it's dismissed from being caused by missing data.
 
 #figure(
   image("images/results/s4_cascade_size_ccdf.png", width: 90%),
@@ -770,7 +770,7 @@ To bridge the simulation's microscopic parameters to its macroscopic emergent dy
 ]
 
 #def(name: "Creation Destiny")[
-  We denoe the creation destiny $tau_c$ the number of new posts created system-wide (the whole simulation) during one single post lifetime.  
+  We denote the creation destiny $tau_c$ the number of new posts created system-wide (the whole simulation) during one single post lifetime.  
 
   $ tau_c = frac(tau_"post", tau_"create") $
 
@@ -809,7 +809,7 @@ The @tbl-coupling reports batch means $plus.minus$ 95% CI for all three ratios a
 
 This section will focus on comparing similarities and differences of the quantities found within the simulation with the results found in @sec-data regarding the quantities of interest of the simulation and it's characteristics.
 
-First, let us discard the incomparable metircs: the simulation outputs per-encounter probabilities (e.g., $p_"repost" = 0.012$), while the firehose reports global event counts. Normalizing by impressions —-the number of timeline encounters per user-— would enable a direct comparison, but this quantity is not observable in the firehose data.
+First, let us discard the incomparable metrics: the simulation outputs per-encounter probabilities (e.g., $p_"repost" = 0.012$), while the firehose reports global event counts. Normalizing by impressions —-the number of timeline encounters per user-— would enable a direct comparison, but this quantity is not observable in the firehose data.
 
 That said, several structural comparisons are meaningful. 
 
@@ -823,7 +823,7 @@ The repost power-law exponent ($gamma_"sim" = 1.73$ vs $gamma_"real" = 2.21$) in
   )
 ) <fig-powerlaw-compare>
 
-The power-law finiding are consistent with user homogeneous policies: every user has the same repost probability, whereas real networks concentrate repost activity in a small fraction of power users depending on the content and similarities.
+The power-law finding are consistent with user homogeneous policies: every user has the same repost probability, whereas real networks concentrate repost activity in a small fraction of power users depending on the content and similarities.
 
 The structural virality comparison ($nu_"sim" approx 2.10$ vs $nu_"real" = 1.35$) shows the simulation produces more branched propagation trees. In the real Bluesky data, 54.7% of cascades have $nu = 1.0$ which is pure broadcast, where every reposter saw the original post directly. The CTIC model's minimum $nu$ is approximately 1.33 (a two-hop chain through the author and one intermediate), so the entire virality distribution is shifted upward. This is a structural consequence of how the propagation tree is reconstructed in the trace analysis, not a missing simulation mechanism.
 

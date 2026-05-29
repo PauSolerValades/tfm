@@ -1,4 +1,4 @@
-This section covers the discarded metrics that were at some point considered to evaluate the simluation.
+This section covers the discarded metrics that were at some point considered to evaluate the simulation.
 
 ==== Gini Coefficient
 

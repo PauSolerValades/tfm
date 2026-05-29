@@ -1,4 +1,4 @@
-#import "utils.typ": *
+#import "utils.typ": def, flex-caption 
 
 This section narrows the description of the Bluesky social network (see @sec-sota-description) into the most important mechanics to study the objective.
 
@@ -19,7 +19,7 @@ We assume that if user $u$ follows user $v$, user $u$ will receive all posts fro
 
 ==== 4. No Quotes, no Replies
 
-With the same criteria, we want to focus on the content of the text, so the way the information transmits itself can be reduced to a single post.
+To further simplify the model (and given the assumptions that will be stated in @sec-method-des-assumptions) quotes and replies will not be included. They are going to add a lot of modelization complexity for what is deemed diminishing returns. See @apx-mechanics for more about additional mechanics.
 
 ==== 5. No Profile of a User
 
@@ -30,7 +30,7 @@ Let's define which features of Bluesky are going to be modeled in the simulation
 2. Users see posts in a timeline: posts will be seen in reverse-chronological order from the accounts they follow.
 
 
-To model these dynamics, this section introduces a unified mathematical notation that models the microblogging platform as a Time-Varying Heterogeneous Graph #todo[i've lost the ref of the friking original paper xd] and the reasons for that are given in the section @sec-method-graph. This formulation rests on the acknowledgment that there are two distinct entities, users and posts, as well as different types of edges to characterize the relationships between entities of the same type and different types. The relationships between the entities are, by their very nature, changing over time.
+To model these dynamics, this section introduces a unified mathematical notation that models the microblogging platform as a Time-Varying Heterogeneous Graph @casteigts2012timevarying. This formulation rests on the acknowledgment that there are two distinct entities, users and posts, as well as different types of edges to characterize the relationships between entities of the same type and different types. The relationships between the entities are, by their very nature, changing over time.
 
 #def(name: "Time-Varying Heterogeneous Graph")[Having established the temporal properties of our entities and their relationships, we formally define our system as a Time-Varying Graph $cal(G) = (V, E, T, rho, psi, eta)$. Here, $V$ and $E$ form the universal topological space, $psi$ and $rho$ govern the temporal existence of nodes and edges respectively, and $eta$ bounds the chronological flow of information across the network.]
 
@@ -53,11 +53,9 @@ $ psi(i, t) = cases(1 "if" t >= t_c, 0 "otherwise") $
 
 We can now cleanly define the set of available items at any time $t$ simply as $cal(I)_t = { i in cal(I) | psi(i, t) = 1 }$.
 
-#comment[the existence of $rho$ eliminates the need to have a time-dependent set $cal(I)(t)$]
-
 == Relational Dynamics and Edge Properties
 
-Similar to the node set, we define a universal edge set $E$ containing every potential interaction between entities. There are two types of relationships: $cal(R)_(cal(U) cal(U)) = {"follow"}$ and $cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "ignore" }$.
+Similar to the node set, we define a universal edge set $E$ containing every potential interaction between entities. There are two types of relationships: $cal(R)_(cal(U) cal(U)) = {"follow"}$ and $cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "ignore" }$. As orthodox it may seem, the "ignore" (user $i$ does not interact with post $i$) is modeled as an action a user takes at a specific time. It makes the concept more intuitive despite having a no concrete equivalent in a social media platform.
 
 #def(name: "Universal Edges")[We denote the set of all possible edges $E = E_(cal(U)cal(U)) union E_(cal(U)cal(I))$, where 
 $ E_(cal(U)cal(I)) = { (u, i, r) | u in cal(U), i in cal(I), r in cal(R)_(cal(U) cal(I)) } $
@@ -76,6 +74,8 @@ To capture the specific temporal dynamics of these connections, we define two co
 - *Interaction Delay*: Associated with reactive event edges $e = (u, i, r)$ where $r in {"like", "repost", "ignore"}$, representing the cognitive processing time before a user reacts to a post.
 - *Creation Delay*: Associated with generative event edges $e = (u, i, "create")$, representing the time taken to compose and publish a new item.]
 
+It is necessary to have a delay when information propagates to avoid instant information transmission. In Implementation @sec-design-sources-propagate there is an example showcasing why it is necessary. In Methodology @sec-method-model it is also explained why is necessary to fit a specific model.
+
 == User Session Dynamics
 <sec-model-sessions>
 
@@ -88,19 +88,42 @@ Consequently, the existence of any event edge inherently requires the user to be
 $ rho((u, i, r), t) = 1 arrow.r.double t in cal(O)(u) $]
 
 
-Lastly, we can define the users that a specific user $u$ is following, and the users that follow them:
+== Followers and followees
+
+We can define the users that a specific user $u$ is following, and the users that follow them:
 
 #def(name: "Following")[The subset of users that user $u in cal(U)$ is following, assuming connections are established at $t=0$, is denoted as 
 $ cal(N)_"out" (u) = { v in cal(U) | rho((u, v, "follow"), 0) = 1 }. $] 
 
 This dictates the sources of information populating user $u$'s timeline, and coincides with the concept of the out-neighborhood of a node in graph theory.
-
-#todo[Example of followers and followees]
-
+ 
 #def(name: "Followers")[The subset of users that follow user $u$, assuming connections are established at $t=0$, is denoted as 
 $ cal(N)_"in" (u) = { v in cal(U) | rho((v, u, "follow"), 0) = 1 }. $]
 
 These are the users affected by user $u$'s actions.
+
+@fig-model-example-graph illustrates a simple three-user topology to ground these definitions.
+
+#figure(
+  table(
+    columns: 3,
+    align: (center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*User*], [*Follows*], [*Followed by*],
+    table.hline(stroke: 0.5pt),
+    [$A$], [—], [$\{B, C\}$],
+    [$B$], [$\{A\}$], [$\{C\}$],
+    [$C$], [$\{A, B\}$], [—],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Follower vs followee distinction in a three-user graph.],
+    [A simple directed graph with three users illustrating the asymmetry of the follower relationship.]
+  )
+) <fig-model-example-graph>
+
+$A$ is a pure source (follows no one, two followers). $B$ sits in the middle (one follower, one followee). $C$ is a pure consumer (follows two people, no followers).  A user's timeline is populated by their followees; their posts reach their followers.
 
 == User Activity and Timeline Construction
 
@@ -113,9 +136,9 @@ $ cal(A)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) =
 #def(name: "Timeline")[The timeline $cal(T)_t (u)$ is the aggregated activity of the user's out-neighborhood $cal(N)_"out" (u)$, strictly excluding items the user organically authored themselves, $cal(P)_t(u)$. The time at which an item from followee $v$ appears in $u$'s timeline is offset by the propagation delay $eta((u, v, "follow"), t)$:
 $ cal(T)_t (u) = ( union.big_(v in cal(N)_"out" (u)) cal(A)_(t - eta((u, v, "follow"), t))(v) ) - cal(P)_t (u) $]
 
-Lastly, we have to define an set that contains all the interacted posts by a given user $u$. This is needed to comply with the CTIC model, as a user cannot propagate if it has already been infected. We will call the set interaction historic.
+Lastly, we have to define an set that contains all the interacted posts by a given user $u$. This is needed to comply with the CTIC model, as a user cannot propagate if it has already been infected. We will call the set interaction history.
 
-#def(name: "User Interaction Historic")[The Interaction Historic set of a user $cal(H)_t (u)$ includes all the items the user has either propagated or liked prior to time $t$
+#def(name: "User Interaction History")[The Interaction History set of a user $cal(H)_t (u)$ includes all the items the user has either propagated or liked prior to time $t$
 
 $ cal(H)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) = 1 "for some" tau < t "and" r in {"repost", "like"} } $ 
 ]

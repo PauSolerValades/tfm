@@ -66,11 +66,14 @@
 #counter(page).update(1)
 
 #set page(numbering: "i")
+
+#pagebreak()
+#pagebreak()
 #heading(outlined: false, numbering: none)[Abstract]
 #include "src/abstract.typ"
 
 #pagebreak()
-#heading(outlined: false, numbering: none)[Aknowledgments]
+#heading(outlined: false, numbering: none)[Acknowledgments]
 
 #include "src/aknowledgments.typ"
 
@@ -173,7 +176,7 @@
 
 #pagebreak()
 #bibliography(
-  ("refs/context.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml", "refs/annex.yml"),
+  ("refs/introduction.yml", "refs/context.yml", "refs/model.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml", "refs/annex.yml"),
   title: "References",
 )
 
@@ -206,6 +209,8 @@
 
 #pagebreak()
 = Additional Mechanics 
+<apx-mechanics>
+
 #include "src/annex/mechanics.typ"
 
 #pagebreak()

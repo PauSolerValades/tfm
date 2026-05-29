@@ -36,3 +36,33 @@ pi-dev:
   url:
     value: https://pi.dev/
     date: 2026-05-27
+
+soler2025dsbskysim:
+  type: Repository
+  title: ds-bskysim
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/ds-bskysim
+    date: 2026-05-27
+  parent:
+    title: GitHub
+
+soler2025desctic:
+  type: Repository
+  title: des-ctic
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/des-ctic
+    date: 2026-05-28
+  parent:
+    title: GitHub
+
+soler2025bskydata:
+  type: Repository
+  title: bsky-data-analysis
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/bsky-data-analysis
+    date: 2026-05-28
+  parent:
+    title: GitHub

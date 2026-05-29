@@ -1,4 +1,24 @@
 zig:
     type: Web
     title: Zig Programming Language
-    url: https://ziglang.org/
+    url:
+    value: https://ziglang.org/
+    date: 2026-05-25
+
+python:
+  type: Web
+  title: Python Programming Language
+  url:
+    value: https://www.python.org/
+    date: 2026-05-28
+  author:
+    - Van Rossum, Guido
+  organization: Python Software Foundation
+
+rlang:
+  type: Web
+  title: "R: A Language and Environment for Statistical Computing"
+  url:
+    value: https://www.r-project.org/
+    date: 2026-05-28
+  organization: R Foundation for Statistical Computing

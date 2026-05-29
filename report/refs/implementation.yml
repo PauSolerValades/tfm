@@ -140,3 +140,69 @@ wiki-cache:
     date: 2026-05-27
   organization: Wikipedia
 
+drepper2007memory:
+  type: Article
+  title: "What Every Programmer Should Know About Memory"
+  author: Drepper, Ulrich
+  date: 2007-11-21
+  url:
+    value: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+    date: 2026-05-22
+  organization: Red Hat, Inc.
+
+barabasi1999emergence:
+  type: Article
+  title: "Emergence of Scaling in Random Networks"
+  author:
+    - Barabási, Albert-László
+    - Albert, Réka
+  date: 1999-10-15
+  page-range: 509-512
+  serial-number:
+    doi: "10.1126/science.286.5439.509"
+  parent:
+    type: Periodical
+    title: Science
+    volume: 286
+    issue: 5439
+
+amin2022scalefree:
+  type: Article
+  title: "Model for Generating Scale-Free Artificial Social Networks Using Small-World Networks"
+  author:
+    - Amin, Farhan
+    - Choi, Gyu Sang
+  date: 2022
+  serial-number:
+    doi: "10.32604/cmc.2022.029927"
+  parent:
+    type: Periodical
+    title: "Computers, Materials & Continua"
+    publisher:
+      name: Tech Science Press
+
+cormen2022algorithms:
+  type: Book
+  title: "Introduction to Algorithms"
+  author:
+    - Cormen, Thomas H.
+    - Leiserson, Charles E.
+    - Rivest, Ronald L.
+    - Stein, Clifford
+  edition: 4
+  date: 2022
+  publisher:
+    name: MIT Press
+  serial-number:
+    isbn: "978-0-262-04630-5"
+
+agner2024instruction:
+  type: Web
+  title: "Instruction Tables: Lists of Instruction Latencies, Throughputs and Micro-operation Breakdowns for Intel, AMD, and VIA CPUs"
+  author: Fog, Agner
+  date: 2024
+  url:
+    value: https://agner.org/optimize/instruction_tables.pdf
+    date: 2026-05-24
+  organization: Technical University of Denmark
+

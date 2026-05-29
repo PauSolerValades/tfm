@@ -178,7 +178,7 @@ So, its safe to say that (and consistently with the literature) post lifetimes d
 
 *Question:* how long does a post stay alive? Lifetime is measured as $t_"last" - t_"created"$ for the $7.5 times 10^6$ posts that receive any engagement with positive lifetime.
 
-The second question we have to ask about the data is the time a post stays alive. Lifetime of a post is defined as $t_"last" - t_"created"$ for the $7.5 times 10^6$ posts that recieve any engagement with positive lifetime.
+The second question we have to ask about the data is the time a post stays alive. Lifetime of a post is defined as $t_"last" - t_"created"$ for the $7.5 times 10^6$ posts that receive any engagement with positive lifetime.
 
 The @tbl-lifetimes-fit shows the result of fitting four continuous distributions over the posts lifetimes. The lifetime exhibits a two-component structure: the body (lifetimes $< 15.6$ h, $approx 75$% of engaged posts) is best fit by a Weibull with shape $k = 0.53$; the tail ($> 15.6$ h, $approx 25$% of engaged posts) follows a Pareto with $alpha = 2.16$. The median lifetime is 3.8 h, but $P_{99}$ reaches 133 h (5.6 days).
 
@@ -214,7 +214,7 @@ The Weibull shape $k = 0.53 < 1$ implies a decreasing hazard rate: a post is act
 
 === Temporal Decay
 
-Does a post, within its lifetime, within a post's lifetime, receive all it's engagement evenly in time or cluster early? The script `eda/temporal_decay.py` fits $N(t) prop t^beta$ — the cumulative number of events as a function of time since creation — per-post on a sample from four engagement-volume buckets.
+Does a post, within its lifetime, within a post's lifetime, receive all its engagement evenly in time or cluster early? The script `eda/temporal_decay.py` fits $N(t) prop t^beta$ — the cumulative number of events as a function of time since creation — per-post on a sample from four engagement-volume buckets.
 
 #figure(
   table(
@@ -412,7 +412,7 @@ Bluesky is *predominantly broadcast*: 54.7% of cascades are pure one-to-many dif
 
 For the agent-based simulation, the empirical $nu$ distribution provides a calibration target. A correctly calibrated simulation should reproduce: $approx 55%$ of cascades at $nu = 1.0$ (pure broadcast); median $nu approx 1.0$, mean $nu approx 1.35$; maximum $nu$ in the 50–100 range; and $nu$ growing sub-linearly with cascade size.
 
-== Topology Obtention
+== Topology Extraction
 <sec-data-topology>
 
 The simulation requires a real social graph upon which information diffuses. The topology was extracted from the Bluesky firehose using `app.bsky.graph.follow` events, with `app.bsky.graph.block` events excluded (blocks serve a moderation role, not an information-propagation role).

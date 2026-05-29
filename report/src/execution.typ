@@ -68,11 +68,6 @@ Before presenting the simulation results, a brief execution performance characte
   )
 ) <tbl-execution-time>
 
-#todo[this i don't like it that much, rewrite ]
-
-To put these numbers in perspective: simulating the full activity of a one-million-user social network —-every post created, every timeline served, every like and repost propagated through the follower graph-— completes in roughly 23 minutes on a single server. This is a remarkable result. When the project began, the ambition was simply to reach a scale large enough to produce meaningful statistical output within a practical time frame; there was no guarantee that a ground-up simulation engine written in a systems language would scale gracefully. The fact that execution time grows in direct proportion to the number of users —-not quadratically, not exponentially-— means that what could have been a multi-day batch job fits comfortably into an afternoon.
-
-Concretely: a run at 100K users takes just over a minute, making 1600 independent replications feasible. At 500K users, a run takes around 11 minutes, allowing 136 replications. Even at 1M users —-the largest topology tested-— ten full runs were completed. Across all three scales, the simulation produced a total of 1746 independent traces, each containing the complete event-level history of a synthetic social network. This volume of data is what makes the statistical analysis in the following sections possible: without linear scalability, the replication count would drop sharply with network size, undercutting the confidence of every estimate.
 
 The linear behaviour is not accidental. It is the direct result of deliberate engineering choices: the D-ary heap with preallocated capacity (@sec-impl-queue) keeps every event-queue operation at $O(1)$ amortized cost; the CSR graph layout (@sec-impl-csr) turns neighbour iteration into a cache-friendly sequential scan; and the buffered binary I/O pipeline (@sec-impl-trace-io) avoids serialization inside the hot simulation loop. Each of these decisions was made with scalability as the guiding concern, and the data confirm they paid off.
 
@@ -143,9 +138,10 @@ To ensure the simulation results remain invariant to absolute wall-clock metrics
 
 $ tau = frac(t, Delta_p) $
 
-In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, ubiquitous operational baseline of the environment, and one of the fundamentals quantites definitng the continuous cascade independent model. Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic.
+In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, ubiquitous operational baseline of the environment, and one of the fundamental quantities defining the continuous cascade independent model. Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic.
 
-== Simulation Results Obtention
+== Trace Processing Pipeline 
+<sec-exec-pipeline>
 
 Before proceeding to the results chapter, we must cover the trace analysis process into the result dataset obtention. As every simulation outputs four trace files, it was unfeasible to not develop a pipeline to generate results datasets to be analyzed. The files can be found at `des-ctic/trace-analysis/main.py`.
 

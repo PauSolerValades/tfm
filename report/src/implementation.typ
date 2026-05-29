@@ -1,6 +1,19 @@
-#import "utils.typ": todo, comment, def, code, flex-caption
+#import "utils.typ":  def, code, flex-caption //todo, comment,
+#import "@preview/cetz:0.4.2"
 
-This chapter details the concrete engineering decisions that realize the simulation design described in @sec-design. While the previous chapter established what the simulation models and why specific algorithmic choices were made, this chapter addresses how those choices are realized in code: the performance strategies, the input/output pipeline, and the data structures that make the simulation scale to millions of users within practical execution times. The technology stack (Zig, distributions library, auxiliary Python scripts) is documented in @apx-software-stack.
+This chapter details the concrete engineering decisions that realize the simulation design described in @sec-design. While the previous chapter established what the simulation models and why specific algorithmic choices were made, this chapter addresses how those choices are realized in code: the performance strategies, the input/output pipeline, and the data structures that make the simulation scale to millions of users within practical execution times. 
+
+== Technology Approach 
+<sec-design-techology>
+
+Because the validity of any simulation can rely on sheer computational volume and repeated runs to achieve statistical significance, a suboptimal implementation can easily contradict the underlying assumptions needed to guarantee a successful process. Execution speed, deterministic behavior, and the tightly optimized computational loops mentioned above are paramount. 
+
+The first step in achieving this explicit memory control is choosing the appropriate tools for the job. Interpreted languages like Python @python and R @rlang are immediately discarded. Even on powerful hardware, the overhead of interpretation introduces unacceptable latency for massive, CPU-bound simulation loops. Moreover, they do not offer control over memory allocation---the most critical performance killer, since any garbage collector memory strategy will affect performance greatly. This is also why the excellent performance of Julia is discarded: despite being fast, its garbage collector introduces the same fundamental limitation. Following this logic, manual memory management becomes necessary to deeply optimize performance and take full advantage of CPU caching. With requirements pointing strictly toward a systems language with manual memory management, the engine was implemented in Zig @zig.
+
+Zig is a modern systems programming language selected specifically for its deterministic memory management and seamless support for Data-Oriented Design (DOD) (see @sec-impl-memory). By design, it provides C-like performance alongside modern quality-of-life improvements and strict guardrails against common C pitfalls, such as segmentation faults and null pointer dereferences. With the application of the right memory optimization techniques (see @sec-impl-memory), Zig enables highly scalable implementations that extract the maximum possible performance from the hardware.
+
+More information about software is documented in @apx-software-stack.
+
 
 == Versioning  
 <sec-impl-version>
@@ -11,13 +24,13 @@ To build a simulation engine from scratch in a systems level programming languag
 
 The first version served as a proof of concept implementation and design, and was where most of the needed utilities but not part of the main program were developed, such as the Heap implementation, the _distributions_ library with the Exponential, Normal and Categorical implementation, as well as the runtime dynamic dispatch JSON config file, in order to iterate quickly with the parameters, as explained in 
 
-The first version did not even aim to implement the same behaviour as the final product. In there, was assumed that user timelines were min-heaps, not max-heaps, so the simulation was serving posts in chronological order, not reverse-chonological order. To simplify it even further, the users were assumed to be homogeneous and behave all equally. In essence, this simplifications allowed to test the propagate behaviour, as well as the essencial arquitectura of the DES simulation with a very similar data structures as the final version will end up having.
+The first version did not even aim to implement the same behaviour as the final product. In there, was assumed that user timelines were min-heaps, not max-heaps, so the simulation was serving posts in chronological order, not reverse-chronological order. To simplify it even further, the users were assumed to be homogeneous and behave all equally. In essence, this simplifications allowed to test the propagate behaviour, as well as the essential architecture of the DES simulation with a very similar data structures as the final version will end up having.
 
 The first version of the network topology loading and wiring was introduced here, as well as the scripts to generate some sample ones to validate it. Furthermore, none of the strategies discussed later in this section where applied here, being very noticeable the poor performance when loading and wiring the topology.
 
 ==== v2: Reverse-Chronological Order and Sessions
 
-To change every user timeline into a max-heap was the most complicated part of all the process implementation, for every user now had to disconnect from the simulation for their timeline to be refilled. That introduces plenty of bugs and missbehaviours with time traveling errors such a repost made to a post before the post arrived to a user timeline; the propagate event was introduced to isolate those bugs, as the old mechanism directly inserted posts into the user timelines ---was nor a very good idea nor a good design decision.
+To change every user timeline into a max-heap was the most complicated part of all the process implementation, for every user now had to disconnect from the simulation for their timeline to be refilled. That introduces plenty of bugs and misbehaviors with time traveling errors such a repost made to a post before the post arrived to a user timeline; the propagate event was introduced to isolate those bugs, as the old mechanism directly inserted posts into the user timelines ---was nor a very good idea nor a good design decision.
 
 Here some DOD principles were applied, specially when wiring the graph topology structure, as the reading data format was redesigned. 
 
@@ -41,15 +54,16 @@ Contains the same features of the v3 simulation with optimizations to be run mul
 
 Every program needs memory where to hold the data it operates on. Every program has two types of memory: 
 - *Stack*: is all allocated by the OS when the program starts. Functions and variables are stored there.
-- *Heap*: Memory not reserved by default, but given on request to the programmer with the use of certain functions; in C would be `malloc, callor, realloc`, and this mechanism is hidden in non memory managed languages, such as Python. Every byte asked to the heap must be freed before the program ends.
+- *Heap*: Memory not reserved by default, but given on request to the programmer with the use of certain functions; in C would be `malloc, callor, realloc`, and this mechanism is hidden in non memory managed languages, such as Python.
 
 As the simulation needs to hold a massive amount of data, the need of heap memory is the only way forward. Every new memory allocation is a `SYSCALL` @wiki-syscall, which will imply program execution halting to get the reserved addresses of memory back, which is an unavoidable part of the program: getting the memory addresses to work. What is a far worse performance concern is the reallocation of memory. Let's take C `malloc` vs `realloc` functions.
 
-`malloc` will return a pointer to a chunk of contiguous memory, ready for the program to use. Imagine we want to store an array of 32 unsigned integers on to the heap, we can ask `malloc` for $32·4 = 128$ bytes of memory with a `SYSCALL`, and the OS will provide that to use, in a contiguuos manner. Now, the list contained 40 numbers, instead of 32, so we have to ask for more memory, with the requisite we still want the previous memory to be contigouos with the new one. Now we have to call `realloc` to give us 32 more integers (as good principled programmers ask the memory in powers of two...), to get a $64 · 4 = 256$ bytes. The catch is that `realloc` will make sure the memory is still contingous, so when reallocating the memory one of two things can happen:
+`malloc` will return a pointer to a chunk of contiguous memory, ready for the program to use. Imagine we want to store an array of 32 unsigned integers (each of which has a size of 4 bytes) on to the heap, we can ask `malloc` for $32·4 = 128$ bytes of memory with a `SYSCALL`, and the OS will provide that to use, in a contiguous manner. Now, the list contained 40 numbers, instead of 32, so we have to ask for more memory, with the requisite we still want the previous memory to be contiguous with the new one. Now we have to call `realloc` to give us 32 more integers (as good principled programmers ask the memory in powers of two...), to get a $64 · 4 = 256$ bytes. The catch is that `realloc` will make sure the memory is still contiguous, so when reallocating the memory one of two things can happen:
 1. Good path: the OS just extends previous memory to 64 integers without problem, as the next 128 byte chunk was empty.
-2. Bad path: the next 128 byte chunk is not empty, therefore the OS needs to search for a 256 bytes of continguous memory in another part of the memory, copy all the previous numbers and return the new address of memory.
+2. Bad path: the next 128 byte chunk is not empty, therefore the OS needs to search for a 256 bytes of contiguous memory in another part of the memory, copy all the previous numbers and return the new address of memory.
 
-Performance wise, the rule of thumb would be to try to avoid the good path, _e.g._ the program should never ran out of memory so no need to ask for more, but it is not always possible and always avoid the bad path, specially if the data is astonishingly big. Fortunately, there are strategies to minimize both of those outcomes.
+
+Performance wise, one would think that the rule of thumb would be to try to avoid the bad path, and go for the good path. That is half right, as there are situations where you must ask for more memory. But the optima is to try to never ask the OS for more memory by choosing a clever memory allocation strategy.
 
 In Zig, Heap memory is managed with `Allocators`, and each of them follows different memory strategies, and will be more or less suited in different situations. The main two used in the simulation are the following:
 + *General Purpose Allocator*: reserves memory in a linear and contiguous fashion. Requires an interruption of the program execution for the kernel to provide the memory addresses. Can be resized if there is free memory adjacent to the allocation. It's the `malloc` and `realloc` equivalent in C.
@@ -59,31 +73,31 @@ In Zig, Heap memory is managed with `Allocators`, and each of them follows diffe
 
 In the simulation, Arenas are perfectly fit for the data loading and the graph topology storage, as it's big data unchanged at runtime.
 
-In _v3_, the JSON contaning all the distinct users and their followers is loaded in its entirety in an arena, `json_arena`. Then, the information is used to create an instance of `Topology` struct, which creates the CSR representation of the graph (see @sec-impl-csr), as well as having as much memory needed for all the specific user information, as explained in user entity on @sec-design-entities. Once the `Topology` struct is created with a different arena, we deinit `json_arena` to have that memory free for another uses, as the JSON topology is not needed anymore.
+In _v3_, the JSON containing all the distinct users and their followers is loaded in its entirety in an arena, `json_arena`. Then, the information is used to create an instance of `Topology` struct, which creates the CSR representation of the graph (see @sec-impl-csr), as well as having as much memory needed for all the specific user information, as explained in user entity on @sec-design-entities. Once the `Topology` struct is created with a different arena, we deinit `json_arena` to have that memory free for another uses, as the JSON topology is not needed anymore.
 
 The main disadvantages of arenas are resizing and growing. When an item gets freed from an arena it is not freed as returning it back to the OS, but the offset of the arena grows. Freeing a lot can lead to fragmentation issues as well as resizing overhead, at to resize an entire arena is time consuming for the OS.
 
-In the simulation, eveything that is not managed by an arena is managed by a standad `Allocator`. All data structures that cannot have an estimation of how many elements will require beforehand, are used with a General Purpose Allocator, such as the $T (u)$ timeline heaps. These structures grow and shrink as events are processed and sessions start and end, as well as changing a lot depending on the config file _e.g_ the load of the timeline $T (u)$ is not going to be the same with an `inter_action_time` of 5 second between any post that a on of 1 second between any post. 
+In the simulation, everything that is not managed by an arena is managed by a standard `Allocator`. All data structures that cannot have an estimation of how many elements will require beforehand, are used with a General Purpose Allocator, such as the $T (u)$ timeline heaps. These structures grow and shrink as events are processed and sessions start and end, as well as changing a lot depending on the config file _e.g_ the load of the timeline $T (u)$ is not going to be the same with an `inter_action_time` of 5 second between any post that a on of 1 second between any post. 
 
-Despite assuming that memory reallocation is necessary, there are strategies to mitigate it the most. For the global heap, an heuristic has been computed (see @sec-impl-queue) to have more than enough memory to use; for every user timeline, a capacity of `1024` timeline events is assumed, so unless the queue needs more, it will never reallocate memory. That this heurists are possible does not imply that is a good idea the use of an arena, as they might need resizing, which in an arena would be catastrophic performance wise.
+Despite assuming that memory reallocation is necessary, there are strategies to mitigate it the most. For the global heap, an heuristic has been computed (see @sec-impl-queue) to have more than enough memory to use; for every user timeline, a capacity of `1024` timeline events is assumed, so unless the queue needs more, it will never reallocate memory. That these heuristics are possible does not imply that is a good idea the use of an arena, as they might need resizing, which in an arena would be catastrophic performance wise.
 
 == Buffered File I/O
 <sec-impl-trace-io>
 
 I/O is the most important feature of the simulation, as the traces are the main method of obtaining the output needed to generalize the results. At the same time, opening and writing to files can be one of the biggest bottlenecks when taking performance into account. 
 
-As well as with memory, a `SYSCALL` is needed to both open a file and to write to it, which interrupts the program execution via a context switch @wiki-context-switch. As an interruption is performance expensive, it is clear that the number of `SYSCALL` to write to file must be reduced. The most efficient way to do that is trough the use of a buffer.
+As well as with memory, a `SYSCALL` is needed to both open a file and to write to it, which interrupts the program execution via a context switch @wiki-context-switch. As an interruption is performance expensive, it is clear that the number of `SYSCALL` to write to file must be reduced. The most efficient way to do that is through the use of a buffer.
 
-A buffer is an array of stack memory, with compile time fixed size. The idea is, instead of every `write` call to be fired inmediatley, fill the buffer. When the buffer is full, call the `write` call with all the contents inside the buffer! This is called to `flush` the buffer.
+A buffer is an array of stack memory, with compile time fixed size. The idea is, instead of every `write` call to be fired immediately, fill the buffer. When the buffer is full, call the `write` call with all the contents inside the buffer! This is called to `flush` the buffer.
 
 Almost all languages implement printing as an inner buffer, which gets flushed if a newline character is found (`\n`) or if the buffer gets full. 
 
 
-Zig lets the programmer chose between a streaming I/O (the system decides when to write) or buffered I/O, which allows the programmer to create a buffer where to store everything that needs to be written to a file, and when the `flush()` function is invoked it interrupts the program flow, writes to file and resumes execution @zig-std-io.
+Zig lets the programmer choose between a streaming I/O (the system decides when to write) or buffered I/O, which allows the programmer to create a buffer where to store everything that needs to be written to a file, and when the `flush()` function is invoked it interrupts the program flow, writes to file and resumes execution @zig-std-io.
 
 There are four different traces, one per event, therefore there are four different file descriptors with 64KB buffers associated to them. They keep filling until they are full, and then when they are, they are dumped into memory. This guarantees very few interruptions, as a 64KB buffer is pretty large especially taking into account the next section performance strategy: the buffers do not contain characters, but bytes of the trace struct (see @sec-design-traces for the different traces) which is going to be much faster and smaller than serializing @wiki-serialization into text, as @sec-impl-config.
 
-Writing raw binary has one obvious drawback however: the resulting trace files are not human readable and need to be deserialized into strings. Zig std provides with a JSON api @zig-std-json, which allows conversion between structs and strings without any inconvenient. Therefore, one the simulation has finished, the binary traces are loaded into memory, and using the struct alignment definiton, tuned into the original `TraceType` struct, converted into a JSON with the standard library utility and dumped into a file.
+Writing raw binary has one obvious drawback however: the resulting trace files are not human readable and need to be deserialized into strings. Zig std provides with a JSON api @zig-std-json, which allows conversion between structs and strings without any inconvenient. Therefore, one the simulation has finished, the binary traces are loaded into memory, and using the struct alignment definition, tuned into the original `TraceType` struct, converted into a JSON with the standard library utility and dumped into a file.
 
 Despite adding a postprocessing computational effort after the simulation finishes, this moves a costly operation (convert the struct into a JSON to write into the buffer) out of the hot simulation loop, the main loop (see @sec-design-lifecycle-main) improving the overall speed.
 
@@ -202,10 +216,7 @@ The simulation consumes a single JSON file describing the network topology, deco
 
 === Synthetic Data Generation
 
-#todo[cite the paper with the algorithm and describe why it was a good idea]
-Since real-world social network data at the target scale of ten million users is not publicly available in a clean format, the simulation relies on synthetic topologies generated by a Python script, `generate_data.py`.
-
-The script constructs a scale-free directed graph using a preferential-attachment variant with a configurable clustering coefficient. The algorithm grows the network node by node; each new node connects to a fixed number of existing nodes with probability proportional to their current in-degree, plus a clustering step that adds edges between the new node's neighbors with a tunable probability. This produces the heavy-tailed degree distribution characteristic of real social networks — a few highly followed hubs and a long tail of low-connectivity users.
+The simulation relies on synthetic topologies generated by a Python script, `generate_data.py`. Since real-world social network data at the target scale is not publicly available in a clean format, a synthetic generator based on the Barabási-Albert preferential attachment model @barabasi1999emergence was extended with a configurable clustering mechanism @amin2022scalefree. This approach was chosen because it produces the two structural features most relevant to information diffusion on a single pass: a heavy-tailed degree distribution (a few hubs, a long tail of low-connectivity users) and tunable local clustering (tight-knit communities that amplify multi-hop propagation). Running the model without these properties would produce either uniform-degree graphs (missing the influencer dynamic entirely) or tree-like graphs (no clustering, no cyclic reinforcement), both of which would invalidate the cascades analysis.
 
 Once the graph is built, the script assigns homogeneous user policies and action probabilities to every node, then serializes the result to the JSON format described above. The process is parameterized by the number of nodes, the number of edges per new node, and the clustering probability, making it straightforward to generate topologies at different scales for performance benchmarking and sensitivity analysis.
 
@@ -238,30 +249,62 @@ This two-step pipeline — Python for format conversion, Zig for high-performanc
 
 This section complements the design data structures section is @sec-design-datastructures with more implementation detail, with more focused on all the non std based structures.
 
-To propretly understand the next section, the concept of cache and cache locality must be introduced.
+To properly understand the next section, the concept of cache and cache locality must be introduced.
 
 #def(name: "Cache")[ A cache @wiki-cache is a hardware or software component that stores data so future requests can be stored faster. ]
 
-Modern CPUs have around 4 caches, varying sizes depending on the generation and arquitecture. When a CPU wants to operate on some piece of data on memory, it first checks the L1 cache. If the data is there, the operation will happen very fast, as to load data from the L1 cache is the faster memory can arrive to the CPU. This is called a Cache Hit. If the data is not found there, called a Cache Miss, it will need to be fetched from the pevious caches (L2, L3 or L4) or directly fetched from RAM.
+Modern CPUs feature a multi-level cache hierarchy —-typically L1, L2, and L3 caches— with sizes and latencies that vary by generation and microarchitecture @drepper2007memory. When a CPU needs to operate on data in memory, it first checks the L1 cache. If the data resides there, the operation proceeds at maximal speed; this is called a cache hit. If the data is absent —-a cache miss—- it must be fetched from a slower level (L2, L3) or directly from main memory, which is orders of magnitude slower.
 
-Modern computing is bounded by memory, as CPU as tremendously fast but memory is not. This is the root of the next optimization: take procedures to make sure the cache has the correct data most of the time. 
+As Drepper @drepper2007memory details, the gap between CPU speed and memory latency has widened so dramatically that modern computing is effectively memory-bound: the CPU spends most of its cycles waiting for data, not computing on it. This is the root of the optimizations that follow: design data structures that keep the cache populated with the right data, so the CPU rarely stalls.
 
-A CPU loads data in the Cache in lines and the @ table shows usual x86 cache line sizes.
+A CPU loads data into the cache in fixed-size blocks called cache lines. On modern x86-64 processors, a cache line is 64 bytes @drepper2007memory. This seemingly small architectural detail has profound implications: if a data structure fits multiple elements within a single cache line, the CPU loads them all in one fetch. If elements are scattered across memory, each access triggers a separate, expensive fetch.
 
-#todo[do that]
+Data structures designed around this constraint —-cache-friendly structures—- execute orders of magnitude faster because they minimize cache misses and keep the CPU pipeline fed @drepper2007memory. This is what we are going to call cache locality:
 
-If we write data structures that are firendly to cache lines loading, our program will be orders of magnitude faster, as there will be far less Cache Misses and therefore less time for the CPU to halt.
+#def(name: "Cache Locality")[A data structure friendly into account cache locality is one that makes sure that its easily loadable in cache lines (as contiguous as possible) and can be split in the different caches in a reasonable way.]
+
+All the performance extracted with the data structures is thanks to using cache locality.
 
 === Queue & Timeline: N-ary Heap
 <sec-impl-queue>
 
 @zig-std-priority-queue
-Despite Zig standard library having a `PriorityQueue` data structure working as a heap, a new from scratch queue has been implemented for the simulation. The reasoning is that the Zig implementation defaults to a binary leaf implementation.
-#todo[cite the MIT datastructures book on n-ary heaps]
+Despite Zig standard library having a `PriorityQueue` data structure working as a heap, a new from scratch queue has been implemented for the simulation. The reasoning is that the Zig implementation defaults to a binary leaf implementation, which underutilizes cache lines on modern hardware.
 
-A heap is normally build over an `ArrayList` ---non fixed size growable dynamic array--- and uses the array indexes to represent a binary tree, and rebalance it with `sift-down`  and `sift-up` methods on insertion and deletion. Theoretically this data structure is enough, but real implementations struggle with cache localities. If instead of a binary tree to represent the structure we use a bigger leaf size, more elements will be able to fit in a single cache line, and therefore the tree will be parsed much more efficienty --that is, with far less cache hits.
+A heap is normally built over an `ArrayList` —-non fixed size growable dynamic array—- and uses the array indexes to represent a tree, rebalanced with `sift-down` and `sift-up` methods on insertion and deletion @cormen2022algorithms. Theoretically this data structure is sufficient, but binary heaps struggle with cache locality: each level of the tree spans a different memory region, so traversing from root to leaf may touch a different cache line at every step. By increasing the branching factor —-using an $n$-ary heap instead of a binary one—- more siblings fit within a single 64-byte cache line @drepper2007memory, reducing the number of cache misses during sift operations @cormen2022algorithms.
 
-#todo[Picture of a binary tree and an 8 leaf tree]
+#figure(
+  cetz.canvas({
+    import cetz.draw: *
+
+    // Define styling for the nodes
+    let node-style = (radius: 0.1, fill: black, stroke: none)
+
+    // ── Level 1 (Root) ──
+    circle((0, 0), name: "root", ..node-style)
+
+    // ── Level 2 & 3 (4-ary split) ──
+    for i in range(4) {
+      // Calculate X position for the 4 intermediate nodes
+      let x2 = -3.0 + (i * 2.0)
+      let name2 = "L2_" + str(i)
+      
+      circle((x2, -1.5), name: name2, ..node-style)
+      line("root", name2)
+
+      // 4 leaves per intermediate node
+      for j in range(4) {
+        // Calculate X position for the 16 leaves, centered under their parent
+        let x3 = x2 - 0.6 + (j * 0.4)
+        let name3 = "L3_" + str(i) + "_" + str(j)
+        
+        circle((x3, -3.0), name: name3, ..node-style)
+        line(name2, name3)
+      }
+    }
+  }),
+  caption: [A minimalist three-level 4-ary tree.]
+) <fig-simple-tree>
 
 The global queue executes with a 8-leaf tree, that means for a same size three $n$ given that accessing the children of the tree node is given by $$ that means visitng this amount less of leafs.
 
@@ -330,15 +373,15 @@ This is exactly the standard CSR `row_ptr` pattern: the `follower_start` array s
 
 Constructing the `topology` struct , each user's followers are first collected into temporary `ArrayList`s. A second pass computes running offsets: the first user gets `follower_start = 0`, the second gets `follower_start = 0 + deg(u_1)`, and so on. The temporary lists are then `memcpy`'d into the `followers` slice at their computed offsets and freed, leaving only the two flat arrays.
 
-During a propagation storm —-when a popular user reposts-— the simulation must deliver a post to thousands of followers. With CSR, this iteration is a single slice over `followers[start..end]`: contiguous memory, one cache line after another, zero pointer dereferences. The per-user cost of storing an adjacency list is reduced to a single `u32` (`follower_start`), and the total memory for edges is exactly $2 dot |E|$ bytes (two `u32` values per edge, since the end is implicit).
+During a propagation storm —-when a popular user reposts-— the simulation must deliver a post to thousands of followers. With CSR, this iteration is a single slice over `followers[start..end]`: contiguous memory, one cache line after another, zero pointer dereferences @drepper2007memory. The per-user cost of storing an adjacency list is reduced to a single `u32` (`follower_start`), and the total memory for edges is exactly $2 dot |E|$ bytes (two `u32` values per edge, since the end is implicit).
 
 === Users: Struct of Arrays
 <sec-impl-users>
 
-The `User` entity defined in @sec-design-entities constains attributes with very different access patterns, and it's not a small struct. In the Object-Oriented paradigm, the default layout for a collection of entities is an Array of Objects, which in Zig would be an Array of Structs (AoS): a contiguous sequence where each element is a full `User` with all its fields packed together, such as `users: []User`. This is intuitive for human reasoning but catastrophically bad for CPU cache utilization when the struct is large and the access pattern is selective.
+The `User` entity defined in @sec-design-entities contains attributes with very different access patterns, and it's not a small struct. In the Object-Oriented paradigm, the default layout for a collection of entities is an Array of Objects, which in Zig would be an Array of Structs (AoS): a contiguous sequence where each element is a full `User` with all its fields packed together, such as `users: []User`. This is intuitive for human reasoning but catastrophically bad for CPU cache utilization when the struct is large and the access pattern is selective.
 
 Consider the `User` struct shown in @code-topology-struct. It contains an `id`, a `follower_start`, several `bool`/`u32` scalar fields, and three `Pareto(f64)` distribution objects — roughly $approx 200$ bytes in total, without taking struct alignment into account #footnote[A secondary benefit is that SoA eliminates internal struct padding. In AoS, the compiler inserts padding bytes between fields of different sizes to satisfy alignment requirements — a `bool` followed by a `u32` wastes 3 bytes, and a `Pareto(f64)` may require 8-byte alignment. These gaps further reduce the number of structs per cache line. SoA sidesteps this entirely: all `bool`s are tightly packed together, all `u32`s are tightly packed together, with padding only at array boundaries.]
-. A typical L1 cache line is 64 bytes. With AoS, a single cache line holds at most $floor(64 / 200) = 0$ complete users — in practice, parts of one user spill across multiple lines. When the simulation iterates over all users to check `is_online` (a 1-byte field), each access loads a full 200-byte struct into cache, only to read one byte and evict the rest. The fields the loop actually needs —-the hot fields-— are dragged along with cold data like the Pareto distribution parameters, which are never touched during the online check.
+. A typical L1 cache line is 64 bytes @drepper2007memory. With AoS, a single cache line holds at most $floor(64 / 200) = 0$ complete users — in practice, parts of one user spill across multiple lines. When the simulation iterates over all users to check `is_online` (a 1-byte field), each access loads a full 200-byte struct into cache, only to read one byte and evict the rest. The fields the loop actually needs —-the hot fields-— are dragged along with cold data like the Pareto distribution parameters, which are never touched during the online check.
 
 The solution is the Structure of Arrays (SoA) pattern. Rather than storing `[User0, User1, ...]` as contiguous structs, each field gets its own contiguous array: all `id`s together, all `follower_start`s together, all `is_online` flags together, and so on. Zig's `MultiArrayList(User)` @zig-std-multi-array-list implements exactly this: internally it is a collection of per-field slices.
 
@@ -360,7 +403,7 @@ The solution is the Structure of Arrays (SoA) pattern. Rather than storing `[Use
 
 The access syntax reflects this layout: `users.items(.is_online)[i]` indexes into the `is_online` array at position `i`. This is the same pattern seen in the CSR iteration at @code-neighbors-example, where `users.items(.follower_start)[i]` reads the offset for user $i$. The dot-parenthesis syntax is Zig's way of selecting which field array to index.
 
-This patern is super cache friendly. A 64-byte cache line fits 64 `bool` flags from the `is_online` array. When the simulation checks whether user 0 is online, the CPU loads the flags for users 0 through 63 in a single fetch. The next 63 checks hit L1 cache. With AoS, accessing 64 `is_online` flags would require at least 64 cache line loads (one per 200-byte struct spread across $approx 4$ lines each).  
+This pattern is cache-friendly by construction @drepper2007memory. A 64-byte cache line fits 64 `bool` flags from the `is_online` array. When the simulation checks whether user 0 is online, the CPU loads the flags for users 0 through 63 in a single fetch. The next 63 checks hit L1 cache. With AoS, accessing 64 `is_online` flags would require at least 64 cache line loads (one per 200-byte struct spread across $approx 4$ lines each).  
 Hot fields — `is_online`, `session_gen`, `num_posts`, `session_start_time` — are accessed on every event. Cold fields — the three Pareto distributions — are touched only during session initialization. SoA ensures that hot loops never pay the memory cost of loading cold data, and cold initialization never pollutes the cache with hot flags it does not need.
 
 === Power-of-Two Indexing
@@ -370,7 +413,7 @@ Hot fields — `is_online`, `session_gen`, `num_posts`, `session_start_time` —
 
 Two of the simulation's core data structures —-the `SegmentedMultiArrayList` that stores posts and the `PagedBitSet` that tracks impressions-— share a common trick that eliminates the single most expensive integer operation from their indexing paths: integer division. Both are thin wrappers around standard library building blocks: `SegmentedMultiArrayList` paginates Zig's `std.MultiArrayList` into fixed-capacity shelves, and `PagedBitSet` paginates `std.DynamicBitSetUnmanaged` into fixed-width pages. The pagination logic in both relies on the same bitwise identity.
 
-On modern x86-64 CPUs, a 64-bit integer division (`div`) takes anywhere from 20 to 80 cycles, depending on the operand values and the microarchitecture. #todo[need a citation for that] A bitwise shift (`shr` / `shl`) or a bitwise AND (`and`) takes exactly 1 cycle, as CPU love binary operations. 
+On modern x86-64 CPUs, a 64-bit integer division (`div`) takes anywhere from 20 to 80 cycles, depending on the operand values and the microarchitecture @agner2024instruction. A bitwise shift (`shr` / `shl`) or a bitwise AND (`and`) takes exactly 1 cycle —-integer division is among the most expensive single operations a CPU can perform, while bitwise arithmetic is essentially free. 
 
 Both structures exploit the same algebraic identity to identify the page a post is in and in which position of the page: when the capacity $C$ is a power of two, $C = 2^n$:
 
@@ -424,11 +467,11 @@ Both `user_seen_post` and `user_interacted_post` in the `Topology` struct use `P
 == Trace Validation
 <sec-impl-validation>
 
-Guaranteeing correctness in a discrete-event simulation implementation  is not self-evident nor trivial: several small misshaps can compromise behaviour ---and therefore the results--- without crashing the engine. To catch these failures, a standalone Python script — `python-utilities/validate_trace.py` independently verifies the output traces against a set of logical invariants. The script is fully decoupled from the simulation binary: it reads the JSONL traces produced by the binary-to-text conversion step (see @sec-impl-trace-io). It has no dependency on Zig or the simulation engine.
+Guaranteeing correctness in a discrete-event simulation implementation  is not self-evident nor trivial: several small mishaps can compromise behaviour ---and therefore the results--- without crashing the engine. To catch these failures, a standalone Python script — `python-utilities/validate_trace.py` independently verifies the output traces against a set of logical invariants. The script is fully decoupled from the simulation binary: it reads the JSONL traces produced by the binary-to-text conversion step (see @sec-impl-trace-io). It has no dependency on Zig or the simulation engine.
 
 The validation rules fall into two categories.
 
-==== Per-file structual Checks
+==== Per-file structural Checks
 Each of the four trace files needs to verify the following facts:
 
 - *Time monotonicity*: timestamps are strictly non-decreasing within each file. A single backwards time step, which would indicate a queue ordering bug, fails the entire validation.

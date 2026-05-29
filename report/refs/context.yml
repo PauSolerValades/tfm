@@ -583,3 +583,11 @@ lasser2025desire:
     page-range: 20-28
     publisher: Wiley
 
+
+blueskyfeeds-user-growth:
+  type: Web
+  title: "Bluesky User Growth Statistics"
+  url:
+    value: https://bskycheck.com/stats.php
+    date: 2026-05-28
+  organization: BSkyCheck

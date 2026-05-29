@@ -1,18 +1,25 @@
 #import "../utils.typ": *
 
-This annex explains what has been delivered with the thesis, as well as some instructions on how to run the code.
+== `des-ctic` — Simulation engine @soler2025desctic
 
-== Repositories
+The simulation (see @sec-design and @sec-impl) lives in `simulation/`. Three versions follow @sec-impl-version:
 
-The simulation (see @sec-design and @sec-impl) is in the `ctic-des` folder. The project contains four versions of the simulation, following what @sec-impl-version describes
-+ `v1-v2`: contains both the reverse chronological and the chronological order of the simulation. Both are contained in the same file, compiling with `zig build` will generate two binaries.
-+ `v3`: the finished simulation.
-+ `v4`: the simulation without `json` configuration, and the specific user session sampling defined in #todo[sec-data-sessions-whatever ]. This is the simulation that has been ran to report results .
++ `static-entities/` — v1–v2: reverse-chronological and chronological timeline variants. `zig build` produces both binaries.
++ `dynamic-posts/` — v3: full DES with action-based decisions and paginated post storage.
++ `all-features/` — v4: final version; no `json` config, uses calibrated parameters from @sec-cal-sessions and @sec-calibration-summary. This produced the results in @sec-results and @sec-exec.
 
-The data analysis code can be found in `bsky-firehose-analysis`, which is structured in the following way:
-+ EDA: main EDA, #todo[see section] on the original database tables ()
-+ Sessions: contants the tukey fence method, the replication of the twitter method (see )
-+ 
+Compile with Zig v0.16.0 and `-Doptimize=ReleaseFast`. Depends on `heap/` (a $d$-ary heap library with $O(1)$ intrusive-indexed removal, see @sec-impl-queue and @sec-impl-datastructures), vendored via Zig package manager.
 
+The `trace-analysis/` subfolder contains the pipeline from @sec-exec-pipeline to convert raw `.jsonl` traces into `.parquet` files.
 
-The database tables description can be found in @apx-database
+== `bsky-firehose-analysis` — Bluesky data pipeline @soler2025bskydata
+
+Located in `bsky-data-analysis/`. Four analytical projects mirror the platform properties characterised in @sec-data:
+
++ *Topology:* `topology/` — Firehose ingest (Go), API-based follower crawler, Forest Fire sampling @leskovec2006sampling, and validation.
++ *Sessions:* `sessions/creation-tukey/` — Per-user adaptive Tukey IQR clustering for session boundaries (@sec-cal-sessions). Distribution fitting in `sessions/analysis/fit_distributions.R` for Pareto, lognormal, and Weibull parameters (@sec-cal-dist).
++ *Post lifetime:* `post-lifetime/sql/` — Five-stage SQL pipeline from raw firehose to `post_lifetime` and `post_engagement_events` tables. EDA scripts for temporal decay, time-to-first, and cascade ordering in `post-lifetime/eda/`.
++ *Structural virality:* `structural-virality/` — Wiener index $nu(T)$ of repost cascades @goel2016structural, computed in Go, plotted in Python (@sec-method-des-metrics).
++ *Inter-post gaps:* `inter-post-gaps/` — Distribution fitting for gaps between consecutive posts within sessions (@sec-cal-interpost).
+
+Global EDA: `EDA/run.py` analyses the full firehose (212M records, 28M posts). Full database schema in `docs/DATABASE.md` and @apx-database.

@@ -1,34 +1,37 @@
-#import "utils.typ": *
+#import "utils.typ": def, flex-caption
 
-This chapter justifies and explains several methodology choices, such as the model chosed to simulate (see @sec-method-model), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
+This chapter justifies and explains several methodology choices, such as the model chosen to simulate (see @sec-method-model), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
 
 == Diffusion Model 
 <sec-method-model>
 
-This section details the theoretical foundation of the simulation engine. To accurately capture the real-world dynamics of information diffusion, we integrate the mathematically rigorous Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a Queue-Based (see ), Activity-Driven simulation architecture.
+This section details the theoretical foundation of the simulation engine. To accurately capture the real-world dynamics of information diffusion, we integrate the mathematically rigorous Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a Queue-Based (see @sec-method-model), Activity-Driven simulation architecture.
 
 === Continuous-Time Diffusion in Microblogging
 <sec-method-ctic>
 
 To accurately represent the dynamics of information diffusion on a microblogging platform like Bluesky (see @sec-sota-description), we utilize the Continuous-Time Independent Cascade (CTIC) (see @sec-sota-diffusion-ctic) model. While standard diffusion models operate in discrete, synchronized epochs @gomezrodriguez2012inferring, real-world microblogging is fundamentally asynchronous: users do not consume information in locked steps; rather, information propagation occurs continuously over time. 
 
-The CTIC model is an amazing fit for microblogging networks due to its reliance on survival analysis and time-dependent transmission likelihoods: posts are injected into a fast-moving, chronologically ordered feed. A post's "survival" (its probability of being seen and reposted before being buried by newer content) is heavily dependent on the exact continuous time elapsed since its creation @gomezrodriguez2011uncovering. By allowing transmission at different rates using continuous temporal processes (such as exponential or power-law distributions), the CTIC model naturally captures the temporally heterogeneous interactions and long-tailed viral fads characteristic of modern social media.
+The CTIC model is a good fit for microblogging networks due to its reliance on survival analysis and time-dependent transmission likelihoods: posts are injected into a fast-moving, chronologically ordered feed. A post's "survival" (its probability of being seen and reposted before being buried by newer content) is heavily dependent on the exact continuous time elapsed since its creation @gomezrodriguez2011uncovering. By allowing transmission at different rates using continuous temporal processes (such as exponential or power-law distributions), the CTIC model naturally captures the temporally heterogeneous interactions and long-tailed viral fads characteristic of modern social media.
 
 While the CTIC model provides the ideal theoretical framework for continuous-time diffusion, evaluating these continuous hazard and survival functions analytically across a massive, highly connected graph is computationally prohibitive. Therefore, to operationalize this model, we chose to translate the continuous-time dynamics into a Discrete Event Simulation (DES) (see @sec-method-des).  
 
-By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a differnt quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @sec-impl
+By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a different quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @sec-impl
 
 === The Homogeneous Rate Simplification
 
-#comment[I am grately surprised this models adapts so well to the original design knowing nothing about this, its very beautiful :)]
 
 In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate is uniform across all network edges, such that:
 
 $ alpha_(i,j) = alpha quad forall i, j in V $
 
-where $V$ is the set of all users in the network. This universal rate, $alpha$, represents the global `propagation_delay` of the network an platform: the continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline.
+where $V$ is the set of all users in the network. This universal rate, $alpha$, represents the global `propagation_delay` of the network and platform: the continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline.
 
-This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see #todo[traces? is it worth it?]). Also, this conveys a implicit and very noticeable computational advantage. 
+This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see @sec-design-traces). Also, this conveys a implicit and very noticeable computational advantage.
+
+A more structural justification for uniform $alpha$ comes from the timeline itself. The reverse-chronological feed operates as a LIFO (Last-In, First-Out) queue @hodas2014simple: the most recently propagated post sits at the top, and the user scrolls downward through progressively older content. When $alpha$ varies per edge, a post created earlier but delayed by a slow transmission could arrive after a post created later via a fast edge, scrambling the expected temporal ordering. Uniform $alpha$ guarantees that propagation preserves the global creation order: if post $p_1$ is created before post $p_2$, then $p_1$ will appear in every follower's timeline before $p_2$. This makes the timeline a faithful temporal projection of the platform's activity, which is both analytically cleaner and closer to how a real microblogging feed behaves in the absence of algorithmic reordering. 
+
+
 
 === Activity-Driven Network Dynamics
 <sec-method-activity>
@@ -44,14 +47,13 @@ $ cal(O) (u) = union.big_(k=1)^oo [t_k, t_k + Delta_k) "where" t_k in T $
 and $Delta_k$ is a positive random variable representing the sessions duration. 
 
 - The interval $I_k = [t_k, t_k + Delta_k)$ constitutes the online duration (sampled from `session_duration`).
-- The gap between sessions, mathematically expressed as $d = t_(k+1) - (t_k + Delta_k)$, constitutes the offline vacation period (sampled from `user_inter_session` see #todo[@ simconfig]).
+- The gap between sessions, mathematically expressed as $d = t_(k+1) - (t_k + Delta_k)$, constitutes the offline vacation period (sampled from `user_inter_session`; see @sec-calibration-summary).
 
 In OSNs, these activity states are usually called sessions: a user starts a session when they log in to the platform to consume content, and it ends when they close the application or log off.
 
-While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself #todo[Cite cognitive limits/attention economy paper]. 
+While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself @hirakura2023method @hodas2014simple. 
 
 An informal mathematical way of the lifetime analysis post is provided on @apx-lifetime.
-
 
 
 == Discrete-Event Simulation
@@ -79,7 +81,7 @@ There are three distinct actions that a user can do in the simulation, which are
 3. Go online: puts the user back online. When online can do any of the actions mentioned above.
 4. Go offline: changes user state from online to offline. Now it cannot interact with any posts, nor create new ones.
 
-As every user acts as an independent entity, it is convenient to make them act independently from one another; the queue $Q$ always contains an event of each type per user always preescheduled #todo[@ sec-design-heurisic]
+As every user acts as an independent entity, it is convenient to make them act independently from one another; the queue $Q$ always contains an event of each type per user always prescheduled (see @sec-design-datastructrues-queue).
 
 
 To comply with the Continuous-Time Independent Cascade, we have to allow reexposition to a content the user has already ignored but coming from another edge (another of it's followees). It is considered then an interaction as a like or a post, so a user can propagate or not propagate a post but interact with it. A user cannot interact nor see again their own posts.
@@ -92,16 +94,15 @@ Therefore, we can give a more abstract expression of an event ---which is an ele
 
 To simplify both implementation and evaluation of the simulation, we assume the following simplifications in respect of how a real online social networks behaves to adapt to the scope of the project.
 
-// 1. *User Homogeneity:* Every user $u in cal(U)$ is indistinguishable in behavior and shares the exact same decision policy $pi$ and creation rate $lambda$.
-// $ forall u, v in cal(U) : pi^(u) = pi^(v) = pi quad "and" quad lambda^(u) = lambda^(v) = lambda $
-//
-1. *Post Homogeneity:* All posts are treated as content-agnostic commodities. A user's probability of executing an action $a$ is completely independent of the specific item being evaluated:
+1. *User Homogeneity Policy:* Every user $u in cal(U)$ is indistinguishable in behavior and shares the exact same decision policy $pi$ and creation rate $lambda$.
+ $ forall u, v in cal(U) : pi^(u) = pi^(v) = pi quad "and" quad lambda^(u) = lambda^(v) = lambda $
+
+2. *Post Homogeneity:* All posts are treated as content-agnostic commodities. A user's probability of executing an action $a$ is completely independent of the specific item being evaluated:
 $ pi(a | i) = pi(a | j) = pi(a) quad forall i, j in cal(I), forall a in cal(R)'_(cal(U)cal(I)) $
 
-2. *Action Independence (Markovian Behavior):* A user's choice to interact with a post $i$ at time $t$ depends strictly on the static policy $pi$ and is independent of their historical impression history $cal(H)_t (u)$. 
+3. *Action Independence (Markovian Behavior):* A user's choice to interact with a post $i$ at time $t$ depends strictly on the static policy $pi$ and is independent of their historical impression history $cal(H)_t (u)$. 
 
 $ PP ( rho((u, i, a), t) = 1 mid cal(H)_t (u) ) = pi(a) $
-
 
 As it's been discussed until now, the proposed model is a dynamical system in which its solution cannot be found analytically due to it's complexity. In a DES implementation, the system's state only changes at discrete points in time when a specific event occurs, allowing the simulation engine to jump efficiently from one event to the next without calculating the time in between. 
 
@@ -110,22 +111,16 @@ As it's been discussed until now, the proposed model is a dynamical system in wh
 The main parameters that define the simulation, once the simplificating assumptions are in place (see @sec-method-des-assumptions).
 1. How often does a user sees a post: this is modeled as the time between every post.
 2. Actions: the probability associated to every action the user can do when sees a post.
-3. Sessions: how often does a user connect (time between sessions) and the session duration of the user. Additionally, from the whole user population, we start with a fraction of the user offline, which is a controlable parameters.
+3. Sessions: how often does a user connect (time between sessions) and the session duration of the user. Additionally, from the whole user population, we start with a fraction of the user offline, which is a controllable parameter.
 4. Propagation delay: time it takes for a post to be reposted or created and then be propagated.
 5. Interaction and Creation delay: when a user decides which decision takes, the delay on realizing the action is implemented into the simulation. Additionally, there is a bigger delay when the user decides to create a post, which simulates the actual writing of the post.
 
-#todo[Create a figure of all the delays]
-
-To see the parameter calibration and results, see #todo[@ sec-data-cal]
+To see the parameter calibration and results, see @sec-cal-policy
 
 === Evaluation Metrics
 <sec-method-des-metrics>
 
-To evaluate the simulation, the following metrics are going to be obtained from the simulation traces:
-
-#todo[Expand the first two sections slightily]
-
-#todo[Mark which ones are caracteristic metrics vs fundamental metrics]
+When designing a simulation, one must have a good distinction between desired quantities ---which metrics is the simulation being build to observe--- and characteristic quantities ---which metrics will the simulation produce. The reposts power-law is a characteristic quantity, as must be reproduced by the simulation to verify its behaviour. Post Lifetimes and Structural Virality are in fact desired quantities to replicate, as in how the input changes will change the output.
 
 ==== Reposts Power-law
 
@@ -134,17 +129,21 @@ According to the CTIC model, the number of reposts of a post should follow a pow
 
 ==== Post Lifetimes
 
-This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptely decrease as time goes on.
+This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptly decrease as time goes on.
 
 ==== Structural Virality
 
 Virality is a concept that is more nuanced than it first appears. While content is said to have "gone viral" when it rapidly becomes popular through person-to-person contagion, popularity alone does not imply virality: a piece of content may reach a large audience through a single broadcast event (e.g., a post by a celebrity with millions of followers) just as easily as through multi-generational peer-to-peer propagation @goel2016structural. Distinguishing between these two mechanisms requires examining the fine-grained structure of the diffusion cascade itself, not just its aggregate size.
 
-#todo[replicate figure 1 of the paper showing broadcast vs viral cascade structures]
+Intuitively, the shape of the cascade matters: a "broadcast" cascade reaches many users but remains extremely shallow (all adoptions occur within one hop from the source), whereas a genuinely "viral" cascade propagates through multiple generations, with each individual responsible for only a fraction of the total adoptions. However, simple metrics like cascade depth are fragile ---a single long chain in an otherwise flat broadcast can inflate the depth without indicating true viral spread @goel2016structural. The @fig-broadcast-vs-viral-2 showcases this differences.
 
-Intuitively, the shape of the cascade matters: a "broadcast" cascade reaches many users but remains extremely shallow (all adoptions occur within one hop from the source), whereas a genuinely "viral" cascade propagates through multiple generations, with each individual responsible for only a fraction of the total adoptions. However, simple metrics like cascade depth are fragile---a single long chain in an otherwise flat broadcast can inflate the depth without indicating true viral spread @goel2016structural.
-
-#todo[add the picture of broadcast vs viral cascade]
+#figure(
+  image("images/sota/broadcast-vs-viral.jpg", width: 80%),
+  caption: flex-caption(
+    [Broadcast vs viral cascade structures.],
+    [Broadcast vs viral cascade structures. A broadcast cascade (right) radiates directly from a single source to many followers. A viral cascade (left) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]
+  )
+) <fig-broadcast-vs-viral-2>
 
 To address these shortcomings, Goel et al. @goel2016structural propose a formal measure of structural virality based on the Wiener index, a classical graph invariant from mathematical chemistry @wiener1947structural. For a cascade represented as a tree $T$ with $n > 1$ nodes, the structural virality $nu(T)$ is defined as the average distance between all pairs of nodes:
 
@@ -161,15 +160,6 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 ]
 
 
-#comment[I could add here another section called “Why not agent-based modeling” but idk how
-interesting is, if in the SotA i don’t introduce the OASIS paper or the big LLM things. Or
-maybe not event the LLM stuff, but traditional ABM modeling in Social Networks
-I got a draft of it, which it should convey the following information:
-ABM tend to be computationally more complex (is that even true????) due to the agents
-being “active” instead of passive. That means the main loop has to evaluate users that are offline
-to discard they are even active. DES just jumps over that, as the event “go back online” just
-needs to be processed when it’s attended. Also, ABMs, if they discrete the time into Δ𝑡 chunks]
-
 // == Why not Agent-Based Modeling?
 // <sec-method-abm>
 //
@@ -184,7 +174,7 @@ needs to be processed when it’s attended. Also, ABMs, if they discrete the tim
 // In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
 //
 
-All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed offline to compute the power-law exponents, and structural virality scores described above.
+All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset (see @sec-exec-pipeline) to analyze and compute the desired quantities.
 
 == Random Number Generation
 <sec-method-rng>
@@ -242,14 +232,6 @@ To sample from it we've used the following relationship @casella2002statistical:
 $ X ~ x_m · exp{Y/alpha} $
 
 therefore being as efficient as generating an exponential with the ziggurat algorithm.
-
-
-== Time-Variyng Heterogeneous Graphs
-<sec-method-graph>
-
-#comment[Esteve, I don't fully understand what I need to write here. Like, why did I need a time heterogeneous graph to model the problem? Because the problem is simply like this]
-
-Revise the articles from the beginning. This is not about the data (users and relationships) and data, but the model of the data.
 
 
 

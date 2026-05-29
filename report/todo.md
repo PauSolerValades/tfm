@@ -7,4 +7,4 @@
 [ ] Posar un exemple (grapfic) de les velocitats de la cache més que una taula.
 [ ] Canviar el heap que s'ha de freear per una altra cosa
 [ ] Define data oriented design quan parlant de cache locality, explicar què és la cpu locality, hits and miss.
-
+[ ] Future section should have the contents improved.
