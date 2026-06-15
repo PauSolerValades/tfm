@@ -3,7 +3,7 @@ data
 *.pdf
 results
 img
-/__pycache__/
+__pycache__/
 
 
 .zig-cache/
@@ -14,3 +14,9 @@ zig-out/
 /build-*/
 /docgen_tmp/
 zig-pkg/
+
+# For manim
+/media
+/custom_config.yml
+test.py
+

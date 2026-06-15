@@ -1,0 +1,778 @@
+#import "@preview/typslides:1.3.3": *
+
+// ==========================================
+// GLOBAL CONFIGURATION
+// ==========================================
+#show: typslides.with(
+  ratio: "16-9",
+  theme: "bluey",
+  font: "New Computer Modern",
+  font-size: 18pt,
+  link-style: "color",
+  show-progress: true,
+)
+
+#show heading: set text(font: "New Computer Modern", fill: rgb("#111111"))
+
+// Image base path helper
+#let img(path, width: auto) = {
+  image("images/" + path, width: width)
+}
+
+// Simple grid column helper
+#let col2(a, b) = grid(columns: 2, gutter: 2.5em, a, b)
+#let col3(a, b, c) = grid(columns: 3, a, b, c)
+#let col4(a, b, c, d) = grid(columns: 4, a, b, c, d)
+
+
+// ==========================================
+// PART 1: THE VISION & THE BOTTLENECK
+// ==========================================
+
+// --- TITLE SLIDE ---
+#blank-slide[
+  #v(4%)
+  #set align(center)
+  #text(size: 1.3em, weight: "bold", fill: rgb("#1a1a1a"))[
+    A Continuous-Time Independent Cascade Model \ on Bluesky using Discrete-Event Simulation
+  ]
+  #v(0.6em)
+  #text(size: 1.0em, style: "italic", fill: rgb("#4a4a4a"))[
+    Master Thesis — MSc Statistics and Operations Research
+  ]
+  #v(1em)
+  #text(size: 1.0em, weight: "medium")[Pau Soler Valadés]
+
+  #text(size: 0.85em, style: "italic", fill: rgb("#333333"))[
+    Supervised by Jana Lasser#super[2], Esteve Codina#super[1], and Pau Fontseca#super[1]
+  ]
+  #v(0.8em)
+  #text(size: 0.75em, fill: rgb("#4a4a4a"))[
+    #super[1] Universitat Politècnica de Catalunya #h(1em) #super[2] University of Graz
+  ]
+  #v(1.2em)
+  #text(size: 0.75em, style: "italic", fill: rgb("#666666"))[
+    July 11, 2026 #sym.dash IDea_Lab, Graz
+  ]
+]
+
+// --- SLIDE: The Vision ---
+#slide(title: "Introduction & Motivation")[
+  #v(0.5em)
+  #set align(center)
+  #text(size: 1.1em)[*Objective*: Study Information Diffusion on a Microblogging Social Media.]
+
+  #set align(left)
+  #v(0.5em)
+  
+  *Definition*: Information diffusion is the study of how discrete pieces of content (called from now on posts) propagate through a network infrastructure over time.
+
+  When posts propagate, they form *cascades* — the study of their structure is of high interest.
+
+  #align(center)[
+    #img("sota/broadcast-vs-viral.jpg", width: 55%)
+  ]
+
+]
+
+#slide(title: "This Project")[
+  
+  Information Diffusion in a Microblogging Social Media site is heavily influenced by the following three factors:
+  - *Platform Affordances:* features of the platform --- feeds, timelines, recommenders. 
+  - *User Dynamics:* when users log in --- how long they scroll, how frequently they create
+  - *User-Content Interaction:* semantic alignment between a post and a user's preferences
+
+  This project tackles mainly *User-Dynamics* and a subset of *Platform Affordances*, aiming to be a first step to allow content-aware analysis. 
+
+]
+
+#slide(title: "Methodology")[
+  #set text(size: 1.3em) 
+  1. Problem definition: what do we want to evaluate
+  2. Problem modelization: how is the model we will use
+  3. Model evaluation: building a simulation to evaluate the model
+  4. Results analysis: how good is the simulation at replicating real data
+]
+
+#slide(title: "Bluesky & the AT Protocol", back-color: rgb("#87ceeb"))[
+  #v(0.3em)
+  #text(size: 1em, weight: "bold")[Bluesky is a decentralized microblogging platform — same concept as Twitter, but open.]
+
+  #v(0.5em)
+  #col2(
+    [
+      - Built on the *AT Protocol* (Authenticated Transfer Protocol)
+      - Separates data storage from the application layer
+      - All platform events flow through the *Firehose* — a public, real-time stream
+      - Follows, posts, likes, reposts — all visible, unfiltered
+    ],
+    [
+      - Unlike Twitter/X, the Firehose grants *complete, unrestricted access*
+      - No corporate API limits, no curated data exports
+      - For the first time: raw, unaggregated telemetry at scale
+      - Enables research that was previously impossible on closed platforms
+    ],
+  )
+]
+
+
+#slide(title: "Problem definition")[
+  #v(0.2em)
+  We model a microblogging social media platform under these simplifying assumptions:
+
+  #v(0.3em)
+      - *Just the Following Feed:* reverse-chronological timelines
+      - *Static Users and Followers:* no new users, no new relationships
+      - *No Mutes nor Blocks:* following a user means receiving all their posts
+      - *No Quotes, no Replies:* only likes and reposts
+      - *No User Profiles:* users are limited to their timeline, no browsing other profiles
+
+  #v(0.4em)
+  So a user can only do two things: *like* or *repost* a post from their timeline.
+  Posts appear in reverse-chronological order from the accounts they follow.
+
+  Users  
+]
+
+#slide(title: "Intutition")[
+
+  We have a user $u in cal(U)$, and everyone of them has a timeline $cal(T)_t (u)$ filled with posts $i in cal(I)$. 
+
+  Main idea: user is online, they are *scrolling* through their timelines, and they can interact with a post with a *like* or a *repost*, or just *ignore* it and keep scrolling.
+
+  When $u$ reposts $i$, $i$ *propagates* to the followers of $u$, $cal(N)_"out" (u)$:
+
+  // HERE
+  $ "for" v "in" cal(N)_"out" (u): "push"(cal(T)_t (v)) $
+
+  But $v in cal(N)_"out" (u)$ will not immediately see reposted content $i$ if it has been scrolling for a while, as the user sees _past_ content, so it gets enqueued in $cal(T)_t (v)$.
+
+  When $v$ connects online again and starts scrolling, will eventually see $i$ if the time $v$ has been online is not too long: then $i$ will never have the change to propagate. 
+]
+
+#slide(title: "Continuous-Time Independent Cascade")[
+  #v(0.3em)
+  #text(size: 0.9em, weight: "bold")[*Definition.*] The CTIC model preserves independent transmission across edges but replaces fixed step-based probabilities with a time-dependent transmission likelihood.
+
+  #v(0.4em)
+  - Each edge has a pairwise transmission rate $alpha_(j,i)$
+  - An infected node $j$ at time $t_j$ may infect neighbor $i$ at some later time $t_i > t_j$
+  - The delay between infection and transmission is governed by continuous hazard functions, not discrete steps
+  - Each infected node gets *one independent chance* per outgoing edge, then becomes refractory
+  - Standard IC operates in discrete synchronized epochs; CTIC replaces these with continuous-time survival analysis
+
+  #v(0.4em)
+  #text(size: 0.8em)[*Homogeneous simplification for this work:* $alpha_(i,j) = alpha$ for all edges — uniform propagation delay across the entire network.]
+]
+
+#slide(title: "Activity-Driven & Queue-Based")[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Users are not always online, and content arrives faster than it can be consumed.]
+
+  #v(0.3em)
+  *Activity-Driven.* Human interactions are bursty — prolonged offline gaps, short engagement bursts. Each user alternates between online sessions and offline periods:
+
+  $ cal(O)(u) = union.big_(k=1)^oo [t_k, t_k + Delta_k) $
+
+  where $Delta_k$ is the session duration and $t_(k+1) - (t_k + Delta_k)$ is the offline gap. When offline, no actions, no post creation, no propagation can occur.
+
+  #v(0.3em)
+  *Queue-Based.* Each user's timeline $cal(T)_t(u)$ is a priority queue ordered by arrival time — the most recently arrived post sits at the top. New posts from followees are pushed into the timeline with their arrival timestamp. When the user scrolls, they pop the post with the maximum timestamp (most recent first).
+]
+
+#slide(title: "Model Evaluation")[
+  The proposed model is too complex to be analytically evaluated: the use of a simulation is mandatory.
+
+]
+
+// --- SLIDE: ABM vs DES ---
+#slide(title: "Why not Agent-Based Modeling?", back-color: rgb("#fff3e0"))[
+  #col2(
+    [
+      #text(size: 0.9em, weight: "bold")[Agent-Based Modeling]
+      #v(0.2em)
+      - Bottom-up: each user is an autonomous agent with its own perception, state, and decision-making
+      - Even when event-driven, every agent's individual state must still be maintained and evaluated
+      - The agent-centric architecture means effort inherently scales with $N$
+      - High development cost: perception, individual cognition, inter-agent communication
+    ],
+    [
+      #text(size: 0.9em, weight: "bold")[Discrete-Event Simulation]
+      #v(0.2em)
+      - Top-down: entities flow through processes and queues — behavior dictated by system logic, not agent autonomy
+      - Jumps from event to event, bypassing idle intervals entirely
+      - No work for offline users — exploits the *intrinsic sparsity* of human activity
+      - Lean: probability distributions and routing rules, not individual cognition
+    ],
+  )
+
+  #v(0.4em)
+  #text(size: 0.8em)[
+    Both can be event-driven. The difference is philosophical: ABM models *who decides*, DES models *what happens*.
+    When the question is *aggregate diffusion dynamics*, DES routes effort where it matters —
+    the propagation events that actually drive the dynamics — rather than maintaining agent autonomy.
+  ]
+]
+
+
+
+// --- SLIDE: Simulation Rules ---
+#slide(title: "Simulation Rules")[
+  #v(0.2em)
+  The model translates into a DES governed by these rules:
+
+  #v(0.3em)
+  #col2(
+    [
+      - A user is either online or offline; when offline, no actions are possible
+      - When online, a user can either create a post or check their timeline
+      - Reposting a post pushes it onto followers' timelines — but only if they haven't interacted with it yet
+      - The only interactions are like, repost, or ignore
+    ],
+    [
+      - A user can't interact with a post they already liked or reposted
+      - A user *can* see a post again if it arrives from a different followee (CTIC re-exposure)
+      - Empty timeline $arrow.r$ user goes offline
+      - Every propagation carries a delay $Delta_p$ between the action and timeline arrival
+    ],
+  )
+]
+
+// --- SLIDE: Input Parameters ---
+#slide(title: "Input Parameters")[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[All randomness in the simulation is driven by calibrated distributions.]
+
+  #v(0.3em)
+  #col2(
+    [
+      *Global parameters*
+      #v(0.15em)
+      - Propagation delay $Delta_p$ — time for a post to reach followers
+      - Interaction delay — cognitive time before reacting to a post
+      - Creation delay — time to compose and publish a post
+      - Inter-action time — gap between consecutive timeline checks
+      - Policy $pi$: $p_"ignore"$, $p_"like"$, $p_"repost"$
+      - Horizon $t_h$ and warm-up $t_w$
+      - Offline startup ratio — fraction of users starting offline
+    ],
+    [
+      *User-dependent parameters* (sampled per user)
+      #v(0.15em)
+      - Session duration $Delta_k$ — how long a user stays online
+      - Inter-session gap — offline time between consecutive sessions
+      - Inter-post creation — interval between posts authored by the same user
+      #v(0.3em)
+    ],
+  )
+]
+
+// --- SLIDE: Event Sources ---
+#slide(title: "Event Sources")[
+  #v(0.2em)
+  Four event types drive the simulation, all managed through a global priority queue $Q$:
+
+  #v(0.3em)
+  #col2(
+    [
+      - *Session:* user goes online or offline. Going online primes action + create events; going offline clears the timeline and schedules the next session start
+      - *Create:* user authors a new post. Propagates to followers at $t + Delta_p$
+    ],
+    [
+      - *Action:* user pops their timeline, decides to ignore / like / repost according to policy $pi$. Reposts trigger propagation; all actions schedule the next action
+      - *Propagate:* delivers a post to a follower's timeline at the scheduled time. The only event not tied to a real-world action — it preserves time causality
+    ],
+  )
+
+  #v(0.3em)
+  #text(size: 0.8em)[Stale-event guard: each event carries a `session_gen` — if the user's session changed since the event was scheduled, it's silently discarded.]
+]
+
+// --- SLIDE: Simulation Lifecycle ---
+#slide(title: "Simulation Lifecycle")[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Three stages, one global priority queue $Q$.]
+
+  #v(0.4em)
+  #col3(
+    framed(title: [Stage 1: Warm-up], back-color: rgb("#e8f5e9"))[
+      $t in [0, 1000]$
+      - All users online
+      - Only create events
+      - Fills all timelines naturally
+    ],
+    framed(title: [Init], back-color: rgb("#fff8e1"))[
+      $t = 1000$
+      - Assign online/offline
+      - Prime event queue
+      - Session + action events
+    ],
+    framed(title: [Main Loop], back-color: rgb("#e3f2fd"))[
+      $t in [1000, 5000]$
+      - Pop min-time from $Q$
+      - Dispatch to handler
+      - Schedule follow-ups
+    ],
+  )
+]
+
+// --- SLIDE: Implementation ---
+#slide(title: "Implementation")[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Custom engine in Zig — built for performance from the ground up.]
+
+  #v(0.3em)
+  *Why custom?* ensuring optimal performance to allow multiple reconstructions and reproducibility. 
+
+  #v(0.3em)
+  #col2(
+    [
+      - *CSR graph layout:* follower iteration is a cache-friendly sequential scan
+      - *D-ary heap:* $O(1)$ amortized event queue with preallocated capacity
+      - *Arena allocation:* zero per-event malloc/free
+      - *Pagination:* Allows for memory efficient unbounded growth 
+    ],
+    [
+      - *Buffered binary I/O:* traces written outside the hot loop
+      - *Custom distributions:* implements all distributions needed 
+      - *Stale-event guard:* avoids queue reallocation on session boundaries
+    ],
+  )
+]
+
+#slide(title: "Road to Evaluation")[
+  #v(0.3em)
+  #set align(center)
+  #text(size: 1em, weight: "bold")[Before running the simulation, we need two things from the real world.]
+
+  #v(0.8em)
+  #col2(
+    align(center)[
+      #text(size: 0.9em, weight: "bold")[A Network Topology]
+      #v(0.2em)
+      #text(size: 0.8em)[Who follows whom?]
+
+      #text(size: 0.75em, fill: gray)[Two years of follow events \ sampled subgraphs]
+    ],
+    align(center)[
+      #text(size: 0.9em, weight: "bold")[Parameter Values]
+      #v(0.2em)
+      #text(size: 0.8em)[How do users behave?]
+
+      #text(size: 0.75em, fill: gray)[Six days of event telemetry \ calibrated distributions]
+    ],
+  )
+]
+
+// --- SLIDE: Topology Extraction ---
+#slide(title: "Topology Extraction", back-color: rgb("#fff3e0"))[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[1.4 years of Bluesky follow events processed into a simulation-ready graph.]
+
+  
+
+  #v(0.3em)
+  - $1.79 times 10^9$ raw firehose events consumed via Go producer-consumer pipeline
+  - Filtered `app.bsky.graph.follow` events → $28.9$M users, $1.47 times 10^9$ active follow edges
+  - Blocks excluded (moderation role, not information-propagation)
+
+  #v(0.2em)
+  *Forest Fire sampling* to preserve scale-free structure at tractable sizes:
+  - $p_f = 0.5$, $p_b = 0.2$ — recursively burns outgoing and incoming neighbours
+  - Preserves power-law degree distribution, community structure, and clustering
+  - Output: induced subgraph (all edges between visited nodes) for simulation
+
+  #v(0.2em)
+  Three datasets used: *100K*, *500K*, and *1M* nodes (120M, 502M, 654M edges)
+]
+
+// --- SLIDE: Session Building ---
+#slide(title: "Session Building", back-color: rgb("#fff3e0"))[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Sessions must be inferred — the Firehose records events, not login/logout boundaries.]
+
+  #v(0.3em)
+  *Approach:* Tukey's IQR outlier detection applied per-user over their inter-event gaps. A session boundary is declared when the gap exceeds the user's personal threshold:
+
+  $ "threshold"(u) = max(60 s, thin space Q_3(u) + 1.5 dot "IQR"(u) ) $
+
+  #v(0.2em)
+  - Applied to 6 days of event data → two session tables:
+  - `sessions_all` ($47.4$M sessions, includes likes): captures rapid browsing (median 23 s)
+  - `sessions_engagement` ($19.6$M sessions, excludes likes): captures content creation rhythms (median 4.8 min)
+
+  #v(0.2em)
+  Each user's session durations and inter-session gaps are then fit to candidate distributions (Pareto, Weibull, Lognormal, Gamma, Exponential) — best fit selected via Vuong's test.
+]
+
+// --- SLIDE: Post Lifetime Analysis ---
+#slide(title: "Post Lifetime Analysis", back-color: rgb("#fff3e0"))[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[How long do posts live? Analysis over $15.3$M top-level posts.]
+
+  #v(0.3em)
+  #col2(
+    [
+      *Engagement counts*
+      #v(0.15em)
+      - 50.7% of posts receive *zero* engagement
+      - Reposts: power-law with $alpha = 2.21$
+      - Likes: $alpha = 2.15$, Replies: $alpha = 2.26$
+      - All in the finite-mean, infinite-variance regime
+    ],
+    [
+      *Lifetime distribution*
+      #v(0.15em)
+      - Two-component structure:
+      - Body ($< 15.6$ h, ~75%): Weibull ($k = 0.53$)
+      - Tail ($> 15.6$ h, ~25%): Pareto ($alpha = 2.16$)
+      - Median lifetime: 3.8 h; $P_99$: 133 h (5.6 days)
+    ],
+  )
+
+  #v(0.2em)
+  #text(size: 0.8em)[Weibull $k < 1$ implies decreasing hazard rate — posts become *less* likely to die the longer they survive. Time-to-first engagement: replies fastest (median 5.9 min), reposts slowest (13.3 min).]
+]
+
+// --- SLIDE: Cascade Analysis (1) ---
+#slide(title: "Cascade Analysis", back-color: rgb("#fff3e0"))[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Structural virality $nu$: distinguishing broadcast from genuine viral spread.]
+
+  #v(0.3em)
+  - Bluesky's AT Protocol includes a `via` field — the *exact* parent repost is known, no inference needed
+  - $4.41$M cascades reconstructed from $25.4$M repost events ($approx 3$ min runtime)
+  - Direct reposts (69.3%): user saw the original post
+  - Via reposts (30.7%): user saw someone else's repost — the chain link
+
+  #v(0.2em)
+  *Three regimes:*
+  #col3(
+    align(center)[
+      #text(size: 0.85em, weight: "bold")[Broadcast]
+      $nu = 1.0$ — 54.7%
+    ],
+    align(center)[
+      #text(size: 0.85em, weight: "bold")[Mixed]
+      $1 < nu <= 3$ — 42.7%
+    ],
+    align(center)[
+      #text(size: 0.85em, weight: "bold")[Viral]
+      $nu > 3$ — 2.6%
+    ],
+  )
+]
+
+// --- SLIDE: Cascade Analysis (2) ---
+#slide(title: "Cascade Analysis (2)", back-color: rgb("#fff3e0"))[
+  #v(0.2em)
+  #text(size: 0.9em, weight: "bold")[Bluesky is predominantly broadcast — but the viral tail is real.]
+
+  #v(0.3em)
+  #col2(
+    [
+      - Median $nu = 1.0$, mean $nu = 1.35$
+      - Max $nu = 80.74$ (12,720 nodes, depth 235)
+      - 73.4% of cascades have depth 1 — every reposter saw the original
+      - $nu$ grows sub-linearly with cascade size: 1,000× larger cascade → only ~15× more viral
+    ],
+    [
+      - Extreme virality is exponentially rare: above $nu = 2$, probability drops ~10× per unit
+      - At $nu = 10$, fewer than 1 in 10,000 cascades remain
+      - Deepest cascade: 235 hops — but even this is only $nu = 80$
+      - *Bluesky cascades are wide, shallow trees — not long chains.*
+    ],
+  )
+
+  #v(0.2em)
+  #text(size: 0.8em)[These empirical distributions — repost $alpha = 2.21$, lifetime shape, and the $nu$ distribution — are the *calibration targets* the simulation must reproduce.]
+]
+
+// --- SLIDE: Calibration ---
+#slide(title: "Calibration")[
+
+  *Per-user distributions.* Each synthetic user receives a real $(alpha, x_min)$ pair randomly sampled from the pool of per-user MLE fits ($1.16$M users). All collapsed to Pareto for implementation simplicity, but the heterogeneity is preserved:
+  - Session duration — randomly sampled from the fitted parameter pool
+  - Inter-session gap — randomly sampled from the fitted parameter pool
+  - Inter-post creation — randomly sampled from the fitted parameter pool
+
+  #v(0.2em)
+  *Action policy.* The categorical $pi$ is derived from the observed engagement rate:
+  - Median user likes or reposts ~20% of posts they see (computed from sessions and inter-action time)
+  - Interactions: 93.8% likes, 6.2% reposts → $pi = [0.80, 0.188, 0.012]$ on [ignore, like, repost]
+  - Inter-action time: Exponential with mean 3 s (estimated)
+
+  #v(0.2em)
+  *Delays.* All set to 1 tick: $Delta_p = 1$ (propagation), interaction delay = 1, creation delay = 1. This removes time units from analysis — all temporal results are expressed as multiples of $Delta_p$, making them system-agnostic.
+]
+
+// --- SLIDE: Statistical Reproducibility ---
+#slide(title: "Stationary State")[
+
+  #v(0.2em)
+  #align(center)[
+    #img("results/s1_convergence.png", width: 90%)
+  ]
+
+  #v(0.2em)
+  - ~1700 total runs across three scales (1600 + 136 + 10)
+  - Online fraction converges within ~100 runs; confidence intervals at $plus.minus 5 times 10^(-5)$
+  - Results are not one-off lucky iterations — they are statistically reproducible averages
+  - The efficiency is what makes the science rigorous
+]
+
+#slide(title: "Stability & Stationarity")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[The simulation reaches a robust steady state across all scales.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s1_histograms.png", width: 100%)
+      #text(size: 0.6em)[Unimodal, tightly concentrated distributions]
+    ],
+    [
+      #v(0.3em)
+      - Online fraction: $0.113$–$0.126$, scale-invariant
+      - Power-law exponent $gamma approx 1.73$
+      - All metrics form tight, unimodal distributions
+      - No evidence of multi-stability or phase transitions
+
+      #v(0.4em)
+      #text(size: 0.75em, fill: gray)[Confidence intervals: online fraction $plus.minus 5 times 10^(-5)$ at 100K with 1600 runs]
+    ],
+  )
+]
+
+
+
+// --- SLIDE: Linear Scalability ---
+#slide(title: "Scalability")[
+  #v(0.2em)
+  #align(center)[
+    #img("results/execution_time_scaling.png", width: 50%)
+  ]
+
+  #v(0.2em)
+  - $R^2 = 1.000$, slope = 1.42
+  - 100K: ~1.4 min/run, 500K: ~10.8 min/run, 1M: ~22.6 min/run
+]
+
+#slide(title: "Growth")[
+  #v(0.2em)
+  #col2(
+    [
+      *Linear time is outstanding.*
+      #v(0.15em)
+      - 1.4 ms per user — doubling users doubles time ($R^2 = 1.000$)
+      - 100K in ~1.4 min, 1M in ~22.6 min
+      - Result of deliberate engineering: CSR layout, D-ary heap, buffered I/O — each chosen with scalability as the guiding concern
+      - Enables massive replication without exploding runtime
+    ],
+    [
+      *Quadratic memory is the bottleneck.*
+      #v(0.15em)
+      - Two `PagedBitSet` instances track seen and interacted posts: $N times M$ bits each
+      - $M$ grows with $N$ (more users → more posts) → $O(N^2)$ worst-case
+      - 100K → 32 GB, 1M → 800 GB peak RSS
+      - This — not time — limits scaling beyond 1M users
+    ],
+  )
+]
+
+
+// ==========================================
+// PART 4: PROOF OF CAPABILITY (THE RESULTS)
+// ==========================================
+
+
+// --- SLIDE: Stability ---
+#slide(title: "Stability & Stationarity")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[The simulation reaches a robust steady state across all scales.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s1_histograms.png", width: 100%)
+      #text(size: 0.6em)[Unimodal, tightly concentrated distributions]
+    ],
+    [
+      #v(0.3em)
+      - Online fraction: $0.113$–$0.126$, scale-invariant
+      - Power-law exponent $gamma approx 1.73$ — *universal constant* \
+        of the simulation at this parameterization
+      - All metrics form tight, unimodal distributions
+      - No evidence of multi-stability or phase transitions
+
+      #v(0.4em)
+      #text(size: 0.75em, fill: gray)[Confidence intervals: online fraction $plus.minus 5 times 10^(-5)$ at 100K with 1600 runs]
+    ],
+  )
+]
+
+// --- SLIDE: Timeline Starvation ---
+#slide(title: "Timeline Starvation")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[An emergent phenomenon: ~50% of sessions end empty.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s2_backlog_hist.png", width: 100%)
+      #text(size: 0.65em)[Backlog distribution: zero dominates all scales]
+    ],
+    [
+      *The boredom mechanic:* when a user exhausts \
+      their timeline, the session ends.
+
+      - 50.9% (100K) / 45.9% (500K) / 53.0% (1M) \
+        sessions end empty
+      - 19–27% of sessions have *zero actions* at all
+      - Root cause: timeline is cleared when user \
+        goes offline
+    ],
+  )
+
+  #v(0.3em)
+  #text(size: 0.8em)[*Key finding:* Follower count has *no effect* on starvation — it's a timing effect, not a topological one. Sessions during quiet periods starve regardless of degree.]
+]
+
+// --- SLIDE: Session Engagement ---
+#slide(title: "Session Engagement")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[Boredom bifurcates the user population.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s2_duration_vs_empty.png", width: 95%)
+      #text(size: 0.65em)[Empty vs non-empty: 9.5× difference in median duration]
+    ],
+    [
+      *Two regimes:*
+      - *Starvers:* median 12 ticks, exit empty
+      - *Engagers:* median 105 ticks, stay for content
+
+      Reposters have 2–3× longer sessions \
+      than never-reposters.
+
+      *Feedback loop:* users driving cascade propagation \
+      are the same users sustaining platform engagement.
+    ],
+  )
+]
+
+// --- SLIDE: Post Lifetimes ---
+#slide(title: "Post Lifetimes & Engagement")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[Engagement follows heavy-tailed distributions.]
+
+  #v(0.3em)
+  #col3(
+    align(center)[
+      #img("results/s3_lifetime_ccdf.png", width: 100%)
+      #text(size: 0.6em)[Lifetime CCDF — heavy-tailed at all scales]
+    ],
+    align(center)[
+      #img("results/s3_reposts_ccdf.png", width: 100%)
+      #text(size: 0.6em)[Repost CCDF — $gamma approx 1.73$ (real Bluesky: 2.21)]
+    ],
+    align(center)[
+      #img("results/s3_burstiness.png", width: 100%)
+      #text(size: 0.6em)[Burstiness $B$ — transition from anti-bursty to bursty at 5–9 reposts]
+    ],
+  )
+
+  #v(0.3em)
+  #text(size: 0.8em)[*Content dilution:* 25% → 19% of posts get any reposts as network grows. More users = more content = thinner attention. But posts that *do* engage live longer in larger networks.]
+]
+
+// --- SLIDE: Cascade Morphology ---
+#slide(title: "The Shape of Virality")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[Structural virality $nu$: the normalized Wiener index.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s4_virality_hist.png", width: 100%)
+      #text(size: 0.65em)[Virality distribution: heavy right tail]
+    ],
+    [
+      $nu(T) = frac(1, n(n-1)) sum sum d_(i j)$
+
+      - Median cascade: 4 nodes, $nu approx 1.67$ (small star)
+      - Max cascade: 1632 nodes at 1M
+      - Max virality: 34.9 (real Bluesky: 80.7)
+      - ~40% of cascades are pure chains ($nu <= 1.34$)
+      - Tail fattens with network size: \
+        0.02% → 0.47% reach size ≥ 50
+    ],
+  )
+]
+
+// --- SLIDE: Broadcast vs Viral ---
+#slide(title: "Broadcast vs Viral Cascades")[
+  #v(0.2em)
+  #text(size: 1em, weight: "bold")[The engine naturally replicates shallow broadcasts vs deep viral chains.]
+
+  #v(0.3em)
+  #col2(
+    align(center)[
+      #img("results/s4_broadcast_vs_viral.png", width: 100%)
+      #text(size: 0.65em)[Max-out-degree (broadcast) vs depth (viral chaining)]
+    ],
+    [
+      - Depth grows sub-linearly with size ($~N^0.6$)
+      - Large cascades achieve size through *branching*, \
+        not deep chains
+      - CTIC cascades are *wide, shallow trees* — \
+        not long chains
+      - Most viral cascade (1M): 150 nodes, depth 87, \
+        $nu = 34.9$ — author had only 107 followers
+
+      *Topological position matters more than raw follower count.*
+    ],
+  )
+]
+
+// ==========================================
+// PART 5: THE STEPPING STONE
+// ==========================================
+
+// --- SLIDE: Limitations ---
+#slide(title: "Current Limitations")[
+  #v(0.2em)
+  #col2(
+    [
+      *Model*
+      #v(0.15em)
+      - Timeline starvation (~50% empty exits) — boredom mechanic too aggressive, needs a complementary reset mechanism
+      - Post homogeneity — all posts are content-agnostic commodities; no semantic awareness
+      - Identical action policy $pi$ for all users — though session parameters are heterogeneous
+      - $gamma_"sim" = 1.73$ vs $gamma_"real" = 2.21$ — uniform repost policy flattens the cascade tail
+    ],
+    [
+      *Engineering*
+      #v(0.15em)
+      - $O(N^2)$ memory for impression matrices — dominates at scale (1M → 800 GB)
+      - $O(log n)$ event queue — binary heap; Calendar Queue would give $O(1)$ amortized
+      - Single-threaded execution with repeated topology reloading per process
+      - No rigorous profiling — actual bottlenecks are hypothesized, not measured
+    ],
+  )
+]
+
+// --- SLIDE: Thank You ---
+#blank-slide[
+  #v(12%)
+  #set align(center)
+
+  #text(size: 2em, weight: "bold", fill: rgb("#1a1a1a"))[Thank You]
+
+  #v(1.5em)
+
+
+  #v(2em)
+]
