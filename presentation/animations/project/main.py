@@ -454,3 +454,202 @@ class ThreeLayerCascade(Scene):
         ).move_to(DOWN * 3.6)
         self.play(Write(final_label))
         self.wait(4)
+
+
+class RhomboidGraph(Scene):
+    def construct(self):
+        # Node positions (rhomboid)
+        pos_C = UP * 2.5
+        pos_A = LEFT * 1.5
+        pos_B = RIGHT * 1.5
+        pos_D = DOWN * 2.5
+
+        dot_a = Dot(point=pos_A, color=GREY, radius=0.18)
+        lbl_a = Text("A", font_size=32, color=WHITE).next_to(dot_a, UP, buff=0.3)
+        tsa_lbl = MathTex(r"t_s = 1", font_size=26, color=WHITE).next_to(dot_a, DOWN, buff=0.3)
+        dot_b = Dot(point=pos_B, color=GREY, radius=0.18)
+        lbl_b = Text("B", font_size=32, color=WHITE).next_to(dot_b, UP, buff=0.3)
+        tsb_lbl = MathTex(r"t_s = 4", font_size=26, color=WHITE).next_to(dot_b, DOWN, buff=0.3)
+        dot_c = Dot(point=pos_C, color=WHITE, radius=0.18)
+        lbl_c = Text("C", font_size=32, color=WHITE).next_to(dot_c, UP, buff=0.3)
+        dot_d = Dot(point=pos_D, color=WHITE, radius=0.18)
+        lbl_d = Text("D", font_size=32, color=WHITE).next_to(dot_d, DOWN, buff=0.3)
+
+        # A <-> B
+        edge_ab = Arrow(pos_A, pos_B, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+        edge_ba = Arrow(pos_B, pos_A, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+        # C -> A
+        edge_ca = Arrow(pos_C, pos_A, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+        # C -> B
+        edge_cb = Arrow(pos_C, pos_B, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+        # A -> D
+        edge_ad = Arrow(pos_A, pos_D, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+        # B -> D
+        edge_bd = Arrow(pos_B, pos_D, color=WHITE, stroke_width=2, buff=0.25, tip_length=0.18)
+
+        nodes = VGroup(dot_a, dot_b, dot_c, dot_d)
+        labels = VGroup(lbl_a, lbl_b, lbl_c, lbl_d)
+        edges = VGroup(edge_ab, edge_ba, edge_ca, edge_cb, edge_ad, edge_bd)
+
+        self.play(
+            Create(edges, run_time=1.5),
+            Create(nodes, run_time=0.8),
+            Write(labels, run_time=0.8),
+        )
+
+        # t = 0 counter
+        t_counter = MathTex(r"t = 0", font_size=36, color=WHITE).move_to(LEFT * 2 + UP * 3.5)
+        self.play(Write(t_counter))
+
+        # Legend
+        legend_online = Dot(point=LEFT * 2 + UP * 2.8, color=WHITE, radius=0.1)
+        legend_online_txt = Text("online", font_size=20, color=WHITE).next_to(legend_online, RIGHT, buff=0.2)
+        legend_offline = Dot(point=LEFT * 2 + UP * 2.3, color=GREY, radius=0.1)
+        legend_offline_txt = Text("offline", font_size=20, color=WHITE).next_to(legend_offline, RIGHT, buff=0.2)
+        self.play(
+            FadeIn(legend_online), Write(legend_online_txt),
+            FadeIn(legend_offline), Write(legend_offline_txt),
+        )
+
+        # Stacks next to A and B
+        self.play(Write(tsa_lbl), Write(tsb_lbl))
+
+        set_a = MathTex(r"\mathcal{T}_0(A) = \{\}", font_size=24, color=WHITE).next_to(dot_a, LEFT, buff=1.0)
+        set_b = MathTex(r"\mathcal{T}_0(B) = \{\}", font_size=24, color=WHITE).next_to(dot_b, RIGHT, buff=1.0)
+        self.play(Write(set_a), Write(set_b))
+        self.wait(1)
+
+        # --- 4 posts from C to A and B ---
+        colors = [RED, BLUE, YELLOW, GREEN]
+        # repost_a[t] = does A repost the post that arrived at time t?
+        repost_a = [True, False, True, False]
+
+        queue_b_dots = VGroup()
+        pending_dot_a = None  # the dot in A's queue waiting to be processed
+
+        for t_idx in range(5):  # 0 to 4
+            t_val = t_idx  # t = 0, 1, 2, 3, 4
+
+            # Advance t counter
+            new_counter = MathTex(r"t = " + str(t_val), font_size=36, color=WHITE).move_to(t_counter)
+            state_changes = []
+
+            # t=1: A goes online
+            if t_val == 1:
+                state_changes.append(dot_a.animate.set_color(WHITE))
+                new_tsa = MathTex(r"t_s = 4", font_size=26, color=WHITE).move_to(tsa_lbl)
+                state_changes.append(Transform(tsa_lbl, new_tsa))
+            # t=4: A goes offline, B goes online
+            if t_val == 4:
+                state_changes.append(dot_a.animate.set_color(GREY))
+                state_changes.append(dot_b.animate.set_color(WHITE))
+                new_tsa = MathTex(r"t_s = \infty", font_size=26, color=WHITE).move_to(tsa_lbl)
+                state_changes.append(Transform(tsa_lbl, new_tsa))
+
+            self.play(Transform(t_counter, new_counter), *state_changes)
+
+            # Step 1: Process pending post from previous tick
+            if pending_dot_a is not None:
+                prev_color = pending_dot_a.get_color()
+                # Was this one marked for repost at the previous tick?
+                if t_val >= 1 and t_val <= 4 and repost_a[t_val - 1]:
+                    # Repost it: send to B and D
+                    repost_b = Dot(point=pos_A, color=prev_color, radius=0.08)
+                    repost_d = Dot(point=pos_A, color=prev_color, radius=0.08)
+                    self.add(repost_b, repost_d)
+                    self.play(
+                        repost_b.animate.move_to(pos_B),
+                        repost_d.animate.move_to(pos_D),
+                        run_time=0.5,
+                    )
+                    dot_b_from_a = Dot(color=prev_color, radius=0.10)
+                    dot_b_from_a.next_to(set_b, DOWN, buff=0.15 + len(queue_b_dots) * 0.2)
+                    queue_b_dots.add(dot_b_from_a)
+                    self.play(FadeIn(dot_b_from_a), FadeOut(repost_b), FadeOut(repost_d), run_time=0.3)
+                # Remove from A's queue (processed)
+                self.play(FadeOut(pending_dot_a), run_time=0.2)
+                pending_dot_a = None
+
+            # Step 2: Receive new post from C (skip at t=4)
+            if t_val < 4:
+                color = colors[t_val]
+                post = Dot(point=pos_C, color=color, radius=0.12)
+                post_a = post.copy()
+                post_b = post.copy()
+                self.add(post_a, post_b)
+                self.play(
+                    post_a.animate.move_to(pos_A),
+                    post_b.animate.move_to(pos_B),
+                    run_time=0.6,
+                )
+
+                # A: store in queue
+                dot_a_q = Dot(color=color, radius=0.10)
+                dot_a_q.next_to(set_a, DOWN, buff=0.15)
+                pending_dot_a = dot_a_q
+                self.play(FadeIn(dot_a_q), FadeOut(post_a), run_time=0.3)
+
+                # B: always queues (offline until t=4)
+                dot_b_q = Dot(color=color, radius=0.10)
+                dot_b_q.next_to(set_b, DOWN, buff=0.15 + len(queue_b_dots) * 0.2)
+                queue_b_dots.add(dot_b_q)
+                self.play(FadeIn(dot_b_q), FadeOut(post_b), run_time=0.3)
+
+            # Update set labels
+            new_set_a = MathTex(
+                r"\mathcal{T}_{" + str(t_val) + r"}(A)",
+                font_size=24, color=WHITE
+            ).move_to(set_a)
+            new_set_b = MathTex(
+                r"\mathcal{T}_{" + str(t_val) + r"}(B)",
+                font_size=24, color=WHITE
+            ).move_to(set_b)
+            self.play(
+                Transform(set_a, new_set_a),
+                Transform(set_b, new_set_b),
+                run_time=0.2,
+            )
+
+        # --- B goes online at t=4, starts processing queue ---
+        seen_colors = set()
+        for i, b_dot in enumerate(queue_b_dots):
+            t_val = 5 + i
+            color = b_dot.get_color()
+
+            new_counter = MathTex(r"t = " + str(t_val), font_size=36, color=WHITE).move_to(t_counter)
+            self.play(Transform(t_counter, new_counter))
+
+            if color in seen_colors:
+                ignore_txt = Text("already seen, ignore", font_size=18, color=YELLOW).next_to(set_b, DOWN, buff=1.8)
+                self.play(Write(ignore_txt), FadeOut(b_dot), run_time=0.5)
+                self.play(FadeOut(ignore_txt), run_time=0.3)
+            else:
+                seen_colors.add(color)
+                repost_a2 = Dot(point=pos_B, color=color, radius=0.08)
+                repost_d2 = Dot(point=pos_B, color=color, radius=0.08)
+                self.add(repost_a2, repost_d2)
+                self.play(
+                    repost_a2.animate.move_to(pos_A),
+                    repost_d2.animate.move_to(pos_D),
+                    FadeOut(b_dot),
+                    run_time=0.5,
+                )
+                self.play(FadeOut(repost_a2), FadeOut(repost_d2), run_time=0.3)
+
+            new_set_b = MathTex(
+                r"\mathcal{T}_{" + str(t_val) + r"}(B)",
+                font_size=24, color=WHITE
+            ).move_to(set_b)
+            self.play(Transform(set_b, new_set_b), run_time=0.2)
+
+        # B goes offline
+        t_val += 1
+        new_counter = MathTex(r"t = " + str(t_val), font_size=36, color=WHITE).move_to(t_counter)
+        self.play(
+            Transform(t_counter, new_counter),
+            dot_b.animate.set_color(GREY),
+        )
+        bored_text = Text("B is bored\nand disconnects", font_size=24, color=WHITE, line_spacing=0.5).next_to(dot_b, DOWN, buff=1.0).shift(RIGHT * 0.3)
+        self.play(Write(bored_text))
+
+        self.wait(4)
