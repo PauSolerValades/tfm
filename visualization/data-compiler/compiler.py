@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import struct
 import igraph as ig
 from pathlib import Path
 
@@ -12,8 +13,21 @@ def generate_random_color():
     return f"hsl({h}, {s}%, {l}%)"
 
 def load_graph(sn_data_path):
-    print(f"Loading graph from {sn_data_path}...")
-    with open(sn_data_path, 'r') as f:
+    """Load a social network graph from a JSON or binary (.bin) file.
+    
+    JSON format: {"users": [{"id": ...}, ...], "followers": [{"follower_id": ..., "followed_id": ...}, ...]}
+    Binary format: u32 num_users, u32 user_ids[num_users], u32 num_edges, u32 edges[num_edges*2]
+    """
+    path = Path(sn_data_path)
+    
+    if path.suffix == '.bin':
+        return _load_graph_from_bin(path)
+    else:
+        return _load_graph_from_json(path)
+
+def _load_graph_from_json(path):
+    print(f"Loading graph from {path}...")
+    with open(path, 'r') as f:
         data = json.load(f)
     
     G = ig.Graph(directed=True)
@@ -32,18 +46,49 @@ def load_graph(sn_data_path):
         edges.append((id_to_idx[edge['follower_id']], id_to_idx[edge['followed_id']]))
         
     G.add_edges(edges)
+    print(f"  Loaded {G.vcount()} nodes, {G.ecount()} edges")
+    return G
+
+def _load_graph_from_bin(path):
+    """Load from monotonous binary format (sequential 0-indexed user IDs)."""
+    print(f"Loading graph from {path} (binary)...")
+    with open(path, 'rb') as f:
+        num_users = struct.unpack('<I', f.read(4))[0]
+        # Skip user_ids (they are sequential 0..N-1 in monotonous format)
+        f.seek(4 + 4 * num_users)
+        num_edges = struct.unpack('<I', f.read(4))[0]
+        raw = f.read()
+    
+    # Unpack edges efficiently using array module
+    import array
+    edges = array.array('I')
+    edges.frombytes(raw)
+    
+    G = ig.Graph(directed=True)
+    G.add_vertices(num_users)
+    for i in range(num_users):
+        G.vs[i]['id'] = i
+    
+    # Add edges in chunks to avoid memory spikes
+    CHUNK = 500000
+    for start in range(0, len(edges), CHUNK * 2):
+        end = min(start + CHUNK * 2, len(edges))
+        G.add_edges([(edges[i], edges[i+1]) for i in range(start, end, 2)])
+    
+    print(f"  Loaded {G.vcount()} nodes, {G.ecount()} edges")
     return G
 
 def calculate_layout(G):
-    print(f"Calculating network layout for {G.vcount()} nodes (using fast DrL algorithm)...")
-    # DrL (Distributed Recursive Layout) is specifically designed to be extremely fast for large scale graphs
-    pos = G.layout_drl()
+    print(f"Calculating network layout for {G.vcount()} nodes, {G.ecount()} edges...")
+    # GraphOpt is a fast force-directed layout suitable for large graphs (10K+ nodes, 1M+ edges).
+    # niter=50 gives good results in ~30-60s for a 10K/3M graph.
+    pos = G.layout_graphopt(niter=50, node_charge=0.01, spring_length=50)
     
     nodes_data = {}
     for i, p in enumerate(pos):
         nodes_data[G.vs[i]['id']] = {"x": float(p[0]), "y": float(p[1])}
-        
-    edges_data = [{"source": G.vs[e.source]['id'], "target": G.vs[e.target]['id']} for e in G.es]
+    
+    edges_data = [{"source": int(G.vs[e.source]['id']), "target": int(G.vs[e.target]['id'])} for e in G.es]
     
     return {"nodes": nodes_data, "edges": edges_data}
 
@@ -132,7 +177,7 @@ def run_compiler(sn_data_path, traces_dir, output_dir):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Compile simulation data for frontend.")
-    parser.add_argument("--network", required=True, help="Path to sn_data.json")
+    parser.add_argument("--network", required=True, help="Path to sn_data.json or monotonous .bin network file")
     parser.add_argument("--traces", required=True, help="Directory containing trace JSONL files")
     parser.add_argument("--output", required=True, help="Output directory for compiled JSONs")
     

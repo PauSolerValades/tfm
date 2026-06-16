@@ -8,8 +8,9 @@ const NODE_RADIUS = 4;
 const BASE_COLOR = 0x30363d; // Offline color (gray)
 const ONLINE_COLOR = 0x8b949e; // Online color (light gray)
 const EDGE_COLOR = 0x21262d;
-const EDGE_ALPHA = 0.2;
-const ONLINE_EDGE_ALPHA = 0.5;
+const EDGE_ALPHA = 0.08;
+let EDGE_RENDER_SCALE = 1; // Will be adjusted for performance
+const MAX_PARTICLES = 200;       // Cap concurrent particles
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -24,9 +25,10 @@ let stats = {
 // State
 let graphData = null;
 let eventsData = null;
-let nodesMap = new Map(); // id -> PIXI.Graphics (Node)
-let outgoingEdges = new Map(); // source_id -> array of { targetId, gfx }
-let postRepostCounts = new Map(); // post_id -> count
+let nodesMap = new Map(); // id -> { sprite, x, y, online, color }
+let edgeCoords = null;   // Float32Array [x1,y1,x2,y2, ...] for all edges
+let sampledEdgesMap = new Map(); // source_id -> [{ targetId, x1, y1, x2, y2 }] (sampled)
+let edgeSprite = null;  // PIXI.Sprite holding the canvas-rendered edges
 let postColors = new Map(); // post_id -> hsl string color
 let isPlaying = false;
 let currentTime = 0;
@@ -34,12 +36,14 @@ let eventIndex = 0; // Current position in the events array
 let maxTime = 1;
 let playbackSpeed = 1;
 let totalUsers = 0;
+let particleCount = 0;
 
 // Base container for zoom/pan
 let viewport;
 let nodesContainer;
-let edgesContainer;
+let edgesLayer;       // Direct child of stage (not viewport) — replaced on re-render
 let particlesContainer;
+let appInstance = null;
 
 // Elements
 const playPauseBtn = document.getElementById('play-pause-btn');
@@ -68,16 +72,19 @@ async function init() {
     });
     
     document.getElementById('app').appendChild(app.view);
+    appInstance = app;
 
     // Containers
     viewport = new PIXI.Container();
     app.stage.addChild(viewport);
     
-    edgesContainer = new PIXI.Container();
+    // edgesLayer is OUTSIDE viewport — holds the pre-rendered canvas sprite
+    edgesLayer = new PIXI.Container();
+    app.stage.addChildAt(edgesLayer, 0); // Behind viewport
+    
     nodesContainer = new PIXI.Container();
     particlesContainer = new PIXI.Container();
     
-    viewport.addChild(edgesContainer);
     viewport.addChild(nodesContainer);
     viewport.addChild(particlesContainer);
 
@@ -154,71 +161,112 @@ async function init() {
 function buildGraph() {
     // Determine bounds to center graph
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const nodeEntries = Object.entries(graphData.nodes);
     
-    for (const [id, pos] of Object.entries(graphData.nodes)) {
+    for (const [, pos] of nodeEntries) {
         if (pos.x < minX) minX = pos.x;
         if (pos.y < minY) minY = pos.y;
         if (pos.x > maxX) maxX = pos.x;
         if (pos.y > maxY) maxY = pos.y;
     }
     
-    // Scale layout to make nodes more separate.
-    // Instead of forcing the entire graph to fit on the screen initially, 
-    // we make it larger so nodes aren't as densely packed. Users can zoom out if needed.
-    const w = maxX - minX;
-    const h = maxY - minY;
-    
-    // Make the scale 3x larger than fitting to screen, to increase node separation
+    const w = maxX - minX || 1;
+    const h = maxY - minY || 1;
     const scale = (Math.min(width / w, height / h) || 1000) * 3;
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
     
-    // Position nodes
-    for (const [idStr, pos] of Object.entries(graphData.nodes)) {
+    // Position nodes as Sprites instead of Graphics (much faster batching)
+    for (const [idStr, pos] of nodeEntries) {
         const id = parseInt(idStr);
-        const node = new PIXI.Graphics();
-        node.beginFill(BASE_COLOR);
-        node.drawCircle(0, 0, NODE_RADIUS);
-        node.endFill();
+        const sprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+        sprite.anchor.set(0.5);
+        sprite.width = NODE_RADIUS * 2;
+        sprite.height = NODE_RADIUS * 2;
+        sprite.tint = BASE_COLOR;
+        sprite.x = (pos.x - cx) * scale + width / 2;
+        sprite.y = (pos.y - cy) * scale + height / 2;
         
-        node.x = (pos.x - cx) * scale + width / 2;
-        node.y = (pos.y - cy) * scale + height / 2;
-        
-        // Save references
-        node.userData = { id, online: false, color: BASE_COLOR };
-        nodesMap.set(id, node);
-        nodesContainer.addChild(node);
-        
-        outgoingEdges.set(id, []);
+        nodesMap.set(id, { sprite, x: sprite.x, y: sprite.y, online: false, color: BASE_COLOR });
+        nodesContainer.addChild(sprite);
     }
     
-    // Draw edges
-    const linesGfx = new PIXI.Graphics();
-    edgesContainer.addChild(linesGfx);
+    // ---- EDGES: Pre-compute all edge coordinates into typed arrays ----
+    const totalEdges = graphData.edges.length;
+    const ecLen = totalEdges * 4;
+    edgeCoords = new Float32Array(ecLen);
     
-    for (const edge of graphData.edges) {
-        const sourceId = edge.source;
-        const targetId = edge.target;
+    // Also sample edges for particle spawning
+    const sampleInterval = Math.max(1, Math.floor(totalEdges / 10000));
+    
+    for (let i = 0; i < totalEdges; i++) {
+        const edge = graphData.edges[i];
+        const srcNode = nodesMap.get(edge.source);
+        const tgtNode = nodesMap.get(edge.target);
         
-        const sourceNode = nodesMap.get(sourceId);
-        const targetNode = nodesMap.get(targetId);
-        
-        if (sourceNode && targetNode) {
-            linesGfx.lineStyle(1, EDGE_COLOR, EDGE_ALPHA);
-            linesGfx.moveTo(sourceNode.x, sourceNode.y);
-            linesGfx.lineTo(targetNode.x, targetNode.y);
+        if (srcNode && tgtNode) {
+            const idx = i * 4;
+            edgeCoords[idx] = srcNode.x;
+            edgeCoords[idx + 1] = srcNode.y;
+            edgeCoords[idx + 2] = tgtNode.x;
+            edgeCoords[idx + 3] = tgtNode.y;
             
-            outgoingEdges.get(sourceId).push({
-                targetId: targetId,
-                x1: sourceNode.x,
-                y1: sourceNode.y,
-                x2: targetNode.x,
-                y2: targetNode.y
-            });
+            // Store sampled edges for particle spawning
+            if (i % sampleInterval === 0) {
+                if (!sampledEdgesMap.has(edge.source)) {
+                    sampledEdgesMap.set(edge.source, []);
+                }
+                sampledEdgesMap.get(edge.source).push({
+                    targetId: edge.target,
+                    x1: srcNode.x, y1: srcNode.y,
+                    x2: tgtNode.x, y2: tgtNode.y
+                });
+            }
         }
     }
     
-    console.log(`Rendered ${graphData.nodes.length || nodesMap.size} nodes and ${graphData.edges.length} edges.`);
+    // Free the full edge array
+    graphData.edges = null;
+    
+    // ---- RENDER EDGES TO CANVAS (batched stroke) ----
+    // Create a canvas matching screen size
+    const eCanvas = document.createElement('canvas');
+    eCanvas.width = Math.ceil(width);
+    eCanvas.height = Math.ceil(height);
+    const eCtx = eCanvas.getContext('2d');
+    
+    eCtx.strokeStyle = `rgba(33, 38, 45, ${EDGE_ALPHA})`;
+    eCtx.lineWidth = 0.5;
+    eCtx.beginPath();
+    
+    const s = viewport.scale.x;
+    const vx = viewport.x;
+    const vy = viewport.y;
+    
+    for (let i = 0; i < ecLen; i += 4) {
+        const x1 = edgeCoords[i] * s + vx;
+        const y1 = edgeCoords[i + 1] * s + vy;
+        const x2 = edgeCoords[i + 2] * s + vx;
+        const y2 = edgeCoords[i + 3] * s + vy;
+        
+        // Skip edges entirely outside viewport
+        if ((x1 < -50 && x2 < -50) || (x1 > width + 50 && x2 > width + 50) ||
+            (y1 < -50 && y2 < -50) || (y1 > height + 50 && y2 > height + 50)) continue;
+        
+        eCtx.moveTo(x1, y1);
+        eCtx.lineTo(x2, y2);
+    }
+    
+    eCtx.stroke();
+    
+    // Convert to PIXI.Sprite — placed OUTSIDE viewport (edgesLayer is on stage)
+    const tex = PIXI.Texture.from(eCanvas);
+    edgeSprite = new PIXI.Sprite(tex);
+    edgeSprite.x = 0;
+    edgeSprite.y = 0;
+    edgesLayer.addChild(edgeSprite);
+    
+    console.log(`Rendered ${nodesMap.size} nodes, ${totalEdges} edges (Canvas2D batched)`);
 }
 
 // ----------------------------------------------------
@@ -245,14 +293,14 @@ function handleEvent(ev, isScrubbing) {
     if (!node) return;
     
     if (ev.type === 'start') {
-        node.userData.online = true;
-        updateNodeColor(node, node.userData.color);
+        node.online = true;
+        updateNodeColor(node, node.color);
         if (!isScrubbing) stats.activeUsers++;
     } 
     else if (ev.type === 'end') {
-        node.userData.online = false;
-        node.userData.color = BASE_COLOR; // reset color when offline? Or keep it?
-        updateNodeColor(node, node.userData.color);
+        node.online = false;
+        node.color = BASE_COLOR;
+        updateNodeColor(node, node.color);
         if (!isScrubbing) stats.activeUsers--;
     } 
     else if (ev.type === 'create') {
@@ -269,26 +317,24 @@ function handleEvent(ev, isScrubbing) {
             postColors.set(ev.post_id, ev.color);
         }
         postRepostCounts.set(ev.post_id, postRepostCounts.get(ev.post_id) + 1);
-        
         if (!isScrubbing) stats.totalReposts++;
         triggerAction(node, ev, isScrubbing);
     }
 }
 
 function triggerAction(node, ev, isScrubbing) {
-    // Change node color to the post's color
-    const hexColor = parseHSL(ev.color); // We need PIXI compatible numeric hex
-    node.userData.color = hexColor;
+    const hexColor = parseHSL(ev.color);
+    node.color = hexColor;
     updateNodeColor(node, hexColor);
     
     if (!isScrubbing) {
-        // Animation: Bubble / Pulse
         pulseNode(node, hexColor);
         
-        // Spawn particles along edges to followers
-        const edges = outgoingEdges.get(ev.user_id);
-        if (edges) {
+        // Spawn particles along sampled edges to followers (capped)
+        const edges = sampledEdgesMap.get(ev.user_id);
+        if (edges && particleCount < MAX_PARTICLES) {
             for (const edge of edges) {
+                if (particleCount >= MAX_PARTICLES) break;
                 spawnParticle(edge.x1, edge.y1, edge.x2, edge.y2, hexColor);
             }
         }
@@ -296,29 +342,26 @@ function triggerAction(node, ev, isScrubbing) {
 }
 
 function updateNodeColor(node, color) {
-    node.clear();
-    
-    if (node.userData.online) {
-        // If online, show actual color or online grey
-        node.beginFill(color === BASE_COLOR ? ONLINE_COLOR : color);
-        node.drawCircle(0, 0, NODE_RADIUS * 1.5); // Slightly larger when online
+    if (node.online) {
+        node.sprite.tint = color === BASE_COLOR ? ONLINE_COLOR : color;
+        node.sprite.width = NODE_RADIUS * 3;
+        node.sprite.height = NODE_RADIUS * 3;
     } else {
-        // Darken color if offline
         const darkened = color === BASE_COLOR ? BASE_COLOR : darkenColor(color, 0.4);
-        node.beginFill(darkened);
-        node.drawCircle(0, 0, NODE_RADIUS);
+        node.sprite.tint = darkened;
+        node.sprite.width = NODE_RADIUS * 2;
+        node.sprite.height = NODE_RADIUS * 2;
     }
-    node.endFill();
 }
 
 function resetSimulationState() {
-    // Reset Stats
     stats = { activeUsers: 0, totalPosts: 0, totalReposts: 0 };
+    particleCount = 0;
     
     // Reset nodes
-    for (const [id, node] of nodesMap.entries()) {
-        node.userData.online = false;
-        node.userData.color = BASE_COLOR;
+    for (const [, node] of nodesMap) {
+        node.online = false;
+        node.color = BASE_COLOR;
         updateNodeColor(node, BASE_COLOR);
     }
     
@@ -330,29 +373,9 @@ function resetSimulationState() {
         child.destroy();
     }
     
-    // Set event index based on current time
-    eventIndex = 0;
-    while (eventIndex < eventsData.length && eventsData[eventIndex].time < currentTime) {
-        const ev = eventsData[eventIndex];
-        // Accumulate state
-        if (ev.type === 'start') stats.activeUsers++;
-        if (ev.type === 'end') stats.activeUsers--;
-        if (ev.type === 'create') stats.totalPosts++;
-        if (ev.type === 'repost') stats.totalReposts++;
-        
-        eventIndex++;
-    }
-    
-    // To accurately recreate state, we actually need to play through from 0 to currentTime silently
-    // But since that can be slow, we'll reset stats manually above, but the nodes state requires a fast-forward:
-    stats = { activeUsers: 0, totalPosts: 0, totalReposts: 0 };
+    // Fast-forward state
     postRepostCounts.clear();
     postColors.clear();
-    
-    for (const [id, node] of nodesMap.entries()) {
-        node.userData.online = false;
-        node.userData.color = BASE_COLOR;
-    }
     
     let tempIndex = 0;
     while (tempIndex < eventsData.length && eventsData[tempIndex].time <= currentTime) {
@@ -365,8 +388,7 @@ function resetSimulationState() {
                 postColors.set(ev.post_id, ev.color);
             }
             stats.totalPosts++;
-        }
-        else if (ev.type === 'repost') {
+        } else if (ev.type === 'repost') {
             if (!postRepostCounts.has(ev.post_id)) {
                 postRepostCounts.set(ev.post_id, 0);
                 postColors.set(ev.post_id, ev.color);
@@ -377,24 +399,22 @@ function resetSimulationState() {
         
         if (node) {
             if (ev.type === 'start') {
-                node.userData.online = true;
+                node.online = true;
                 stats.activeUsers++;
-            }
-            else if (ev.type === 'end') {
-                node.userData.online = false;
-                node.userData.color = BASE_COLOR;
+            } else if (ev.type === 'end') {
+                node.online = false;
+                node.color = BASE_COLOR;
                 stats.activeUsers--;
-            }
-            else if (ev.type === 'create' || ev.type === 'repost') {
-                node.userData.color = parseHSL(ev.color);
+            } else if (ev.type === 'create' || ev.type === 'repost') {
+                node.color = parseHSL(ev.color);
             }
         }
         tempIndex++;
     }
     eventIndex = tempIndex;
     
-    for (const [id, node] of nodesMap.entries()) {
-        updateNodeColor(node, node.userData.color);
+    for (const [, node] of nodesMap) {
+        updateNodeColor(node, node.color);
     }
     
     drawHistogram();
@@ -405,34 +425,35 @@ function resetSimulationState() {
 // ----------------------------------------------------
 function pulseNode(node, color) {
     const pulse = new PIXI.Graphics();
-    pulse.beginFill(color, 0.5);
+    pulse.beginFill(color, 0.4);
     pulse.drawCircle(0, 0, NODE_RADIUS);
     pulse.endFill();
     pulse.x = node.x;
     pulse.y = node.y;
+    pulse.alpha = 1;
     
     particlesContainer.addChild(pulse);
     
-    gsap.to(pulse.scale, { x: 4, y: 4, duration: 0.8, ease: "power2.out" });
-    gsap.to(pulse, { alpha: 0, duration: 0.8, ease: "power2.out", onComplete: () => {
+    gsap.to(pulse.scale, { x: 5, y: 5, duration: 0.6, ease: "power2.out" });
+    gsap.to(pulse, { alpha: 0, duration: 0.6, ease: "power2.out", onComplete: () => {
         particlesContainer.removeChild(pulse);
         pulse.destroy();
     }});
 }
 
 function spawnParticle(x1, y1, x2, y2, color) {
+    particleCount++;
     const p = new PIXI.Graphics();
     p.beginFill(color);
-    p.drawCircle(0, 0, 2);
+    p.drawCircle(0, 0, 1.5);
     p.endFill();
     p.x = x1;
     p.y = y1;
     
     particlesContainer.addChild(p);
     
-    // Distance based duration
     const dist = Math.hypot(x2 - x1, y2 - y1);
-    const duration = Math.min(2.0, Math.max(0.2, dist / 100)) / playbackSpeed;
+    const duration = Math.min(1.5, Math.max(0.1, dist / 200));
     
     gsap.to(p, {
         x: x2, 
@@ -440,6 +461,7 @@ function spawnParticle(x1, y1, x2, y2, color) {
         duration: duration,
         ease: "none",
         onComplete: () => {
+            particleCount--;
             particlesContainer.removeChild(p);
             p.destroy();
         }
@@ -569,7 +591,10 @@ function setupInteraction(canvas) {
         initY = viewport.y;
     });
     
-    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mouseup', () => {
+        if (isDragging) scheduleEdgeRedraw();
+        isDragging = false;
+    });
     
     window.addEventListener('mousemove', (e) => {
         if (isDragging) {
@@ -583,7 +608,6 @@ function setupInteraction(canvas) {
         const zoomFactor = 1.1;
         const direction = e.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
         
-        // Zoom towards mouse position
         const mouseX = e.clientX;
         const mouseY = e.clientY;
         
@@ -595,7 +619,53 @@ function setupInteraction(canvas) {
         
         viewport.x = mouseX - localX * viewport.scale.x;
         viewport.y = mouseY - localY * viewport.scale.y;
+        
+        scheduleEdgeRedraw();
     }, { passive: false });
 }
+
+let redrawTimer = null;
+function scheduleEdgeRedraw() {
+    // Debounce: re-render edges 200ms after zoom/pan stops
+    if (redrawTimer) clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(() => {
+        if (!edgeCoords) return;
+        
+        const eCanvas = document.createElement('canvas');
+        eCanvas.width = Math.ceil(width);
+        eCanvas.height = Math.ceil(height);
+        const eCtx = eCanvas.getContext('2d');
+        
+        eCtx.strokeStyle = `rgba(33, 38, 45, ${EDGE_ALPHA})`;
+        eCtx.lineWidth = 0.5;
+        eCtx.beginPath();
+        
+        const s = viewport.scale.x;
+        const vx = viewport.x;
+        const vy = viewport.y;
+        const len = edgeCoords.length;
+        
+        for (let i = 0; i < len; i += 4) {
+            const x1 = edgeCoords[i] * s + vx;
+            const y1 = edgeCoords[i + 1] * s + vy;
+            const x2 = edgeCoords[i + 2] * s + vx;
+            const y2 = edgeCoords[i + 3] * s + vy;
+            
+            if ((x1 < -50 && x2 < -50) || (x1 > width + 50 && x2 > width + 50) ||
+                (y1 < -50 && y2 < -50) || (y1 > height + 50 && y2 > height + 50)) continue;
+            
+            eCtx.moveTo(x1, y1);
+            eCtx.lineTo(x2, y2);
+        }
+        
+        eCtx.stroke();
+        
+        // Replace the edge sprite texture
+        const tex = PIXI.Texture.from(eCanvas);
+        if (edgeSprite) {
+            edgeSprite.texture.destroy(true);
+            edgeSprite.texture = tex;
+        }
+    }, 200);
 
 init();

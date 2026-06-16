@@ -309,76 +309,121 @@
 ]
 
 // --- SLIDE: Event Sources ---
-#slide(title: "Event Sources")[
-  #v(0.2em)
-  Four event types drive the simulation, all managed through a global priority queue $Q$:
+#slide(title: "(2) - Simulation Design")[
+  Global queue $Q$ is a min-heap, returns the smallest timestamp event (next event to process)
 
-  #v(0.3em)
-  #col2(
-    [
-      - *Session:* user goes online or offline. Going online primes action + create events; going offline clears the timeline and schedules the next session start
-      - *Create:* user authors a new post. Propagates to followers at $t + Delta_p$
-    ],
-    [
-      - *Action:* user pops their timeline, decides to ignore / like / repost according to policy $pi$. Reposts trigger propagation; all actions schedule the next action
-      - *Propagate:* delivers a post to a follower's timeline at the scheduled time. The only event not tied to a real-world action — it preserves time causality
-    ],
-  )
+  A single user can have two sets of events:
+  - `session.start`: when is the user going back online.
+  - `create`, `action`, `session.end` and `propagate`: Action is to interact with a post, create is to generate a post. If a creation or a repost, a `propagate` event will be triggered in the future and the last is a `session.end`, which turns the user online.
 
-  #v(0.3em)
-  #text(size: 0.8em)[Stale-event guard: each event carries a `session_gen` — if the user's session changed since the event was scheduled, it's silently discarded.]
+  $Q$ holds *every* events per *every* user. Worse case, 4 events per user, ergo $|Q| approx 4N$
+
+  TODO: make a timeline showcasing how the two events can be
 ]
 
+// --- SLIDE: Single User Event Timeline ---
+// #slide(title: "(2) - Single User Session Timeline")[
+//   #v(0.3em)
+//   #text(size: 0.85em, weight: "bold")[A single user's session is a chain of events — no propagation, just the user's own activity.]
+//
+//   #v(2em)
+//
+//   #cetz.canvas({
+//     import cetz.draw: *
+//
+//     // Main timeline
+//     line((0, 0), (18, 0), stroke: 1.4pt)
+//
+//     // ---- Tick 1: session.start ----
+//     line((0, -0.2), (0, 0.2), stroke: 1.2pt)
+//     content((0, -.45), [$e_(s)$], anchor: "north")
+//     content((0, .85), [*session.start*], anchor: "south")
+//     content((0, 1.6), [user goes online], anchor: "south")
+//
+//     // ---- Tick 2: create ----
+//     line((4.5, -0.2), (4.5, 0.2), stroke: 1.2pt)
+//     content((4.5, -.45), [$e_c$], anchor: "north")
+//     content((4.5, .85), [*create*], anchor: "south")
+//     content((4.5, 1.6), [user authors a post], anchor: "south")
+//
+//     // ---- Tick 3: first action ----
+//     line((9.0, -0.2), (9.0, 0.2), stroke: 1.2pt)
+//     content((9.0, -.45), [$e_(a_1)$], anchor: "north")
+//     content((9.0, .85), [*action*], anchor: "south")
+//     content((9.0, 1.6), [like / repost / ignore], anchor: "south")
+//
+//     // ---- Tick 4: second action ----
+//     line((13.5, -0.2), (13.5, 0.2), stroke: 1.2pt)
+//     content((13.5, -.45), [$e_(a_2)$], anchor: "north")
+//     content((13.5, .85), [*action*], anchor: "south")
+//     content((13.5, 1.6), [like / repost / ignore], anchor: "south")
+//
+//     // ---- Tick 5: session.end ----
+//     line((18.0, -0.2), (18.0, 0.2), stroke: 1.2pt)
+//     content((18.0, -.45), [$e_(e)$], anchor: "north")
+//     content((18.0, .85), [*session.end*], anchor: "south")
+//     content((18.0, 1.6), [user goes offline], anchor: "south")
+//
+//     // ---- Random variable labels below ----
+//     content((2.25, -.8), [$Delta_"create"$], anchor: "north")
+//     content((6.75, -.8), [$X tilde "Exp"(lambda)$], anchor: "north")
+//     content((11.25, -.8), [$Y tilde "Exp"(lambda)$], anchor: "north")
+//     content((15.75, -.8), [$Delta_"session"$], anchor: "north")
+//
+//     // ---- Session span bracket above ----
+//     line((0, 1.85), (0, 2.15), stroke: .6pt)
+//     line((18.0, 1.85), (18.0, 2.15), stroke: .6pt)
+//     line((0, 2.15), (18.0, 2.15), stroke: .6pt)
+//     content((9.0, 2.4), [*one session*], anchor: "south")
+//   })
+//
+//   #v(0.8em)
+//   #text(size: 0.75em)[
+//     Events $e_(s)$, $e_c$, $e_(a_1)$, $e_(a_2)$, and $e_(e)$ form a single user session.
+//     Inter-action times $X, Y tilde "Exp"(lambda)$ are i.i.d. between consecutive actions.
+//     The session ends at $e_(e)$ — by boredom (empty timeline) or session duration limit.
+//   ]
+// ]
+
 // --- SLIDE: Simulation Lifecycle ---
-#slide(title: "Simulation Lifecycle")[
-  #v(0.2em)
-  #text(size: 0.9em, weight: "bold")[Three stages, one global priority queue $Q$.]
+#slide(title: "(2) - Simulation Lifecycle")[
+
+  To ensure a non empty timeline start, simulation has three different stages:
 
   #v(0.4em)
   #col3(
     framed(title: [Stage 1: Warm-up], back-color: rgb("#e8f5e9"))[
-      $t in [0, 1000]$
-      - All users online
-      - Only create events
-      - Fills all timelines naturally
+      $t in [0, 1000]$ \
+       All users online \
+       Only post creation \
+       Fills timelines \
     ],
-    framed(title: [Init], back-color: rgb("#fff8e1"))[
-      $t = 1000$
-      - Assign online/offline
-      - Prime event queue
-      - Session + action events
+    framed(title: [Stage 2: Start Up], back-color: rgb("#fff8e1"))[
+      $t = 1000$ \
+       Assign online/offline \
+       Prime event queue \
+       Session and action \
     ],
-    framed(title: [Main Loop], back-color: rgb("#e3f2fd"))[
-      $t in [1000, 5000]$
-      - Pop min-time from $Q$
-      - Dispatch to handler
-      - Schedule follow-ups
+    framed(title: [Stage 3: Main Loop], back-color: rgb("#e3f2fd"))[
+      $t in [1000, 5000]$ \
+       Pop min-time from $Q$ \
+       Dispatch to handler \
+       Schedule follow-ups \
     ],
   )
 ]
 
 // --- SLIDE: Implementation ---
-#slide(title: "Implementation")[
-  #v(0.2em)
-  #text(size: 0.9em, weight: "bold")[Custom engine in Zig — built for performance from the ground up.]
+#slide(title: "(2) - Implementation")[
+  
+  The simulation has been written in Zig, a systems programming language. Think C but with some safety and QoL improvements.
 
-  #v(0.3em)
-  *Why custom?* ensuring optimal performance to allow multiple reconstructions and reproducibility. 
+  *Why?*
+  1. Ensure a reasonable execution time to run the simulation multiple time, to ensure statistical significance, even for big datasets.
+  2. I care about quality and my craft; it's the programmers responsability to deliver a high performance program, under _any_ circumstance.
+  3. Resonable doubts about performance of other already existing simulation softwares.
 
-  #v(0.3em)
-  #col2(
-    [
-      - *CSR graph layout:* follower iteration is a cache-friendly sequential scan
-      - *D-ary heap:* $O(1)$ amortized event queue with preallocated capacity
-      - *Arena allocation:* zero per-event malloc/free
-      - *Pagination:* Allows for memory efficient unbounded growth 
-    ],
-    [
-      - *Buffered binary I/O:* traces written outside the hot loop
-      - *Custom distributions:* implements all distributions needed 
-      - *Stale-event guard:* avoids queue reallocation on session boundaries
-    ],
-  )
+  Applied *Data-oriented-Design* principles to make the program as optimal I know.
 ]
 
 #slide(title: "Road to Evaluation")[
