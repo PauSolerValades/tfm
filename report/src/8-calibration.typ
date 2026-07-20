@@ -92,7 +92,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 *Power-law dominates.* For session durations, the median exponent is $alpha = 2.47$ with $x_min = 98$ s (1.6 min). For inter-session gaps, $alpha = 2.05$ with $x_min = 5,806$ s (1.6 h). Both lie in the $2$–$3$ range — finite mean, infinite variance. The $x_min$ values reveal a two-regime structure: the power-law only governs the tail; the body of short sessions and brief gaps follows a different regime.
 
 #figure(
-  image("images/calibration/7-1_duration_pareto_params.png", width: 70%),
+  image("../images/calibration/7-1_duration_pareto_params.png", width: 70%),
   caption: flex-caption(
     [Pareto parameter densities for session durations.],
     [Pareto parameter densities for session durations ($alpha$ left, $x_min$ right). Median $alpha = 2.47$, $x_min = 98$ s (1.6 min).],
@@ -100,7 +100,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 ) <fig-cal-dur-pareto>
 
 #figure(
-  image("images/calibration/7-1_gap_pareto_params.png", width: 70%),
+  image("../images/calibration/7-1_gap_pareto_params.png", width: 70%),
   caption: flex-caption(
     [Pareto parameter densities for inter-session gaps.],
     [Pareto parameter densities for inter-session gaps. Median $alpha = 2.05$, $x_min = 5,806$ s (1.6 h). The gap $x_min$ is substantially higher than duration $x_min$, reflecting the longer timescales of inter-session pauses.],
@@ -110,7 +110,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 *Lognormal is the credible alternative for gaps.* 25.9% of users have log-normally distributed inter-session gaps, with median $mu = 9.84$, $sigma = 0.96$, corresponding to a central tendency of $approx 5.2$ h with wide spread. For session durations, lognormal users have median $mu = 5.21$, $sigma = 0.63$, corresponding to $approx 3.1$ min.
 
 #figure(
-  image("images/calibration/7-1_duration_lognormal_params.png", width: 70%),
+  image("../images/calibration/7-1_duration_lognormal_params.png", width: 70%),
   caption: flex-caption(
     [Lognormal parameter densities for session durations.],
     [Lognormal parameter densities for session durations ($mu$ left, $sigma$ right). Median $mu = 5.21$, $sigma = 0.63$, corresponding to a central tendency of $approx 3.1$ min.],
@@ -118,7 +118,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 ) <fig-cal-dur-lognormal>
 
 #figure(
-  image("images/calibration/7-1_gap_lognormal_params.png", width: 70%),
+  image("../images/calibration/7-1_gap_lognormal_params.png", width: 70%),
   caption: flex-caption(
     [Lognormal parameter densities for inter-session gaps.],
     [Lognormal parameter densities for inter-session gaps. Median $mu = 9.84$, $sigma = 0.96$, central tendency $approx 5.2$ h. Greater dispersion than durations.],
@@ -128,7 +128,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 *Weibull hazard interpretation.* For session durations, the Weibull shape has median $k = 1.58$ — mildly increasing hazard (sessions tend to end on a schedule). 24% of duration-Weibull users have $k < 1$ (decreasing hazard — the longer you browse, the more engaged you get). For inter-session gaps, median $k = 1.08$ — nearly exponential, with 46% of users showing $k < 1$ (decreasing hazard: the longer you've been away, the *less* likely you are to return — abandonment or sleep).
 
 #figure(
-  image("images/calibration/7-1_duration_weibull_params2.png", width: 70%),
+  image("../images/calibration/7-1_duration_weibull_params2.png", width: 70%),
   caption: flex-caption(
     [Weibull parameter densities for session durations.],
     [Weibull parameter densities for session durations (shape $k$ left, scale $lambda$ right). Median $k = 1.58$, median $lambda = 258$ s (4.3 min).],
@@ -136,7 +136,7 @@ For each user with $>= 10$ data points ($1.16 times 10^6$ users from `sessions_a
 ) <fig-cal-dur-weibull>
 
 #figure(
-  image("images/calibration/7-1_gap_weibull_params2.png", width: 70%),
+  image("../images/calibration/7-1_gap_weibull_params2.png", width: 70%),
   caption: flex-caption(
     [Weibull parameter densities for inter-session gaps.],
     [Weibull parameter densities for inter-session gaps. Median $k = 1.08$ — 46% of users have $k < 1$ (decreasing hazard, abandonment). Median $lambda = 35,229$ s (9.8 h).],
@@ -274,7 +274,7 @@ The data was analyzed in two ways: global (gap to the immediately preceding post
 ) <tbl-cal-interpost-fits>
 
 #figure(
-  image("images/calibration/7-2_interpost_best_dist2.png", width: 85%),
+  image("../images/calibration/7-2_interpost_best_dist2.png", width: 85%),
   caption: flex-caption(
     [Best-fit distribution per gap type.],
     [Best-fit distribution per gap type. Power-law dominates.],
@@ -284,7 +284,7 @@ The data was analyzed in two ways: global (gap to the immediately preceding post
 Power-law users have median $alpha = 1.80$ (global) and $alpha = 2.39$ (within-session). For the global case, $alpha < 2$ means infinite variance — extreme burstiness. The median $x_min$ is 44 min (global) and 11 min (within-session).
 
 #figure(
-  image("images/calibration/7-2_interpost_alpha_hist2.png", width: 75%),
+  image("../images/calibration/7-2_interpost_alpha_hist2.png", width: 75%),
   caption: flex-caption(
     [Histogram of power-law exponent $alpha$ for inter-post gaps.],
     [Histogram of power-law exponent $alpha$ for inter-post gaps. ],
@@ -401,7 +401,7 @@ The simulation natively supports Pareto distributions for `session_duration`, `i
 Each file is a newline-separated list of `shape scale` pairs (where `shape = alpha` and `scale = x_min`). The simulation samples `sample_size = 10000` random rows per run, assigning each user a Pareto `init(shape, scale)`. This preserves the full per-user heterogeneity observed in the firehose: bursty users get $alpha < 2$, regular users get $alpha > 3$.
 
 #figure(
-  image("images/calibration/7-1_pareto_param_ecdf.png", width: 85%),
+  image("../images/calibration/7-1_pareto_param_ecdf.png", width: 85%),
   caption: flex-caption(
     [Empirical CDF of Pareto parameters for sessions.],
     [Empirical CDF of Pareto parameters $alpha$ (top) and $x_min$ (bottom) for session durations (left) and inter-session gaps (right), fitted per-user to `sessions_all`. These distributions are sampled to generate `params/session_duration_params.txt` and `params/inter_session_params.txt`.],
@@ -409,7 +409,7 @@ Each file is a newline-separated list of `shape scale` pairs (where `shape = alp
 ) <fig-cal-pareto-ecdf>
 
 #figure(
-  image("images/calibration/7-2_pareto_inter_post_ecdf.png", width: 75%),
+  image("../images/calibration/7-2_pareto_inter_post_ecdf.png", width: 75%),
   caption: flex-caption(
     [Empirical CDF of Pareto parameters for inter-post creation gaps.],
     [Empirical CDF of Pareto parameters for inter-post creation gaps (global mode), fitted per-user to `engaged_events`. Sampled to generate `params/inter_creation_params.txt`.],

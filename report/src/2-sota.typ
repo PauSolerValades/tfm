@@ -153,7 +153,7 @@ And what information diffusion tries to model are the information cascades the c
 Specifically, an information cascade can be defined as a graph, where the nodes are the actors (users) involved in the propagation, and the edges are the relationships of those users. A new level is added to the graph when the action of information propagation (_e.g_ a repost) happens at a certain time $t$. 
 
 #figure(
-  image("images/sota/broadcast-vs-viral.jpg", width: 80%),
+  image("../images/sota/broadcast-vs-viral.jpg", width: 80%),
   caption: flex-caption(
     [Broadcast vs viral cascade structures.],
     [Broadcast vs viral cascade structures. A broadcast cascade (left) radiates directly from a single source to many followers. A viral cascade (right) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]

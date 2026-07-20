@@ -42,7 +42,7 @@ Every run produced the four trace files described in @sec-design-traces. The fol
 Before presenting the simulation results, a brief execution performance characterization is warranted. @fig-execution-time shows the wall-clock time per run as a function of network size.
 
 #figure(
-  image("images/results/execution_time_scaling.png", width: 85%),
+  image("../images/results/execution_time_scaling.png", width: 85%),
   caption: flex-caption(
     [Simulation execution time vs. network size.],
     [Simulation execution time vs. network size. Points show the mean and observed range across all runs of each dataset. The dashed line is a linear regression ($R^2 = 1.000$ over the three points), with slope $1.42$ s per thousand users ($1.4$ ms per user). Doubling the number of users doubles the execution time —-a textbook example of linear scalability-— meaning the simulation can grow to larger networks without collapsing under its own weight.],
@@ -81,7 +81,7 @@ Before committing to the full batch execution, a single representative run from 
 @fig-stationary-100K, @fig-stationary-500K, and @fig-stationary-1M (generated with `des-ctic/python-utilities/stationary.py`) show the online user fraction over time for one representative run at each scale. The dashed vertical line marks the detected stationary threshold —-the point after which the rolling mean of the online fraction stabilises within a narrow band.
 
 #figure(
-  image("images/execution/100K_session_trace_stationary.png", width: 90%),
+  image("../images/execution/100K_session_trace_stationary.png", width: 90%),
   caption: flex-caption(
     [Stationary analysis for DS-100K.],
     [Stationary analysis for DS-100K (99,834 users, 450,605 session events). Stationary state reached at $t approx 2385$; average online fraction 7.7%.],
@@ -89,7 +89,7 @@ Before committing to the full batch execution, a single representative run from 
 ) <fig-stationary-100K>
 
 #figure(
-  image("images/execution/500K_session_trace_stationary.png", width: 90%),
+  image("../images/execution/500K_session_trace_stationary.png", width: 90%),
   caption: flex-caption(
     [Stationary analysis for DS-500K.],
     [Stationary analysis for DS-500K (499,197 users, 2,213,374 session events). Stationary state reached at $t approx 2222$; average online fraction 8.5%.],
@@ -97,7 +97,7 @@ Before committing to the full batch execution, a single representative run from 
 ) <fig-stationary-500K>
 
 #figure(
-  image("images/execution/1M_session_trace_stationary.png", width: 90%),
+  image("../images/execution/1M_session_trace_stationary.png", width: 90%),
   caption: flex-caption(
     [Stationary analysis for DS-1M.],
     [Stationary analysis for DS-1M (997,779 users, 4,549,885 session events). Stationary state reached at $t approx 2436$; average online fraction 7.6%.],

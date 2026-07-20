@@ -138,7 +138,7 @@ Virality is a concept that is more nuanced than it first appears. While content 
 Intuitively, the shape of the cascade matters: a "broadcast" cascade reaches many users but remains extremely shallow (all adoptions occur within one hop from the source), whereas a genuinely "viral" cascade propagates through multiple generations, with each individual responsible for only a fraction of the total adoptions. However, simple metrics like cascade depth are fragile ---a single long chain in an otherwise flat broadcast can inflate the depth without indicating true viral spread @goel2016structural. The @fig-broadcast-vs-viral-2 showcases this differences.
 
 #figure(
-  image("images/sota/broadcast-vs-viral.jpg", width: 80%),
+  image("../images/sota/broadcast-vs-viral.jpg", width: 80%),
   caption: flex-caption(
     [Broadcast vs viral cascade structures.],
     [Broadcast vs viral cascade structures. A broadcast cascade (right) radiates directly from a single source to many followers. A viral cascade (left) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]

@@ -70,12 +70,12 @@
 #pagebreak()
 #pagebreak()
 #heading(outlined: false, numbering: none)[Abstract]
-#include "src/abstract.typ"
+#include "src/0-abstract.typ"
 
 #pagebreak()
 #heading(outlined: false, numbering: none)[Acknowledgments]
 
-#include "src/aknowledgments.typ"
+#include "src/0-aknowledgments.typ"
 
 #pagebreak()
 #outline(title: "Table of Contents")
@@ -107,76 +107,76 @@
 #pagebreak()
 = Introduction
 
-#include "src/introduction.typ"
+#include "src/1-introduction.typ"
 
 #pagebreak()
 = Social Networks State of the Art
 <sec-sota>
 
-#include "src/sota.typ"
+#include "src/2-sota.typ"
 
 #pagebreak()
 = Problem Formulation 
 <sec-model>
 
-#include "src/model.typ"
+#include "src/3-model.typ"
 
 #pagebreak()
 = Methodology
 <sec-method>
 
-#include "src/methodology.typ"
+#include "src/4-methodology.typ"
 
 #pagebreak()
 = Design 
 <sec-design>
 
-#include "src/design.typ"
+#include "src/5-design.typ"
 
 #pagebreak()
 = Implementation
 <sec-impl>
 
-#include "src/implementation.typ"
+#include "src/6-implementation.typ"
 
 #pagebreak()
 = Bluesky Data Analysis
 <sec-data>
 
-#include "src/data.typ"
+#include "src/7-data.typ"
 
 #pagebreak()
 = Calibration
 <sec-calibration>
 
-#include "src/calibration.typ"
+#include "src/8-calibration.typ"
 
 #pagebreak()
 = Execution 
 <sec-exec>
 
-#include "src/execution.typ"
+#include "src/9-execution.typ"
 
 #pagebreak()
 = Results
 <sec-results> 
 
-#include "src/results.typ"
+#include "src/10-results.typ"
 
 #pagebreak()
 = Conclusions
 
-#include "src/conclusions.typ"
+#include "src/11-conclusions.typ"
 
 #pagebreak()
 = Future Work
 <sec-future>
 
-#include "src/futurework.typ"
+#include "src/12-futurework.typ"
 
 #pagebreak()
 #bibliography(
-  ("refs/introduction.yml", "refs/context.yml", "refs/model.yml", "refs/methodology.yml", "refs/design.yml", "refs/implementation.yml", "refs/data.yml", "refs/calibration.yml", "refs/futurework.yml", "refs/annex.yml"),
+  ("refs/1-introduction.yml", "refs/2-context.yml", "refs/3-model.yml", "refs/4-methodology.yml", "refs/5-design.yml", "refs/6-implementation.yml", "refs/7-data.yml", "refs/8-calibration.yml", "refs/9-futurework.yml", "refs/10-annex.yml"),
   title: "References",
 )
 
