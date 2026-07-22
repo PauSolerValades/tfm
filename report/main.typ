@@ -190,11 +190,16 @@
 #include "src/annex/ai.typ"
 
 #pagebreak()
-= Code Structure and Technical Guide
+= Code Repositories
 <apx-code>
 
 #include "src/annex/code.typ"
 
+#pagebreak()
+= Data Analysis
+<apx-data>
+
+#include "src/annex/data.typ"
 #pagebreak()
 = Post Lifetime Analysis
 <apx-lifetime>

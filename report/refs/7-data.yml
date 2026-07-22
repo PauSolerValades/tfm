@@ -18,6 +18,23 @@ satopaa2011kneedle:
     serial-number:
       isbn: "978-1-4577-0384-1"
 
+alstott2014powerlaw:
+  type: Article
+  title: "powerlaw: A Python Package for Analysis of Heavy-Tailed Distributions"
+  author:
+    - Alstott, Jeff
+    - Bullmore, Ed
+    - Plenz, Dietmar
+  date: 2014
+  serial-number:
+    doi: "10.1371/journal.pone.0085777"
+  parent:
+    type: periodical
+    title: "PLOS ONE"
+    volume: 9
+    number: 1
+    page-range: e85777
+
 clauset2009powerlaw:
   type: Article
   title: "Power-Law Distributions in Empirical Data"
