@@ -1,0 +1,27 @@
+# Animations / partial movies
+presentation/animations/
+*partial_movie*
+*.mp4
+*.mov
+*.avi
+*.webm
+*.mkv
+*.gif
+*.part
+
+# Caches & build artifacts
+.zig-cache/
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+*.aux
+*.log
+*.out
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Typst
+*.pdf

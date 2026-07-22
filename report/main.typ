@@ -196,6 +196,12 @@
 #include "src/annex/code.typ"
 
 #pagebreak()
+= Examples
+<apx-examples>
+
+#include "src/annex/example.typ"
+
+#pagebreak()
 = Data Analysis
 <apx-data>
 

@@ -1,3 +1,7 @@
+#import "../utils.typ": *
+
+#todo[recheck the code and rewrite this section with more "personality". this is kinda important and worth being though about.]
+
 This appendix documents the complete pipeline from raw firehose JSONL files to simulation-ready graph samples. It covers the data source, the three-phase DuckDB ingestion architecture, the SCD2 design, known data gaps, and the Go Forest Fire sampling implementation.
 
 #import "../utils.typ": flex-caption

@@ -1,60 +1,10 @@
-#import "utils.typ": def, flex-caption
+#import "utils.typ": *
 
-This chapter justifies and explains several methodology choices, such as the model chosen to simulate (see @sec-method-model), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
+This chapter justifies and explains several methodology choices, such as the model chosen to simulate (see @sec-model-ctic), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
 
-== Diffusion Model 
-<sec-method-model>
+== Why a Simulation?
 
-This section details the theoretical foundation of the simulation engine. To accurately capture the real-world dynamics of information diffusion, we integrate the mathematically rigorous Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a Queue-Based (see @sec-method-model), Activity-Driven simulation architecture.
-
-=== Continuous-Time Diffusion in Microblogging
-<sec-method-ctic>
-
-To accurately represent the dynamics of information diffusion on a microblogging platform like Bluesky (see @sec-sota-description), we utilize the Continuous-Time Independent Cascade (CTIC) (see @sec-sota-diffusion-ctic) model. While standard diffusion models operate in discrete, synchronized epochs @gomezrodriguez2012inferring, real-world microblogging is fundamentally asynchronous: users do not consume information in locked steps; rather, information propagation occurs continuously over time. 
-
-The CTIC model is a good fit for microblogging networks due to its reliance on survival analysis and time-dependent transmission likelihoods: posts are injected into a fast-moving, chronologically ordered feed. A post's "survival" (its probability of being seen and reposted before being buried by newer content) is heavily dependent on the exact continuous time elapsed since its creation @gomezrodriguez2011uncovering. By allowing transmission at different rates using continuous temporal processes (such as exponential or power-law distributions), the CTIC model naturally captures the temporally heterogeneous interactions and long-tailed viral fads characteristic of modern social media.
-
-While the CTIC model provides the ideal theoretical framework for continuous-time diffusion, evaluating these continuous hazard and survival functions analytically across a massive, highly connected graph is computationally prohibitive. Therefore, to operationalize this model, we chose to translate the continuous-time dynamics into a Discrete Event Simulation (DES) (see @sec-method-des).  
-
-By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a different quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @sec-impl
-
-=== The Homogeneous Rate Simplification
-
-
-In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate is uniform across all network edges, such that:
-
-$ alpha_(i,j) = alpha quad forall i, j in V $
-
-where $V$ is the set of all users in the network. This universal rate, $alpha$, represents the global `propagation_delay` of the network and platform: the continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline.
-
-This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see @sec-design-traces). Also, this conveys a implicit and very noticeable computational advantage.
-
-A more structural justification for uniform $alpha$ comes from the timeline itself. The reverse-chronological feed operates as a LIFO (Last-In, First-Out) queue @hodas2014simple: the most recently propagated post sits at the top, and the user scrolls downward through progressively older content. When $alpha$ varies per edge, a post created earlier but delayed by a slow transmission could arrive after a post created later via a fast edge, scrambling the expected temporal ordering. Uniform $alpha$ guarantees that propagation preserves the global creation order: if post $p_1$ is created before post $p_2$, then $p_1$ will appear in every follower's timeline before $p_2$. This makes the timeline a faithful temporal projection of the platform's activity, which is both analytically cleaner and closer to how a real microblogging feed behaves in the absence of algorithmic reordering. 
-
-
-
-=== Activity-Driven Network Dynamics
-<sec-method-activity>
-
-When modeling an OSN with users as the primary entities, there is a particular aspect that is highly intuitive for human behavior but heterodox in traditional graph theory: nodes are not available for information transmission at all times; rather, their availability is a function of time $t$. 
-
-Standard static network models assume that nodes and edges are perpetually available for information transmission. However, empirical studies of social and technological systems reveal that human interactions are fundamentally bursty and temporally disconnected @barabási2005bursts. To capture this reality, the Activity-Driven modeling framework describes a time-varying network where the topological evolution is strictly governed by the intrinsic behavioral patterns of individual nodes @pozzana2017epidemic.
-
-In this paradigm, each user is characterized by an "activity" rate, defined as their propensity to engage with the network and form connections at a given time. Consequently, nodes alternate between discrete online sessions and offline "vacation" periods. As explained when modeling the problem (see @sec-method-model), this bursty interactions have already been modeled as $cal(O) (u)$, and despite no restrictions being imposed on it's nature, we can characterize it as
-
-$ cal(O) (u) = union.big_(k=1)^oo [t_k, t_k + Delta_k) "where" t_k in T $
-
-and $Delta_k$ is a positive random variable representing the sessions duration. 
-
-- The interval $I_k = [t_k, t_k + Delta_k)$ constitutes the online duration (sampled from `session_duration`).
-- The gap between sessions, mathematically expressed as $d = t_(k+1) - (t_k + Delta_k)$, constitutes the offline vacation period (sampled from `user_inter_session`; see @sec-calibration-summary).
-
-In OSNs, these activity states are usually called sessions: a user starts a session when they log in to the platform to consume content, and it ends when they close the application or log off.
-
-While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself @hirakura2023method @hodas2014simple. 
-
-An informal mathematical way of the lifetime analysis post is provided on @apx-lifetime.
-
+The model literally cannot be solved analitically due to much complexity.
 
 == Discrete-Event Simulation
 <sec-method-des>
@@ -129,6 +79,8 @@ According to the CTIC model, the number of reposts of a post should follow a pow
 
 ==== Post Lifetimes
 
+#todo[Refactor things from data and from model and explain them here! make a fancy definiton, what does it mean in this context]
+
 This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptly decrease as time goes on.
 
 ==== Structural Virality
@@ -160,8 +112,10 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 ]
 
 
-// == Why not Agent-Based Modeling?
-// <sec-method-abm>
+
+== Why not Agent-Based Modeling?
+<sec-method-abm>
+#comment[I think it's worth it to bring this back :)]
 //
 // Agent-Based Modeling (ABM) is a bottom-up simulation paradigm in which a system is modeled as a collection of autonomous, self-directed agents that follow individual behavioral rules, perceive their environment, and interact with one another @bonabeau2002agent. Unlike DES, where entities are passive and their behavior is dictated by the system's process logic, agents in ABM are "active"---each maintains its own state and decision-making autonomy @siebers2010discrete. This natural one-to-one mapping between individual users and autonomous agents has led to ABM being widely adopted in the study of online social networks, where agent-centric modeling of user behavior is conceptually appealing.
 //
@@ -176,8 +130,12 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 
 All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset (see @sec-exec-pipeline) to analyze and compute the desired quantities.
 
+
+
 == Random Number Generation
 <sec-method-rng>
+
+#comment[This takes too long, i think we can safly add a methodology appendix with this explained and treat the RNG as an external library, despite being written from scratch]
 
 This section covers the implementations of the Random Number Generators needed in the main simulation, as Zig did not have a library of distributions. The distributions library has been published under the MIT license and its source available @soler2025distributions
 

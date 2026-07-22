@@ -7,7 +7,7 @@ This annex contains discarded material of the post lifetime analysis. Specifical
 
 == Lifetime Description
 
-To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-method-model, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
+To mathematically capture this cognitive bottleneck within our formal model, information diffusion is modeled as a reverse-chronological queueing process. As established in @sec-model-ctic, this is resolved by the timeline subset $cal(T)_t (u)$, which functions as a time-descending priority queue where propagated posts are stored.
 
 Let us assume a post $i$ is created (or reposted) by user $u$ at time $t$, and $v in cal(N)_"out"(u)$ is a follower of user $u$. The exact time user $v$ is actually exposed to this post, denoted as $tau$, can be modeled as:
 

@@ -1,4 +1,4 @@
-#import "utils.typ":  def, code, flex-caption //todo, comment,
+#import "utils.typ":  def, code, flex-caption, todo, comment,
 #import "@preview/cetz:0.4.2"
 
 This chapter details the concrete engineering decisions that realize the simulation design described in @sec-design. While the previous chapter established what the simulation models and why specific algorithmic choices were made, this chapter addresses how those choices are realized in code: the performance strategies, the input/output pipeline, and the data structures that make the simulation scale to millions of users within practical execution times. 
@@ -462,7 +462,7 @@ The impression and interaction matrices $cal(E)$ and $cal(H)$ — central to the
 
 When a post is created beyond the currently allocated pages, `ensureItemCapacity` allocates new pages on demand — each a fresh `DynamicBitSet` sized for $N times 2^n$ bits. Old pages are never resized or copied, so the amortized cost of growth is constant per new post. The `isSet` check — called on every action event to test whether the user has already interacted with the surfaced post — executes three bitwise operations and one memory load: two shifts, one AND, and the bitset lookup. No division, no reallocation, no page table walk.
 
-Both `user_seen_post` and `user_interacted_post` in the `Topology` struct use `PagedBitSet`, representing the exposure history $cal(E)$ and interaction history $cal(H)$ from the design model (see @sec-design-dm-event).
+Both `user_seen_post` and `user_interacted_post` in the `Topology` struct use `PagedBitSet`, representing the interaction history $cal(H)$ from the design model (see @sec-design-dm-state).
 
 == Trace Validation
 <sec-impl-validation>

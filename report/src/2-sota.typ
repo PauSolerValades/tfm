@@ -1,4 +1,4 @@
-#import "utils.typ": def, flex-caption
+#import "utils.typ": def, flex-caption, todo, comment
 
 This section introduces context to the project: what a microblogging social network is, how the phenomena of information diffusion has been studied, and why Bluesky is the chosen social network to simulate.
 
@@ -29,41 +29,51 @@ This section aims to characterize the topology of social networks according to t
 
 === Multilayer Network
 
-While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is:
+While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is.
 
-A multilayer network @kivela2014multilayer is a quadruplet $M = (V_M, E_M, V, L)$, where:
+#def(name: "Multilayer Network")[
+A Multilayer Network is a quadruplet $M = (V_M, E_M, V, L)$, where:
 - $V$ is the set of all nodes in the system
 - $L = {L_a}_(a=1)^d$ is a sequence of sets of possible layers, where $d$ represents the number of distinct aspects (dimensions) of the network
 - $V_M subset.eq V times product_(a=1)^d L_a$ is the set of node-layer tuples, representing exactly which node exists in which layer
 - $E_M subset.eq V_M times V_M$ is the multilayer edge set connecting these tuples
+]
 
-In an online social network environment, we can define two primary aspects ($d=2$): node types (users, posts, ...) and interaction types (follows, likes, reposts...). The point of this definition is that $G_M = (V_M, E_M)$ is a graph, so a Multilayer Network can be interpreted as a graph with specific labelings over the nodes and edges.
+In an online social network environment, we can define two primary aspects ($d=2$): node types (users, posts, profiles...)and interaction types (follows, likes, reposts...). This structure feels natural as $G_M = (V_M, E_M)$ is a graph, so a Multilayer Network can be interpreted as a graph with specific labellings over the nodes and edges.
 
-We can also partition the edges into _intra-layer edges_ $E_A = {((u, bold(alpha)), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))}$ and the _inter-layer edges_ as $E_C = E_M - E_A$.
+We can conveniently partition the edges into _intra-layer edges_ $E_A = {((u, bold(alpha)), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))}$ ---they connect two nodes of the same type--- and the _inter-layer edges_ ---they connect two nodes of different type--- as $E_C = E_M - E_A$.
 
-The adjacency matrix for a fully interconnected multilayer network can be represented by an order-$2(d+1)$ adjacency tensor $cal(A)$. The tensor elements $cal(A)_(u v bold(alpha) bold(beta))$ have a value of $1$ if there is an edge between node $u$ in layer $bold(alpha)$ and node $v$ in layer $bold(beta)$, and $0$ otherwise.
+The adjacency matrix for a fully interconnected multilayer network can be represented by an order-$2(d+1)$ adjacency tensor $cal(A)$ @eq-adj-mln. The tensor elements $cal(A)_(u v bold(alpha) bold(beta))$ have a value of $1$ if there is an edge between node $u$ in layer $bold(alpha)$ and node $v$ in layer $bold(beta)$, and $0$ otherwise.
 
 $
 cal(A)_(u v bold(alpha) bold(beta)) = cases(
   1 "if" ((u, bold(alpha)), (v, bold(beta))) in E_M,
   0 "otherwise"
 )
-$
+$ <eq-adj-mln>
 
 To isolate the topological properties of specific subsystems (or, more intuitively, to "slice" the adjacency tensor), we can apply structural constraints. If we restrict our analysis to interactions occurring strictly within the same layer (disallowing inter-layer edges), the network possesses only diagonal couplings. With this restriction, we can express the relevant subsystem as an intra-layer adjacency tensor with elements $cal(A)_(u v bold(alpha)) = cal(A)_(u v bold(alpha) bold(beta))$. 
 
 In other words, instead of analyzing the entire complex tensor $cal(A)$ simultaneously, we can fix the layer index $bold(alpha)$ to isolate a specific relationship. This extracts a standard 2D adjacency matrix $A^(bold(alpha))$ representing a single "slice" of the original tensor. This extraction process will be implicitly used in the following sections when describing the macroscopic topological properties of a single entity type and a single relationship.
 
+#todo[Make a graph example which will contain:
+- entites: user and posts
+- relationships: user follows, user creates post, user likes posts, user reposts post.
+two classes: user and posts, but as many layers as relationships (i think owo)
+
+i don't think we need to expliticly describe $cal(A)$
+]
+
 === Property Analysis by Scale
 <sec-sota-topo-scale>
 
-Social networks properties can be classified in three distinct levels of magnification: the micro-scale, the macro-scale, and the meso-scale @wiki-social-network.
+As a complex system, social networks properties can be classified in three distinct levels of magnification: the micro-scale, the macro-scale, and the meso-scale @wiki-social-network.
 
 - *Micro-scale* analysis focuses on the individual building blocks of the network: a single node and its immediate edges. Metrics at this level include a user's individual degree, their specific centrality.  
 - *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. All the homophily based process affect
 - *Macro-scale* analysis of the global properties of the entire system. This includes the overarching scale-free degree distribution or the small-world average path length of the whole platform, such as structural virality. Macro-scale metrics treat the network as a single, unified entity.
 
-Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties relevant to societal metrics ---an therefore relevant for our case study--- are the meso and macro-scale of the network.
+Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties relevant to societal metrics ---an therefore relevant for this work--- are the meso and macro-scale of the network.
 
 === Scale-Free Distribution
 <sec-sota-topo-scalefree>
@@ -76,9 +86,7 @@ where $gamma in [2,3]$, depending of the metric.
 
 The value of $gamma$ is obtained from the actual data, and will change according to which "slice" of $M$ we pick. That means that both the degree of a user for the followers relationship and the degree of a post with the repost relationship will follow powerlaws, with different $gamma$ in every case.
 
-Networks which follow this specific power law are called scale-free networks @wiki-scale-free-network @easley2010powerlaws.
-
-Specifically, in the multilayer network, both the entity user with relationship follower and the entity post with the total number of reposts are going to follow power laws with different gamma values.
+Networks which follow this specific power law are called scale-free networks @wiki-scale-free-network @easley2010powerlaws. Specifically, with the multilayer network framework in mind, both the entity user with relationship follower and the entity post with the total number of reposts are going to follow different power laws with different gamma values.
 
 === Small-World Phenomena
 <sec-sota-topo-smallworld>
@@ -123,6 +131,7 @@ There are other factors much more affected by homophily, such as user attributes
 === Community Structure 
 <sec-sota-topo-community>
 
+#comment[if this does not show up in the dataset analysis, let's just remove it!]
 The intense, localized density inherent in social networks implies that graphs are not uniformly clustered. Instead, they exhibit complex meso-scale (see @sec-sota-topo-scale) structures that sit between microscopic node interactions and macroscopic network properties, being the community structure the most frequently analyzed meso-scale structure.
 
 #def(name: "Community")[a community (or module) is defined as a subgraph exhibiting dense internal connection and sparse external connections.]
@@ -155,8 +164,8 @@ Specifically, an information cascade can be defined as a graph, where the nodes 
 #figure(
   image("../images/sota/broadcast-vs-viral.jpg", width: 80%),
   caption: flex-caption(
-    [Broadcast vs viral cascade structures.],
-    [Broadcast vs viral cascade structures. A broadcast cascade (left) radiates directly from a single source to many followers. A viral cascade (right) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]
+    [Broadcast vs viral cascade.],
+    [Broadcast vs viral cascade. A viral cascade (left) propagates through multiple generations of reposts, forming a deeper tree structure. A broadcast cascade (right) radiates directly from a single source to many followers.  Image from Goel et. al @goel2016structural]
   )
 ) <fig-broadcast-vs-viral>
 
@@ -164,6 +173,8 @@ Traditionally, diffusion models are classified into three distinct mathematical 
 
 === Epidemic Models
 <sec-sota-diffusion-epidemic>
+
+#comment[this is candidate to be removed to gain some space here, as just gives context, and it's not used _at all_ in any part of the code nor the project, but it's true that highlights what's worth of the model]
 
 Epidemic models focus on the macroscopic diffusion of information, and they are primary modeled using classic compartmental models adapted from epidemiology. Despite lots of flavours for epidemic models being available (SIR, SIS, SIRS and Competitive Influence Diffusion), this section explains the SIR model to be able to properly contextualize them in the social networks field.
 
@@ -232,6 +243,8 @@ By allowing transmission at different rates $alpha_{j,i}$ across different edges
 
 == Description of Microblogging Social Media 
 <sec-sota-description>
+
+#comment[this and why bluesky sections could be merged to gain space, as it's clear that bluesky is just an open protocol twitter clone.]
 
 Despite social networks being a relatively new addition to modern life, they have fundamentally changed how information is consumed and spread in the modern age. To adequately understand the aims of this project, some definitions and context regarding social networks are provided.
 

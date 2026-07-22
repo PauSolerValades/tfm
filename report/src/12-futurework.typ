@@ -96,7 +96,7 @@ The current simulation inherits these limitations through its two simplifying as
 
 === Why Content Matters
 
-Most classical diffusion models ---including the one presented in this work (@sec-method-model)--- deliberately focus on the "container" rather than the "content." The justification for this approach lies in the unique topological properties of social networks (see @sec-sota-topologies), where the observed flow of information often mimics real-world data patterns regardless of the message being sent. For instance, basic structural models can effectively replicate the heavy-tailed distribution of cascades found in empirical datasets without modeling a single word of the posts themselves.
+Most classical diffusion models ---including the one presented in this work (@sec-model-ctic)--- deliberately focus on the "container" rather than the "content." The justification for this approach lies in the unique topological properties of social networks (see @sec-sota-topologies), where the observed flow of information often mimics real-world data patterns regardless of the message being sent. For instance, basic structural models can effectively replicate the heavy-tailed distribution of cascades found in empirical datasets without modeling a single word of the posts themselves.
 
 We see a tangential acknowledgment of content in the application of specific models: the Independent Cascade (IC) model is frequently utilized to simulate the viral spread of misinformation, with the underlying assumptions that is not difficult for a user to spread it, it does not need to be convinced. In contrast, there are other models that model believe change, as a user needs multiple exposures to similar content to actually transmit it to its followers. These choices imply an underlying assumption about the type of content being transmitted, even if the model itself remains mathematically agnostic to the semantics.
 
@@ -139,7 +139,7 @@ This section proposes another solution not involving LLMs. Rather than giving ev
 
 The main strong point of this approach is to avoid heavyweight operations per-event in the middle of the hot loop, as they compromise simulation scalability, such as LLMs inference. An embedding is a fixed-dimensional vector that captures the semantic essence of a post or user in a form that supports fast arithmetic.
 
-Given a user $u in cal(U)$, their observable identity ---what they have contributed to the network--- is captured by their activity set $cal(A)_t (u)$, which includes both original creations and reposts (see @sec-method-model, @def-activity). This is distinct from the narrower set of original posts $cal(P)_t (u)$: a repost is an act of endorsement that shapes the user's public identity just as much as an original post.
+Given a user $u in cal(U)$, their observable identity ---what they have contributed to the network--- is captured by their activity set $cal(A)_t (u)$, which includes both original creations and reposts (see @sec-model-ctic, @def-activity). This is distinct from the narrower set of original posts $cal(P)_t (u)$: a repost is an act of endorsement that shapes the user's public identity just as much as an original post.
 
 #def(name: "Post/User Embedding")[
   A vector in a relatively small space $RR^n$ that if you apply the cosine similarity with a post embedding they will be similar if the information they encode is similar. 
