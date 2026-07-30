@@ -37,6 +37,47 @@ pi-dev:
     value: https://pi.dev/
     date: 2026-05-27
 
+vuong1989likelihood:
+  type: Article
+  title: "Likelihood Ratio Tests for Model Selection and Non-Nested Hypotheses"
+  author: Vuong, Quang H.
+  date: 1989-03
+  serial-number:
+    doi: "10.2307/1912557"
+  page-range: 307-333
+  parent:
+    type: Periodical
+    title: Econometrica
+    volume: 57
+    issue: 2
+    publisher: The Econometric Society
+
+r-vuong-test:
+  type: Web
+  title: "vuong.test: Vuong's likelihood ratio test for non-nested models"
+  url:
+    value: https://search.r-project.org/CRAN/refmans/unitquantreg/html/vuong.test.html
+    date: 2026-06-01
+  organization: R Package Documentation — unitquantreg
+
+distfit-pypi:
+  type: Web
+  title: "distfit: probability density function fitting"
+  author: Taskesen, Erdogan
+  url:
+    value: https://pypi.org/project/distfit/
+    date: 2026-06-01
+  organization: PyPI
+
+distfit-parametric:
+  type: Web
+  title: "distfit: Parametric distribution fitting"
+  author: Taskesen, Erdogan
+  url:
+    value: https://erdogant.github.io/distfit/pages/html/Parametric.html
+    date: 2026-06-01
+  organization: distfit Documentation
+
 soler2025dsbskysim:
   type: Repository
   title: ds-bskysim

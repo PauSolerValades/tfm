@@ -1,3 +1,6 @@
+#import "utils.typ": *
+
+#todo[Change according to the actual results, but i think the skeleton is in place from last time]
 
 Information diffusion in social networks is an extremely challenging problem. This difficulty stems not only due to a scale problem ---enormous amount of data, and the need of big sample sizes to properly extrapolate results--- but the nature of the problem in itself: capture human behaviour in a complex system.
 

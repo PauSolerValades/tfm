@@ -20,7 +20,7 @@ The models have been used for the following utilities:
 - Reference formatting.
 
 Generative AI has NOT been used in the following tasks:
-- Any code written in Zig (Implementation, @sec-impl) or concerning the simulation.
+- Any code written in Zig or concerning the simulation.
 - Any decision taking regarding technology election, _e.g_ the use of the Go programming language or R, the use of DuckDB/SQLite database technology, the use of parquet files.
 - Pipeline design: which transformations to apply to the data in order to obtain some results from it.
 - Any interpretation of the data, as well as results obtained from it.

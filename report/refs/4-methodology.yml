@@ -108,6 +108,22 @@ casella2002statistical:
   serial-number:
     isbn: "978-0-534-24312-8"
 
+sumari2013comparing:
+  type: Article
+  title: "Comparing Three Simulation Model Using Taxonomy: System Dynamic Simulation, Discrete Event Simulation and Agent Based Simulation"
+  author:
+    - Sumari, Suliza
+    - Ibrahim, Roliana
+    - Zakaria, Nor Hawaniah
+    - Ab Hamid, Amy Hamijah
+  date: 2013-08
+  parent:
+    type: Periodical
+    title: International Journal of Management Excellence
+    volume: 1
+    issue: 3
+    page-range: 54-59
+
 barabási2005bursts:
   type: Article
   title: The origin of bursts and heavy tails in human dynamics

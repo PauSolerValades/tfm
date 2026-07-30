@@ -73,7 +73,7 @@ The measurements reported here are approximate -—-peak RSS was recorded from s
   ),
   caption: flex-caption(
     [Peak memory usage across dataset sizes.],
-    [Peak memory usage across dataset sizes. The per-100K-user column shows that the memory cost per user increases with scale, confirming superlinear growth. A log-log fit over these four points yields an exponent of $approx 2.0$, consistent with the expected $O(N^2)$ worst case driven by the $N times M$ impression matrices (see @sec-impl-impressions).],
+    [Peak memory usage across dataset sizes. The per-100K-user column shows that the memory cost per user increases with scale, confirming superlinear growth. A log-log fit over these four points yields an exponent of $approx 2.0$, consistent with the expected $O(N^2)$ worst case driven by the $N times M$ impression matrices (see @apx-impl-impressions).],
   )
 ) <tbl-memory-scaling>
 

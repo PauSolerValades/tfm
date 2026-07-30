@@ -1,17 +1,13 @@
-#import "utils.typ": def, code, flex-caption 
+#import "utils.typ": *
 
 This chapter outlines directions for extending the simulation beyond its current scope, organized into two independent tracks. The first addresses computational performance — removing the remaining bottlenecks that limit scalability to tens of millions of users. The second addresses model fidelity — lifting the simplifying assumptions of content-agnostic, action-independent diffusion to capture the semantic and psychological drivers of real social network behavior.
 
 == Performance Optimizations
 <sec-future-performance>
 
-The simulation already applies arena-based memory allocation and buffered file I/O to keep the hot loop from stalling (see @sec-impl-memory and @sec-impl-trace-io). Two bottlenecks remain that are structural rather than implementational: the $O(log n)$ cost of the event queue, and the single-threaded nature of trace writing.
-
-=== Future Event Set Data Structures
-
 The Event Queue is a well known performance critical point. Event with the precautions taken, a MinHeap might not be enough for scalability into the millions of users, so another more specific data structure could be used.
 
-The current implementation uses a binary heap for the global event queue $Q$ (see @sec-impl-queue). While the heap provides $O(log n)$ operations, the future event set remains the principal bottleneck as the simulation scales toward $N = 10^7$ users. A flattened binary heap stores elements in non-contiguous memory regions, causing cache misses during sift-down operations: loading one tree node does not pre-fetch the next comparison target, stalling the CPU.
+The current implementation uses a binary heap for the global event queue $Q$ (see @apx-impl-queue). While the heap provides $O(log n)$ operations, the future event set remains the principal bottleneck as the simulation scales toward $N = 10^7$ users. A flattened binary heap stores elements in non-contiguous memory regions, causing cache misses during sift-down operations: loading one tree node does not pre-fetch the next comparison target, stalling the CPU.
 
 With at most $4N$ events simultaneously in the queue and each event requiring two to four heap operations, the actual computational cost is several times the theoretical $log_2(4N) approx 25$ comparisons. The lack of batch insertion in a heap means there is no avenue for amortization.
 
@@ -19,57 +15,9 @@ The solution is a Calendar Queue @brown1988calendar — a bucketed priority queu
 
 It is important to note that the Calendar Queue and its variants remain an active research topic in the discrete-event simulation literature. Furthermore, multi-tiered extensions such as MList and its dynamic-shift variant DSMList @kim2009mlist have been shown to improve performance by at least 20% over standard Calendar Queue implementations by introducing multiple dynamically-allocated calendar queues at different time resolutions. Evaluating which variant ---static Calendar Queue, dynamic Calendar Queue, or a multi-tiered structure ---best serves this simulation's specific event arrival pattern is an open empirical question that warrants dedicated benchmarking. This would help improve memory usage in the simulation execution, as well as having a faster access to the Future Event set.
 
-=== Parallelism
-<sec-future-multiprocess>
-
-The execution model followed in the Execution (@sec-exec) is highly inefficient, and wastes memory. In essence, the multiple executions were parallelized using bash as the next code shows:
-
-#code(caption: flex-caption([Parallelism execution methodology], [Parallelism execution methodology]))[
-  ```bash
-  for i in {0..P}; do (
-    for j in {0..R}; do
-      ./bsky-sim -n "batch-$i/$j" data/size-network.bin
-    done
-  ) &
-  done
-  wait
-  ```
-] <code-bash-parallelism>
-
-where $P$ is the number of process to spawn, and $R$ is the replications of the simulation per process. The simulation generates a folder inside traces with the `n` argument. 
-
-This is wasteful, as the topology is the same per every simulation and does not change between runs, but this approach reloads the topology per process. If the topology were split between the CSR (followers and users are immutable) and the mutable information (user entities, posts created and paged structures),  parallelism via multithreading could be used for one process to run several executions with as many threads the programmers wishes.
-
-Another parallelism structure would be to try to parallelize the simulation itself. Parallel Discrete Event Simulation are a research field on its own, as the sources being related to each other makes this program not very easily parallelizable.
-
-The last optimization regarding parallelism would be to get rid of `SYSCALL` when writing every trace. Lets imagine two green threads per execution: one runs the simulation and fills the trace buffers, and the other just flushed the buffer when its full. With a simple call to the other thread, the first one would not need to stop the program execution in order to flush, as the `SYSCALL` would be from another program.
-
-
-=== Multi-Stage Compilation
-<sec-future-compiletime>
-
-The simulation currently parses the JSON configuration at runtime and resolves distribution types through tagged unions. Every call to `.sample()` dispatches through a union tag, and the concrete distribution type (e.g., `Exponential(f64)` vs `Erlang(f64)`) is invisible to the compiler's optimizer, as well as ever if guarding all the trace writing calls `if (simconf.trace_to_file)` depend on a runtime variable, so even if the variable `simconf.trace_to_file = false`, the if will be executed at every iteration. To avoid this overhead, v4 hardcoded all the variables for the code to be optimized when compiled. This section presents a clever metaprogramming technique to have the flexibility of v3 in the configuration with v4 performance without the need of editing the code.
-
-A solution to this small inconveniences can be found in metaprogramming capabilities, that is, having a program that generates the specialized code of the simulation on it's runtime, and then the simulation will see the `json` configuration as a compile time know variable. With that done, the first program is an specialization of the actual simulation. Let's define them as
-
-- *simulation-builder.zig*: receives the JSON config as a parameter and emits specialized Zig source code.
-- *simulation.zig*: the simulation binary, compiled by the zig compiler invoked by simulation-builder.zig.
-
-Simulation-builder is a code generator that runs once per configuration. Simulation is the actual simulation, now compiled with full knowledge of which distributions it will use and if it has to write the traces or not. This is a multi-compilation stage pipeline, which can be implemented with the zig build system, which is in itself a zig program that manages the zig compilation.
-
-Benefits:
-- Runtime distribution dispatch (tagged union switch) is eliminated but all the distributions are still settable at runtime. While the branch predictor handles this well at runtime, the real win is that LLVM can inline the entire sampling call chain once concrete types are known. A call to `.sample(rng)` becomes a direct invocation of, e.g., the Ziggurat exponential sampler, with zero indirection.
-- Heap pre-allocation estimates can be computed at code-gen time from the known distribution parameters and network size. If the expected event count per user is statically bounded by the config and topology dimensions, the per-user timeline heaps can be pre-sized, eliminating reallocation churn in the hot loop. Notably, the topology is only *inspected* for these aggregate statistics — the network data itself is not embedded in the specialized binary and remains a runtime input, so the same specialized binary can process different topologies of similar scale.
-
-As trade-offs, each configuration change requires a recompilation (a few seconds), and the resulting binary is specialized to one config shape. This approach favors long-running, single-config executions or a small number of carefully chosen parameter points over rapid parameter sweeps with hundreds of configs. For the final calibrated configuration that will be run at full scale with many replications, the compile-time investment may be justified by the runtime savings.
-Implement appropriately the session gaps, duration and inter post creation as the data gave. The decisions taken in the works were result of a severe time limitation constraint and the need for the distributions software to implement the lognormal, the weibull and the gamma from scratch.
-
-== Performance Evaluation
-<sec-future-execution>
-
-Despite empirically proving the implementation provided runs very fast, a rigorous performance analysis has not been conducted. A profiling of the code would actually highlight which are the actual bottlenecks of the code to prioritize in order to maximize the effort to performance ratio. Additionally, the space complexity usage of the program (see @apx-performance-space) is rudimentary, and would need real memory usage to actually determine.
 
 == Model Improvements
+#todo[There cannot be 10 pages of ficittious wannabes: just cut them down to the main idea: use an embedding to represent the user state and similarity with a post. all the other goodies to the appendix]
 
 Despite the results section proving the success in the model election with behaviours and data, two findings point to problems in the model, as does not resemble user actual behaviors, the timeline starvation problem.
 
@@ -228,6 +176,5 @@ Expanding the softmax policy with the cosine similarity $c$ between user identit
 $ beta_(u,i)(x) = frac(exp(theta_"repost" dot c + beta_"repost"), sum_(k in cal(A)) exp(theta_k dot c + beta_k) dot x) (1 - gamma)^(x^(omega_i) $
 
 This synthesis resolves the reinforcement paradox: even highly exposed posts (large $x$) will not trigger unrealistic, network-wide outbreaks unless they maintain high semantic alignment ($c$) with the viewing users. Cascades naturally fracture into topically relevant sub-communities, preserving both structural decay and semantic homophily.
-
 
 Taken together, the proposals given in this section sketch a research path from a purely structural, content-agnostic simulation toward one where diffusion emerges from the interplay between semantics and topology. The result is a framework where who users are, what content says, and how communities reshape it are no longer orthogonal assumptions but continuous, entangled dynamics, making ---allegedly--- a worth exploring research topic.

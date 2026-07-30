@@ -134,49 +134,43 @@
 #include "src/5-design.typ"
 
 #pagebreak()
-= Implementation
-<sec-impl>
-
-#include "src/6-implementation.typ"
-
-#pagebreak()
 = Bluesky Data Analysis
 <sec-data>
 
-#include "src/7-data.typ"
+#include "src/6-data.typ"
 
 #pagebreak()
 = Calibration
 <sec-calibration>
 
-#include "src/8-calibration.typ"
+#include "src/7-calibration.typ"
 
 #pagebreak()
 = Execution 
 <sec-exec>
 
-#include "src/9-execution.typ"
+#include "src/8-execution.typ"
 
 #pagebreak()
 = Results
 <sec-results> 
 
-#include "src/10-results.typ"
+#include "src/9-results.typ"
 
 #pagebreak()
 = Conclusions
 
-#include "src/11-conclusions.typ"
+#include "src/10-conclusions.typ"
 
 #pagebreak()
 = Future Work
 <sec-future>
 
-#include "src/12-futurework.typ"
+#include "src/11-futurework.typ"
 
 #pagebreak()
 #bibliography(
-  ("refs/1-introduction.yml", "refs/2-context.yml", "refs/3-model.yml", "refs/4-methodology.yml", "refs/5-design.yml", "refs/6-implementation.yml", "refs/7-data.yml", "refs/8-calibration.yml", "refs/9-futurework.yml", "refs/10-annex.yml"),
+  ("refs/1-introduction.yml", "refs/2-context.yml", "refs/3-model.yml", "refs/4-methodology.yml", "refs/5-design.yml", "refs/6-data.yml", "refs/7-calibration.yml", "refs/8-futurework.yml", "refs/9-annex.yml", "refs/6-implementation.yml"),
   title: "References",
 )
 
@@ -196,18 +190,37 @@
 #include "src/annex/code.typ"
 
 #pagebreak()
+= Random Number Generation Methodology 
+<apx-rng>
+
+#include "src/annex/rng.typ"
+
+#pagebreak()
 = Examples
 <apx-examples>
 
 #include "src/annex/example.typ"
 
 #pagebreak()
+= Implementation
+<apx-impl>
+
+#include "src/annex/implementation.typ"
+
+#pagebreak()
 = Data Analysis
 <apx-data>
 
 #include "src/annex/data.typ"
+
 #pagebreak()
-= Post Lifetime Analysis
+= Sessions
+<apx-sessions>
+
+#include "src/annex/sessions.typ"
+
+#pagebreak()
+= Post Lifetime Cavilations 
 <apx-lifetime>
 
 #include "src/annex/lifetime.typ"
@@ -231,7 +244,7 @@
 #include "src/annex/software-stack.typ"
 
 #pagebreak()
-= Twitter Session Mechanics Threshold 
+= Session Finding Methods
 <apx-threshold>
 
 #include "src/annex/threshold.typ"

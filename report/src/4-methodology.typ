@@ -1,10 +1,15 @@
 #import "utils.typ": *
 
-This chapter justifies and explains several methodology choices, such as the model chosen to simulate (see @sec-model-ctic), why the use of a discrete-event simulation methodology (see @sec-method-des) finishing with the random number generation has been used and implemented (see @sec-method-rng).
+This chapter justifies and explains several methodology choices, why the use of a discrete-event simulation methodology (see @sec-method-des) and why the DES framework has been chosen over ABM @sec-method-abm.
+
+As the Random Number Generation library `distributions` @soler2025distributions has been implemented from scratch to serve this project, the methodology is in @apx-rng but not included in the main body due to report length constraints.
 
 == Why a Simulation?
 
 The model literally cannot be solved analitically due to much complexity.
+
+#comment[I don't know if this section makes actual sense. I thought it would be super easy to write but lol its actually quite difficult to narrow down why this method will analytically make no sense]
+
 
 == Discrete-Event Simulation
 <sec-method-des>
@@ -18,7 +23,7 @@ Information diffusion (see @sec-sota-diffusionmodels) models information cascade
 === Description and Mechanics
 <sec-method-des-mechanics>
 
-The main mechanic of the simulation is the content propagation. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
+The propose of the simulation is the information diffusion, specifically the cascades generated when the content traverses the network. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
 
 $ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $ <eq-proc-propagate>
 
@@ -79,9 +84,15 @@ According to the CTIC model, the number of reposts of a post should follow a pow
 
 ==== Post Lifetimes
 
-#todo[Refactor things from data and from model and explain them here! make a fancy definiton, what does it mean in this context]
+The lifetime of a post is the interval between its first repost and its last repost. It captures the temporal window during which a cascade is actively spreading ---outside this window, the post is effectively dead. Unlike cascade size, which counts how many users participated, lifetime measures for how long the cascade remained viable.
 
-This measures for how long a post is alive. In this context, alive means the time from the first repost from the last repost. This is also expected to follow some sort of power-law, as the post should get the big majority of interactions on their first ticks, and then abruptly decrease as time goes on.
+What makes lifetime a particularly interesting quantity in this model is that it emerges from the interaction between the activity based and the queue dynamics. We can express the lifetime of a post in the simulation as 
+
+$ tau = Delta_"idle" + Delta_"scroll" $
+
+When a post arrives in a follower's timeline while the user is offline, it sits idle for a duration $Delta_"idle"$ ---the gap until the next session begins. During this idle window, newer posts continue to pile on top. Once the user logs in, the feed is consumed reverse-chronologically: the post cannot be seen until the user scrolls past every newer post that arrived after it, incurring an additional delay $Delta_"scroll"$. If $Delta_"scroll"$ exceeds the user's session duration $Delta_k$, the post will never be seen ---the transmission opportunity is lost, and the cascade stalls at that edge. If $Delta_"scroll" < Delta_k$, the post survives and may propagate further.
+
+Lifetime is therefore a desired quantity (see @sec-method-des-metrics): it cannot be set by a parameter but instead emerges from the interaction between network topology (how many posts compete for attention), user activity rhythms (session gaps and durations), and the reverse-chronological consumption model. Reproducing realistic lifetime distributions serves as a strong signal that the model captures the correct interplay between these mechanisms.
 
 ==== Structural Virality
 
@@ -112,84 +123,21 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 ]
 
 
+All evaluation metrics listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset (see @sec-exec-pipeline) to analyze and compute the desired quantities.
 
-== Why not Agent-Based Modeling?
+
+== Simulation Paradigm Choice
 <sec-method-abm>
-#comment[I think it's worth it to bring this back :)]
-//
-// Agent-Based Modeling (ABM) is a bottom-up simulation paradigm in which a system is modeled as a collection of autonomous, self-directed agents that follow individual behavioral rules, perceive their environment, and interact with one another @bonabeau2002agent. Unlike DES, where entities are passive and their behavior is dictated by the system's process logic, agents in ABM are "active"---each maintains its own state and decision-making autonomy @siebers2010discrete. This natural one-to-one mapping between individual users and autonomous agents has led to ABM being widely adopted in the study of online social networks, where agent-centric modeling of user behavior is conceptually appealing.
-//
-// Despite this conceptual fit, ABM carries a substantial computational cost when applied at scale. Whether an ABM uses fixed time-stepping or event-driven scheduling, each agent's state must still be individually evaluated whenever the simulation requires it to act, react, or remain idle. In a microblogging platform with hundreds of thousands of users, the overwhelming majority are offline at any given instant---no decision is being made, no content is being consumed, and no propagation can occur. Yet under an agent-based paradigm, the simulator must still account for every user's presence, maintain their individual state, and check whether they are eligible to participate @maidstone2012discrete. The result is that computational effort scales with the number of users $N$ regardless of how few are actually active, making the approach increasingly wasteful as the network grows.
-//
-// Discrete-Event Simulation avoids this overhead through its fundamental operational principle: the simulator does not advance time in uniform steps, nor does it poll entities that have nothing to do. Instead, it maintains a chronologically ordered event queue and jumps directly from one scheduled event to the next, bypassing idle intervals entirely. Processing an event---such as a post creation or a user session initialization---may involve work proportional to the local network degree (iterating over a poster's followers, scheduling follow-up events), but no work is performed for the vast silent majority of users who are offline. Because human activity in microblogging is highly bursty and intermittent @barabási2005bursts, with prolonged gaps of inactivity between short engagement sessions, this event-driven design naturally exploits the system's intrinsic sparsity.
-//
-// Beyond runtime performance, ABM also demands substantially more development effort. Specifying perception, individual decision-making, and inter-agent communication for every user introduces considerable model complexity @bonabeau2002agent. Maidstone @maidstone2012discrete observes that ABS models tend to take significantly more time to develop than their DES counterparts, and that this added complexity is difficult to justify when the research question concerns aggregate diffusion dynamics rather than heterogeneous individual cognition. In DES, by contrast, the system is modeled top-down through a network of processes and queues: entities flow through the system according to probability distributions and predefined routing rules @fishman2002simulation, yielding a leaner model that remains expressive enough to capture population-level propagation behavior.
-//
-// In the context of this work, the choice becomes clear. An ABM of a Bluesky-scale network would require maintaining and evaluating individual agent state for every user, even though the vast majority are offline and unreachable for information transmission at any given moment. When coupled with the need for hundreds or thousands of independent replications to achieve statistical convergence across the parameter space, the computational demands of an agent-based approach would render large-scale exploration infeasible. The DES approach was therefore selected not only for its natural integration with the event-driven CTIC model (see @sec-method-ctic), but also for its ability to route computational effort where it matters---toward the propagation events that actually drive the dynamics---rather than toward polling idle users.
-//
 
-All evaluation metrics listed in this section are computed from the time-aggregated counters collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @sec-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset (see @sec-exec-pipeline) to analyze and compute the desired quantities.
+The topic of this project is clearly in the Complex Social Science field #todo[search for a good source], but its author comes from an OR and Statistics master: two disciplines that default to two different paradigms with opposing methodological defaults. Operational Research (OR) heavily relies on Discrete-Event Simulation (DES) @maidstone2012discrete, while Complex Social Science defaults to Agent-Based Modeling (ABM) to study collective behavior and contagion @bonabeau2002agent. While simulating information cascades on a social network conceptually aligns with ABM, this section justifies why DES is the most appropriate mathematical and structural fit for this specific work.
 
+ABM is a bottom-up paradigm where autonomous agents follow behavioral rules and interact with their environment @bonabeau2002agent. In contrast, DES entities are typically passive tokens moving through a system's process logic @siebers2010discrete. However, the distinction in practice is rarely absolute. As Siebers et al. observe, "true ABS models in OR do not exist"; rather, practitioners build combined models where a DES backbone is augmented with entity-specific states @siebers2010discrete. The present simulation fits this description precisely, as it utilizes a classical DES architecture, yet each user carries personalized, empirically calibrated temporal parameters (e.g., session durations, inter-creation times and the degree in the network topology). Users are heterogeneous, but they are not fully autonomous agents because the simulation _does not model individual cognitive decision-making_.
 
+This lack of cognition is the key in the paradigm choice. Sumari et al. warn that DES is less suitable for analyzing complex human behavior because its focus is on process flows @sumari2013comparing. If this research explored *why* a user reposts based on emotional or semantic factors, ABM would be a better fit. However, in this content-agnostic model, the user action policy $pi$ is a global categorical distribution sampled independently of the post itself (see @sec-method-des-assumptions). The human element is deliberately abstracted into a stochastic process, removing the cognitive autonomy that ABM is designed to simulate.
 
-== Random Number Generation
-<sec-method-rng>
+By removing user preferences, the model remains more akind to DES territory. DES natively excels at routing entities through networks of queues and servers @fishman2001des, and cucially, while DES is inherently built around queuing structures, the concept of queues does not natively exist in standard ABM frameworks @siebers2010discrete. Because the CTIC model relies on reverse-chronological timelines that function strictly as queues, DES provides the exact architectural infrastructure required to simulate them.
 
-#comment[This takes too long, i think we can safly add a methodology appendix with this explained and treat the RNG as an external library, despite being written from scratch]
+Furthermore, human activity in microblogging is highly bursty @barabási2005bursts; the vast majority of users are offline at any given instant. DES natively exploits this by jumping chronologically from scheduled event to event, bypassing idle intervals entirely. This computational efficiency is critical for scaling to bigger networks, serving as a powerful empirical benefit of the chosen paradigm.
 
-This section covers the implementations of the Random Number Generators needed in the main simulation, as Zig did not have a library of distributions. The distributions library has been published under the MIT license and its source available @soler2025distributions
-
-
-=== Ziggurat Algorithm
-The generation of random variates for continuous distributions, specifically the Normal, Exponential and Pareto distributions, relies on the highly optimized Ziggurat algorithm @marsaglia2000ziggurat. This method is a form of rejection sampling that overlays the target probability density function (PDF) with a set of $n=256$ horizontal rectangles (named after the Mesopotamian ziggurat temples for their tiered resemblance) of equal area, constructed such that they tightly bound the distribution curve.
-
-Our implementation in Zig heavily leverages compile-time evaluation (`comptime`) to specialize the algorithm identically for both `f32` and `f64` precision without runtime overhead. The core optimization focuses on minimizing calls to the pseudo-random number generator (PRNG). Instead of requiring two distinct random values—one to select a rectangle and another to sample a point within it—a single 64-bit random integer is generated (or 32-bit for `f32`).
-
-From this single random word, two values are extracted with zero PRNG overhead:
-1. The lowest 8 bits are masked (`bits & 0xff`) to uniformly select the index $i$ of one of the 256 precomputed rectangles.
-2. The remaining 52 bits are shifted and directly utilized as the mantissa of an IEEE 754 floating-point number @ieee2019floating, @goldberg1991floating.
-
-To construct the uniform floating-point value efficiently, the integer mantissa is bitwise OR-ed with a predefined exponent mask. For symmetric distributions like the Normal, the exponent is chosen such that the resulting float falls into the interval $[2, 3)$. Subtracting 3 then shifts the domain to $[-1, 1)$. For asymmetric distributions like the Exponential, the exponent mask places the float in $[1, 2)$, and subtracting an offset near 1 yields a uniform variate in $[0, 1)$.
-
-This uniformly distributed value $u$ is scaled by the $x$-coordinate boundary of the selected rectangle $i$, producing a candidate sample $x = u \cdot x_i$. If the candidate falls strictly within the core of the rectangle ($|x| < x_{i+1}$), it is immediately accepted. This fast-path covers approximately 99% of all generation requests and bypasses costly mathematical operations.
-
-When a candidate falls outside the fast-path core, two edge cases are handled:
-- *Boundary Cases:* If $i > 0$ and the sample is in the wedge between rectangles, an additional random draw evaluates the exact PDF to deterministically accept or reject the candidate.
-- *Tail Cases:* If $i = 0$, the sample lies in the infinite tail of the distribution. A specialized `zeroCase` function handles this tail recursively. 
- - *Exponential* distribution, it evaluates the inverse transform @devroye1986nonuniform shifted by the rightmost boundary $R$, yielding $R - \ln(U)$. 
- - *Normal* distribution, it implements Marsaglia's tail generation, looping to draw values until $-2y < x^2$ is satisfied, and appropriately shifting the result by $R$.
-
-
-=== Categorical Distribution
-<sec-method-rng-categorical>
-
-The categorical distribution models discrete random variables that can take on one of $k$ possible categories, each with a specific probability. In our Zig implementation, a categorical distribution is initialized with an array of distinct items (`data`) and their corresponding probabilities (`weights`). During initialization, an accumulator array (`acc`) is computed that stores the cumulative sum of the
-given probabilities.
-
-To sample from this distribution, we employ a standard inverse transform method @devroye1986nonuniform: a uniform floating-point value $u in [0, 1)$ is drawn and compared linearly against the cumulative weights array until a value satisfying $u <= text("acc")[i]$ is found, at which point the category at index $i$ is returned.
-
-While theoretically faster alternatives like the Alias Method @walker1977alias exist --—capable of sampling in $O(1)$ time after a linear $O(k)$ setup—-- they introduce additional memory overhead and initialization complexity. For the context of this simulation, where $k$ is typically very small (e.g., modeling a handful of user action types), the performance difference is strictly negligible. Thus, we have opted for the linear search approach due to its simplicity and cache locality.
-
-However, to optimize the performance of the linear search, the following convention has been maintained when constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
-
-
-=== Pareto Distribution
-
-The Pareto Distribution is fundamental when talking about social networks, as its the distribution associated with the power-law. It's defined by two parameters, scale $alpha$ and shape $x_m$, and has the following density and cumulative density functions:
-
-$ f(x | alpha, x_m ) = cases(frac(alpha x_m^alpha, x^(alpha + 1)) & "if" x >= x_m, 0 & "if" x < x_m )  $
-
-$ F(x | alpha, x_m) = cases(
-  1 - (frac(x_m, x))^alpha & "if" x >= x_m,
-  0 &"if" x < x_m
-)
-$ 
-
-To sample from it we've used the following relationship @casella2002statistical: a random variable $X$ follows a $"Pareto"(alpha, x_m)$ distribution when $Y ~ "Exp"(1)$ and
-
-$ X ~ x_m · exp{Y/alpha} $
-
-therefore being as efficient as generating an exponential with the ziggurat algorithm.
-
-
+Ultimately, DES was selected because the core research question ---aggregate diffusion dynamics under stochastic user activity--- does not require cognitive agent autonomy. The model operates as a combined DES/ABS architecture, using DES for process flow and ABS principles for heterogeneous parametrization. If future iterations lift the content-agnostic assumption and introduce semantic decision-making (see @sec-future-content), the architectural constraints of the model would need to be carefully re-evaluated, potentially prompting a paradigm shift toward a more traditional ABM framework.
 

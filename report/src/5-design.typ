@@ -3,7 +3,7 @@
 #import "utils.typ": procedure, flex-caption, todo, comment
 #import "@preview/cetz:0.4.2"
 
-This chapter covers the design of the simulation: the entities and data model (see @sec-design-entities), the semantics of each event source (see @sec-design-sources), the overall simulation lifecycle (see @sec-design-lifecycle), and the trace schema that captures all state transitions (see @sec-design-traces). For every data structure referenced here, only the algorithmic motivation is provided; the concrete realization, memory layout, and performance considerations are treated separately in @sec-impl.
+This chapter covers the design of the simulation: the entities and data model (see @sec-design-entities), the semantics of each event source (see @sec-design-sources), the overall simulation lifecycle (see @sec-design-lifecycle), and the trace schema that captures all state transitions (see @sec-design-traces). For every data structure referenced here, only the algorithmic motivation is provided; the concrete realization, memory layout, and performance considerations are treated separately in @apx-impl.
 
 == Design Overview
 <sec-design-overview>
@@ -65,7 +65,7 @@ The Post entity is the manifestation of the elements of the set $cal(I)$. It is 
 
 Unlike Users and Posts, which represent the theoretical entities of the network, Events and TimelineEvents are strictly operational constructs required by the Discrete-Event Simulation engine to advance continuous time and propagate the information.  
 - *Event*: The fundamental mechanical unit of the simulation. An Event is a scheduled state transition always associated to the user the event relates with ---such as a user session starting or ending, interacting with the next post on the timeline, or to create a post. It serves as the operational trigger that updates the network's state without requiring the simulation to compute inactive time intervals.  
-- *TimelineEvent*: A simple tuple that links a post identifier to its specific arrival timestamp in a user's chronological feed $cal(T)_t (u)$. It acts as the mechanical payload that physically delivers propagated content to a follower's timeline once the required propagation delay has elapsed. #todo[in the implementation we must discuss why this is a very good idea when adding content]
+- *TimelineEvent*: A simple tuple that links a post identifier to its specific arrival timestamp in a user's chronological feed $cal(T)_t (u)$. It acts as the mechanical payload that physically delivers propagated content to a follower's timeline once the required propagation delay has elapsed. @apx-impl-queue
 
 Lastly, the structure this events are contanied in are the main simulation queue $Q$ and every user timeline $cal(T)_t (u)$.
 
@@ -174,7 +174,7 @@ Both of this options are nested under a check when the event type is a `session`
 
 #comment[this is very important for the simulation, and it's desgin also, but feels close to the implementation. Maybe should be refactored as an example or heavily shortened and kept here]
 
-In an Activity-Driven Discrete-Event Simulation, interrupting a stochastic process introduces a severe operational challenge. Because the system relies on scheduling future events (such as the next user action or post creation) within a continuous renewal process, a user transitioning to an offline state leaves previously scheduled events orphaned in the global Future Event Set ($Q$). Dynamically locating and deleting these orphaned events from the global priority queue upon every session boundary would require O(N) traversals and continuous memory reallocations, effectively destroying the engine's cache locality and computational performance (#todo[cite the implementation appendix when done]).
+In an Activity-Driven Discrete-Event Simulation, interrupting a stochastic process introduces a severe operational challenge. Because the system relies on scheduling future events (such as the next user action or post creation) within a continuous renewal process, a user transitioning to an offline state leaves previously scheduled events orphaned in the global Future Event Set ($Q$). Dynamically locating and deleting these orphaned events from the global priority queue upon every session boundary would require O(N) traversals and continuous memory reallocations, effectively destroying the engine's cache locality and computational performance (@apx-impl-memory).
 
 To resolve this without breaking time causality, the engine employs a lazy-evaluation mechanism via a `session_gen` counter. Every time a user initiates a new online session, their internal generation counter increments. Any event scheduled during that session carries this specific generation integer as part of its payload. When the main simulation loop eventually pops an event, it simply compares the event's stored generation ID against the user's current `session_gen`. If the values do not match, the event is immediately discarded as "stale". This guarantees O(1) event invalidation and ensures that offline users cannot illegally execute actions, preserving the integrity of the inter-action distributions. A step by step example showcasing the need for this is provided in @anx-ex-session-gen.
 
@@ -226,16 +226,17 @@ The `create` event behaves as a stardard event source, as it does not have relat
 // this paragraph is plain implemenation, not needed
 // A noticeable fact is that the `create` type does not contain any payload, as the user that creates it is at that point information known by the program and the `post_id` will be selected if the event is created. Preselecting which `post_id` would the post have when the create event is scheduled is, again, the naive approach, but breaks when interacting with the possibility of an event being stale.
 
-Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` sequence will have gaps, which breaks the power-of-two indexing scheme used by the paginated post storage (see @sec-impl-posts).
+Let's assume for a moment that when a `create` event is scheduled, the `post_id` is already picked. Now, if that event becomes stale (as it is scheduled at a time when user $u$ is not going to be online), the `post_id` sequence will have gaps, which breaks the power-of-two indexing scheme used by the paginated post storage (see @apx-impl-posts).
 
 Apart from the staleness nuance, the three real and direct consequences this action has are 
-1. A post gets created and stores (see @sec-impl-datastructures)
-2. The new post gets marked as seen by $u$, as a user cannot be exposed to its own content (see @sec-impl-datastructures)
-3. The new post gets marked as interacted by its author $u$, as cannot like nor repost a post authored by itself. (see @sec-impl-datastructures)
+1. A post gets created and stores (see @apx-impl-datastructures)
+2. The new post gets marked as seen by $u$, as a user cannot be exposed to its own content (see @apx-impl-datastructures)
+3. The new post gets marked as interacted by its author $u$, as cannot like nor repost a post authored by itself. (see @apx-impl-datastructures)
 
 Create has two random quantities associated to it, the time between creations (handled by the variable `inter_post_creation`) and the delay simulating how long does a user take to create a post (variable `creation_delay`).
 
 === Actions
+<sec-design-sources-action>
 
 The action source is the fundamental event in the simulation, as is how the actual content diffusion is achieved: the continuous flow of actions represents the current user $u$ checking their timeline. When an event is generated by the simulation, the source will generate another action.
 
@@ -438,7 +439,7 @@ Beyond these common fields, each trace variant carries type-specific payload:
 
 - *TracePropagation*: Logs the redistribution of a post to the followers of the reposting user. The `type` field stores the `post_id` being propagated, making this trace structurally identical to `TraceCreate` in its payload but semantically distinct: it represents the delayed diffusion step that occurs when a repost action is processed and the propagation delay $tau$ elapses. The separation between action and propagation is what preserves time causality in the simulation (see @sec-design-sources).
 
-By recording every state-transition in this structured format, the trace files provide a complete, auditable log of the simulation's execution. This enables offline reconstruction of user timelines, validation of the CTIC cascades (see @sec-impl-validation), and statistical analysis of the emergent macro-level dynamics without re-running the simulation.
+By recording every state-transition in this structured format, the trace files provide a complete, auditable log of the simulation's execution. This enables offline reconstruction of user timelines, validation of the CTIC cascades (see @apx-impl-validation), and statistical analysis of the emergent macro-level dynamics without re-running the simulation. Performance wise, the traces use a buffered log to not produce unecessary kernel interruptions and not pay the penalty of constant context loading-offloading explained in detail in @apx-impl-trace-io
 
 #figure(
   cetz.canvas({
@@ -520,45 +521,44 @@ By recording every state-transition in this structured format, the trace files p
   caption: [Flowchart of the Main Loop discrete-event dispatching logic.]
 ) <fig-mainloop-flow>
 
-== Algorithmic Data Structures
+== Data Structures
 <sec-design-datastructures>
 
-This section summarizes the algorithmic reasoning behind each data structure selection, concerning design and performance from a theoretical standpoint, not from which specific implementation can yield those results. That latter performance concern through the implementation is addressed in @sec-impl.
+This section describes the data structures for certain specific simulation events, as well as h highlighting some performance implications.
 
 === Global Event Queue
 <sec-design-datastructrues-queue>
 
 The Future Event Set (FES) (referred to until now as $Q$) is the central bottleneck of any discrete-event simulation: every event processed requires one extraction and potentially multiple insertions. 
 
-A Heap @cormen2022algorithms is the traditional data structure to implement a Priority Queue, which is exactly what the FES is. Assuming a binary heap, they have a $O(log n)$ deletion of the minimum and insertion cost, with a $O(n)$ space complexity. This is far better from the naive approach, which would be to keep a list sorted and inserting and deleting the elements. With a list, insertion and deletion would be $O(n)$: finding an element to know where to insert the next one would be a $O(log n)$ to find the index, but all the upper elements of the list have to be shifted by one position, giving an $O(n)$ cost. The same applies when removing the minimum.
+A Heap @cormen2022algorithms is the traditional data structure to implement a Priority Queue, which is exactly what the FES is. Assuming a binary heap, they have a $O(log_2 n)$ deletion of the minimum and insertion cost, with a $O(n)$ space complexity. The heap uses its tree representation to sift up or sift down the element in the tree branches, making $O(log n)$ operations at most.
 
-On the contrary, the heap uses its tree representation to sift up or sift down the element in the tree branches, making $O(log n)$ operations at most.
+To maximize performance by reducing the cache misses and avoid pointer chasing, it's beneficial that, instead of using a binary heap ---represented with a binary tree--- to use a $d$-ary heap, where the leafs per tree are bigger, so more tree can fit in cache at the same time. For more performance and implementation details see @apx-impl-queue
 
-==== Estimating the amount of elements in the FES
-
-Analyzing the simulation, a good heuristic can be given to know more or less to what the number of total events at a single time $t$ will be.
-
-An online user will have no more than four events enqueued at any time:
-- The next `action`
-- The next `creation`
-- The `session.end` event.
-- A `propagate` after the create or an `action.repost`.
-
-If the user is offline, it will have four events at most:
-- A stale `action`
-- A stale `creation`
-- A stale `propagate`
-- The `session.start` event.
-
-Then the relationship of number of element on the queue to the input number of total users $N$ is, at most, $4N$. This is useful to validate the viability of the MinHeap selection, as every operation will require approximately $log_2 (4 N)$ with a million users, we would need, at worst, $log_2 (4·10^6) approx 21.93$ comparisons, still a reasonable number. This approximation is also useful for the implementation, see @sec-impl-datastructures.
-
+// ==== Estimating the amount of elements in the FES
+//
+// Analyzing the simulation, a good heuristic can be given to know more or less to what the number of total events at a single time $t$ will be.
+//
+// An online user will have no more than four events enqueued at any time:
+// - The next `action`
+// - The next `creation`
+// - The `session.end` event.
+// - A `propagate` after the create or an `action.repost`.
+//
+// If the user is offline, it will have four events at most:
+// - A stale `action`
+// - A stale `creation`
+// - A stale `propagate`
+// - The `session.start` event.
+//
+// Then the relationship of number of element on the queue to the input number of total users $N$ is, at most, $4N$. This is useful to validate the viability of the MinHeap selection, as every operation will require approximately $log_2 (4 N)$ with a million users, we would need, at worst, $log_2 (4·10^6) approx 21.93$ comparisons, still a reasonable number. This approximation is also useful for the implementation, see @apx-impl-datastructures.
+//
 
 === User Timeline
 
 Each user's timeline $cal(T)(u)$ must maintain posts in reverse-chronological order, supporting both efficient insertion of newly propagated posts and extraction of the most recent one when the user scrolls. This is the same problem as the Future Event Set, but the priority of the queue is the maximum element, not the minimum. So a MaxHeap has the same advantages as explained in @sec-design-datastructrues-queue for the Future Event Set.
 
-Opposite to the Global Queue, the estimation of the timeline amount of events is far more complex, and if were easily described, there would not be need for this simulation. The only optimization regarding a space storage estimation is described in @ sec-impl-timelines.
-
+Implementation-wise, however, this is not one timeline but two — and that duplication is what cleanly delimits the information diffusion context. The active heap holds what the user *can* see; the passive heap accumulates everything propagating *toward* them. See @apx-impl-queue for more details.
 
 === Follower Topology
 <sec-design-datastructures-topology>
@@ -567,18 +567,18 @@ The Graph data structure is traditionally a performance killer structure, diffic
 
 As the follower graph is static throughout the simulation, a Compressed Sparse Row structure is perfectly well suited for this simulation, as it is a known fact that social networks users adjacency matrix is sparse. 
 
-A Compressed Sparse Row (CSR) is a data storage technique that represents a matrix $M$ with three different one dimension arrays:
+A Compressed Sparse Row (CSR) (see @apx-impl-csr) is a data storage technique that represents a matrix $M$ with three different one dimension arrays:
 - A row pointer array `row_ptr`, dimension $N+1$ which stores the start index for each row, and `row_ptr[i+1]` marks the end of row i.
 - A column index array `col_idx`, which stores every non zero index.
 - The actual values of the matrix in a `values` array.
 
 This storage method provides a $O(1)$ range look up and a $O("degree")$ iteration cost.
 
-When representing an adjacency matrix $A$, the `values` array is just full of ones, as it represents the existence of the directed edge, so with just the `row_ptr` and the `col_idx` it is enough. The way this is implemented then is that each user stores only a `start_index` and `end_index` of the followers; iterating over their followers becomes a single slice operation over the global array. Details in @sec-impl-csr.
+When representing an adjacency matrix $A$, the `values` array is just full of ones, as it represents the existence of the directed edge, so with just the `row_ptr` and the `col_idx` it is enough. The way this is implemented then is that each user stores only a `start_index` and `end_index` of the followers; iterating over their followers becomes a single slice operation over the global array. Performance wise, as the graph is static during the whole simulation, this way of representing the data is the perfect fit: cache locality is perfectly conserved as the data of the followers for a single user is perfectly contiguous, maximizing information in the loading of the cache line. Details in @apx-impl-csr.
 
 === User Storage
 
-The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is definitely not performance aware in lots of cases. This is approached in @sec-impl-users.
+The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is definitely not performance friendly due to cache locality. The struct user (see @apx-impl-users) is pretty big, and to iterate for just one of the elements when stored as an array of structs involves loading the full object in the cache, and as they are big, the actual relevant information is not dense. The struct of arrays implementation provided @apx-impl-users changes the paradigm as it's just one struct with the arrays: now to search one field of the struct is perfectly optimized for cache locality, which implies less time waiting for memory to load, leading to a better performance. This is approached in @apx-impl-users.
 
 === Post Storage
 <sec-design-datastructrues-post>
@@ -589,17 +589,16 @@ The problem with using a flat dynamic array are periodic $O(n)$ reallocation cos
 
 The strategy is to paginate the list into manageable chunks for the computer. Pagination is a memory strategy involving the purposeful segmentation of data into pages to avoid the contiguous memory requirement of arrays. When a page is full, memory for another page is allocated, making OS life easier as there is no need for bigger and bigger contiguous memory blocks, but lots of fixed size blocks.
 
-The specific data structure used is a SegmentedList, also called a Library structure. A library has shelves (the pages from the pagination) and each shelf has books (the contents of the post); when a library is full, another library is created, avoiding all the contiguous memory requirements of a normal list. In other words, a SegmentedList is just a list (dynamic, variable elements) of arrays (static, fixed-size).
+The specific data structure used is a `SegmentedList`, also called a Library structure @apx-impl-posts. A library has shelves (the pages from the pagination) and each shelf has books (the contents of the post); when a library is full, another library is created, avoiding all the contiguous memory requirements of a normal list. In other words, a SegmentedList is just a list (dynamic, variable elements) of arrays (static, fixed-size).
 
-
-The trade-off is that accessing the list is not trivial as the compute of the offset by the operator `[ ]`, as now requires two operations to access the wanted book: in which library is the book and which shelf, which makes this structure slower than a traditional list. In @sec-impl-posts the strategy for indexing is provided.
+The trade-off is that accessing the list involves the computation of the offset by the operator `[ ]`, as now requires two operations to access the wanted book: in which library is the book and which shelf, which makes this structure slower than a traditional list. In @apx-impl-posts the strategy for indexing is provided.
 
 === Impression and Seen Tracking 
 
 The simulation needs to keep track of which posts has every user seen or interacted with. As the posts can grow unbounded, also can the interactions from a user to a post. To check a binary relationship from a user to a post, only a bit is needed per post and per user, so assuming a fixed number of posts $M$, we could represent if a user has interacted with a post with the matrix $A$ with dimensions $N times (N times M) = N^2 M$.
 
-If we flatten that matrix into a $N^2 M$, we can represent it with a BitSet. A BitSet is a fixed size collection of bits, which can be manipulated with bit operations. In other words, a BitSet is just a sequence of zeroes and ones.
+If we flatten that matrix into a $N^2 M$, we can represent it with a BitSet @apx-impl-impressions. A BitSet is a fixed size collection of bits, which can be manipulated with bit operations. In other words, a BitSet is just a sequence of zeroes and ones.
 
 As posts can grow unbounded, we use the same Pagination strategy from post storage (@sec-design-datastructrues-post) and we generate a PaginatedBitSet, which is a BitSet split in several pages.
 
-The impression matrix tracks which of the $N$ users have seen which of the (unbounded) $M$ posts. A monolithic bitset would require reserving memory for all $N times M$ bits upfront, which is infeasible. A paged bitset allocates memory in fixed-size pages, growing horizontally as new posts are created. The page allocation strategy is covered in @sec-impl-impressions.
+The impression matrix tracks which of the $N$ users have seen which of the (unbounded) $M$ posts. A monolithic bitset would require reserving memory for all $N times M$ bits upfront, which is infeasible. A paged bitset allocates memory in fixed-size pages, growing horizontally as new posts are created. The page allocation strategy is covered in @apx-impl-impressions.
