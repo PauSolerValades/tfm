@@ -10,6 +10,7 @@ ross2006simulation:
     title: Simulation
     publisher: Academic Press
 
+
 fishman2001des:
   type: Chapter
   author: Fishman, George S.
@@ -23,6 +24,7 @@ fishman2001des:
       type: Periodical
       title: Springer Series in Operations Research
 
+
 soler2025distributions:
   type: Repository
   title: distributions
@@ -33,80 +35,6 @@ soler2025distributions:
   parent:
     title: GitHub
 
-marsaglia2000ziggurat:
-  type: Article
-  title: "The Ziggurat Method for Generating Random Variables"
-  author:
-    - Marsaglia, George
-    - Tsang, Wai Wan
-  date: 2000
-  serial-number:
-    doi: "10.18637/jss.v005.i08"
-  parent:
-    type: Periodical
-    title: Journal of Statistical Software
-    volume: 5
-    issue: 8
-
-ieee2019floating:
-  type: Misc
-  title: "IEEE Standard for Floating-Point Arithmetic"
-  author: IEEE
-  date: 2019
-  serial-number:
-    doi: "10.1109/IEEESTD.2019.8766229"
-
-walker1977alias:
-  type: Article
-  title: "An Efficient Method for Generating Discrete Random Variables with General Distributions"
-  author: Walker, Alastair J.
-  date: 1977-09
-  serial-number:
-    doi: "10.1145/355744.355749"
-  parent:
-    type: Periodical
-    title: ACM Transactions on Mathematical Software
-    volume: 3
-    issue: 3
-    page-range: 253-256
-
-goldberg1991floating:
-  type: Article
-  title: "What Every Computer Scientist Should Know About Floating-Point Arithmetic"
-  author: Goldberg, David
-  date: 1991-03
-  serial-number:
-    doi: "10.1145/103162.103163"
-  parent:
-    type: Periodical
-    title: ACM Computing Surveys
-    volume: 23
-    issue: 1
-    page-range: 5-48
-
-devroye1986nonuniform:
-  type: Book
-  title: "Non-Uniform Random Variate Generation"
-  author: Devroye, Luc
-  date: 1986
-  publisher: Springer
-  location: New York, NY
-  serial-number:
-    isbn: "978-1-4613-8645-2"
-    doi: "10.1007/978-1-4613-8643-8"
-
-casella2002statistical:
-  type: Book
-  title: "Statistical Inference"
-  author:
-    - Casella, George
-    - Berger, Roger L.
-  date: 2002
-  edition: 2nd Edition
-  publisher: Duxbury/Thomson Learning
-  location: Pacific Grove, CA
-  serial-number:
-    isbn: "978-0-534-24312-8"
 
 sumari2013comparing:
   type: Article
@@ -143,6 +71,37 @@ barabási2005bursts:
       volume: 435
       issue: 7039
 
+
+kleinberg2003bursty:
+  type: Article
+  title: "Bursty and Hierarchical Structure in Streams"
+  author: Kleinberg, Jon
+  date: 2003
+  serial-number:
+    doi: "10.1023/A:1024940629314"
+  page-range: 373-397
+  parent:
+    type: Periodical
+    title: Data Mining and Knowledge Discovery
+    volume: 7
+    issue: 4
+
+
+ester1996dbscan:
+  type: Article
+  title: "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+  author:
+    - Ester, Martin
+    - Kriegel, Hans-Peter
+    - Sander, Jörg
+    - Xu, Xiaowei
+  date: 1996
+  page-range: 226-231
+  parent:
+    type: Conference
+    title: Proceedings of the 2nd International Conference on Knowledge Discovery and Data Mining (KDD-96)
+
+
 wiener1947structural:
   type: Article
   title: "Structural determination of paraffin boiling points"
@@ -157,23 +116,3 @@ wiener1947structural:
     title: Journal of the American Chemical Society
     volume: 69
     issue: 1
-
-kwak2017centrality:
-  type: Article
-  title: "Centrality Fairness: Measuring and Analyzing Structural Inequality of Online Social Networks"
-  author:
-    - Kwak, Heeyoung
-    - Kim, Joonyoung
-    - Lim, Yongsub
-    - Han, Shin-Kap
-    - Jung, Kyomin
-  date: 2017
-  serial-number:
-    doi: "10.6138/JIT.2017.18.7.20150408"
-  parent:
-    type: Periodical
-    title: Journal of Internet Technology
-    volume: 18
-    issue: 7
-    pages: "1515-1524"
-    publisher: "Taiwan Academic Network"

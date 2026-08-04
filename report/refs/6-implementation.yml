@@ -1,13 +1,3 @@
-soler2025eazyargs:
-  type: Repository
-  title: EazyArgs 
-  author: Soler Valadés, Pau
-  url:
-    value: https://github.com/PauSolerValades/eazy-args
-    date: 2026-05-08
-  parent:
-    title: GitHub
-
 zig-std:
   type: Web
   title: Zig Standard Library (v0.16.0)
@@ -17,77 +7,6 @@ zig-std:
   organization: Zig Software Foundation
   note: "Source code: https://github.com/ziglang/zig/tree/master/lib/std"
 
-zig-std-heap:
-  type: Web
-  title: "std.heap — GeneralPurposeAllocator and ArenaAllocator"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
-
-zig-std-io:
-  type: Web
-  title: "std.io — Buffered and Streaming I/O"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
-
-zig-std-json:
-  type: Web
-  title: "std.json — JSON Serialization and Deserialization"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
-
-zig-std-priority-queue:
-  type: Web
-  title: "std.PriorityQueue — Binary Heap Implementation"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
-
-zig-std-multi-array-list:
-  type: Web
-  title: "std.MultiArrayList — Structure of Arrays Container"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
-
-zig-std-dynamic-bit-set:
-  type: Web
-  title: "std.DynamicBitSetUnmanaged — Dynamically-Sized Bitset"
-  url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
-  organization: Zig Software Foundation
-  parent:
-    type: Web
-    title: Zig Standard Library (v0.16.0)
-    url: https://ziglang.org/documentation/0.16.0/std/
 
 duckdb:
   type: Article
@@ -108,47 +27,6 @@ duckdb:
     serial-number:
       isbn: "978-1-4503-5643-5"
 
-wiki-syscall:
-  type: Web
-  title: System call
-  url:
-    value: https://en.wikipedia.org/wiki/System_call
-    date: 2026-05-27
-  organization: Wikipedia
-
-wiki-context-switch:
-  type: Web
-  title: Context switch
-  url:
-    value: https://en.wikipedia.org/wiki/Context_switch
-    date: 2026-05-27
-  organization: Wikipedia
-
-wiki-serialization:
-  type: Web
-  title: Serialization
-  url:
-    value: https://en.wikipedia.org/wiki/Serialization
-    date: 2026-05-27
-  organization: Wikipedia
-
-wiki-cache:
-  type: Web
-  title: CPU cache
-  url:
-    value: https://en.wikipedia.org/wiki/Cache_(computing)
-    date: 2026-05-27
-  organization: Wikipedia
-
-drepper2007memory:
-  type: Article
-  title: "What Every Programmer Should Know About Memory"
-  author: Drepper, Ulrich
-  date: 2007-11-21
-  url:
-    value: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
-    date: 2026-05-22
-  organization: Red Hat, Inc.
 
 barabasi1999emergence:
   type: Article
@@ -166,20 +44,6 @@ barabasi1999emergence:
     volume: 286
     issue: 5439
 
-amin2022scalefree:
-  type: Article
-  title: "Model for Generating Scale-Free Artificial Social Networks Using Small-World Networks"
-  author:
-    - Amin, Farhan
-    - Choi, Gyu Sang
-  date: 2022
-  serial-number:
-    doi: "10.32604/cmc.2022.029927"
-  parent:
-    type: Periodical
-    title: "Computers, Materials & Continua"
-    publisher:
-      name: Tech Science Press
 
 cormen2022algorithms:
   type: Book
@@ -195,14 +59,3 @@ cormen2022algorithms:
     name: MIT Press
   serial-number:
     isbn: "978-0-262-04630-5"
-
-agner2024instruction:
-  type: Web
-  title: "Instruction Tables: Lists of Instruction Latencies, Throughputs and Micro-operation Breakdowns for Intel, AMD, and VIA CPUs"
-  author: Fog, Agner
-  date: 2024
-  url:
-    value: https://agner.org/optimize/instruction_tables.pdf
-    date: 2026-05-24
-  organization: Technical University of Denmark
-

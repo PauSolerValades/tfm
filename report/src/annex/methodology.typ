@@ -1,4 +1,5 @@
 #import "../utils.typ": *
+#import "@preview/lovelace:0.3.0": pseudocode-list
 
 This sections addresses methodological issues and concerns that, while extremely important, had to be moved into the appendix due to lenght constraints.
 
@@ -11,6 +12,7 @@ This section covers the implementations of the Random Number Generators needed i
 
 
 === Ziggurat Algorithm
+
 The generation of random variates for continuous distributions, specifically the Normal, Exponential and Pareto distributions, relies on the highly optimized Ziggurat algorithm @marsaglia2000ziggurat. This method is a form of rejection sampling that overlays the target probability density function (PDF) with a set of $n=256$ horizontal rectangles (named after the Mesopotamian ziggurat temples for their tiered resemblance) of equal area, constructed such that they tightly bound the distribution curve.
 
 Our implementation in Zig heavily leverages compile-time evaluation (`comptime`) to specialize the algorithm identically for both `f32` and `f64` precision without runtime overhead. The core optimization focuses on minimizing calls to the pseudo-random number generator (PRNG). Instead of requiring two distinct random values—one to select a rectangle and another to sample a point within it—a single 64-bit random integer is generated (or 32-bit for `f32`).
@@ -64,7 +66,9 @@ therefore being as efficient as generating an exponential with the ziggurat algo
 === Goodness-of-fit Test
 
 To test the implementations of the above distributions
+
 #todo[to make this appropiately, i implemented the Kolmogorov-Smirnoff test for the upper distributions in zig.]
+
 
 == Distribution Fitting
 
@@ -82,7 +86,6 @@ fit = powerlaw.Fit(data, discrete=True, xmin=1, verbose=False)
 R, p = fit.distribution_compare("power_law", "lognormal_positive")
 ln_better = R < 0 and p < 0.05
 pl_better = R > 0 and p < 0.05
-winner = "lognormal" if ln_better else ("powerlaw" if pl_better else "none")
 ```
 ] <code-powerlaw-or-lognormal>
 
@@ -112,11 +115,11 @@ is an estimator for the variance of the log-likelihood ratio; $f(y_i | x_i, hat(
 As $n -> infinity$, $T$ converges in distribution to $cal(N)(0, 1)$. At significance level $alpha$, the null hypothesis of equivalence is rejected when $|T| > z_(alpha/2)$, where $z_(alpha/2)$ is the $alpha/2$ quantile of the standard normal distribution.
 
 === Distributions and Goodness-of-fit
+<apx-method-gof-dist>
 
-For discriminating between several distribuitions, `distfit` @distfit-pypi uses `scipy.stats` #todo[cite] implementations to test them against empirical data @distfit-parametric. Knowing the origin of the type of data we are dealing with in this work, everytime some distribution needs to be fitted to actual data it makes no sense to test all distributions, as well as not every goodness-of-fit metric to minimize is not suited for those distributions.
+#todo[recite and cite R and `fitdistplus`]
 
-=== Considered Distributions
-
+#todo[add also where the distributions not in fitdistplus distributions are found]
 For the sessions durations and gaps between sessions ---and partially for the events per user, day and hour in #todo[reference proper data section]--- it was clear the density and form of the outputs was very extreme, in the sense that all distributions either have a heavy-tail, high outliers as a peak, or both. So, our analysis has limited to the following `scipy.stats` distributions:
 - Pareto: type of powerlaw.
 - Gamma:
@@ -137,3 +140,77 @@ Powerlaw fitting:
 Wasserstain:
 - Panaretos, V. M., & Zemel, Y. (2019). "Statistical Aspects of Wasserstein Distances." Annual Review of Statistics and Its Application, 6, 405-431
 - Rüschendorf, L. (2001). "Wasserstein metric." Encyclopedia of Mathematics
+
+== Session Creation
+
+This section covers the Tukey Fences method, which is the only method not described in @sec-method-session for the sake of this document brevity
+
+=== Tukey's Fences
+<apx-method-session-tukey>
+
+The Tukey Fences @tukey1977eda is an outlier detection method that consist of defining the inner and outer fence. Every point inside the fence is not an outlier, and every other one it is classified an outlier.
+
+$
+"Tukey"(k) = [Q_1 - k dot "IQR", Q_3 + k dot "IQR"]
+$
+
+For the sessions creation, we use the upper part of the fence to define the threshold per user
+
+$
+  "tukey"(k) = Q_3 + k dot (Q_3 - Q_1)
+$
+
+Algorithm @proc-tukey-sessions summarises the procedure. The fence is recomputed for each user from their own inter-event gap distribution, so the threshold adapts to the user's cadence. So, if the distance to the next event is bigger than $epsilon$ it is classified in the next session.
+
+#procedure(caption: flex-caption(
+  [Tukey session clustering.],
+  [Tukey session clustering: per-user adaptive gap threshold $epsilon$ followed by a linear scan over the user's sorted, deduplicated event timestamps.],
+))[
+  #pseudocode-list[
+    + *procedure* $"TukeySessions"(u: "User", k: "float")$
+      + $E <- u."events"$
+      + *if* $|E| < 3$ *then*
+        + *return* $emptyset$
+      + *end*
+      + $T <- "sort"(E)$
+      + $"gaps" <- (T_2 - T_1, dots, T_n - T_(n-1))$
+      + $epsilon <- "tukey"(k, "gaps")$
+      + $"sessions" <- emptyset$
+      + $"start" <- T_1$
+      + $"cur_end" <- T_1$
+      + *for* $i <- 2 "to" n$ *do*
+        + *if* $T_i - T_(i-1) > epsilon$ *then*
+          + $"sessions" <- "sessions" union {("start", "cur_end")}$ $"//"$ gap exceeds the fence
+          + $"start" <- T_i$
+        + *end*
+        + $"cur_end" <- T_i$
+      + *end*
+      + $"sessions" <- "sessions" union {("start", "cur_end")}$
+      + *return* $"sessions"$
+    + *end*
+  ]
+] <proc-tukey-sessions>
+
+=== HDBSCAN
+<apx-method-session-hdbscan>
+
+Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN) amplifies DBSCAN @sec-method-session-dbscan by generating a complete density-based clustering hierarchy @mcinnes2017hdbscan. Instead of relying on a fixed global threshold, HDBSCAN conceptually performs DBSCAN over varying $epsilon$ values and integrates the results to find a clustering structure that offers the best stability over $epsilon$ @campello2013hdbscan. This allows the algorithm to detect clusters of varying densities and makes it significantly more robust to parameter selection @campello2013hdbscan.
+
+HDBSCAN fundamentally relies on a single input parameter, $m_"pts"$, which acts as a smoothing factor for the density estimates @mcinnes2017hdbscan. The algorithm operates by computing a core distance for each object and defining a symmetric mutual reachability distance between object pairs @ester1996dbscan. These distances are used to conceptually construct a mutual reachability graph, from which a Minimum Spanning Tree (MST) is extracted and simplified to build a hierarchical dendrogram @mcinnes2017hdbscan.
+
+To provide a usable flat partition from this hierarchy, HDBSCAN employs a simplification process based on cluster stability @mcinnes2017hdbscan. By tracking how long clusters "survive" as the density threshold changes—a metric derived from the relative excess of mass—the algorithm optimally extracts the most significant clusters through local cuts across different density levels in the cluster tree @ester1996dbscan.
+
+== Reproducibility of the Distribution Fits
+<apx-method-repro>
+
+All the scripts and intermediate outputs behind @sec-cal-dist and the parameter histograms are available in the `bsky-data-analysis` repository @soler2025bskydata, under `sessions/distribution-fit/`. The pipeline runs in five stages, each with a single entry point:
+
+1. *Extraction* (`dump_data.py`): per-user session durations and inter-session gaps are dumped from the production table `pau_db.sessions` (DBSCAN $epsilon = 300$ s, $m_"pts" = 2$, see @apx-session-dbscanparams) into ten strided parquet chunks. Durations are non-singleton sessions only; gaps are the intervals between the end of a session and the start of the next.
+2. *Per-user fitting* (`fit_chunk.R`, `fit_lib.R`): each user--column unit is fitted by maximum likelihood against the eight candidate distributions of @apx-method-gof-dist; KS, Cramér--von Mises and Anderson--Darling statistics are computed in closed form. Writes `results/gof__chunk{0..9}.tsv` and `results/params__chunk{0..9}.tsv`.
+3. *Model selection* (`step2_build_best.py`): AIC winner per user and column, with the Pareto/Lomax/GPD siblings grouped under the `power_tail` family. Produces `results/best_per_user.tsv`, `results/best_params.tsv` and `results/family_summary.tsv` ---the source of @tbl-cal-dist-family.
+4. *Canonical power-law parameters* (`step3_powerlaw_canonical.py`): every `power_tail` winner is converted to the canonical GPD($xi$, $sigma$, $mu$) parametrization, verified to $|Delta "CDF"| <= 10^(-16)$.
+5. *Meta-fits and plots* (`step4_fit_parameters.R`, `step5_plot_param_distributions.R`): the across-user parameter series are themselves fitted ---AIC selection among exponential, gamma, lognormal, Weibull and normal, restricted to $n_"obs" >= 30$--- producing `results/param_distributions.tsv`, `results/param_correlations.tsv` and the parameter histograms (a subset is shown in @fig-cal-pair-param-hists). The meta-fits themselves are deliberately not used in the simulation: @sec-cal-acrossuser argues that they are unreliable (too few users in several families, multimodal parameter series) and that the per-user parameters are sampled empirically instead.
+
+The complete methodological write-up lives in `sessions/distribution-fit/METHODOLOGY.md` of the same repository, and the sessionization decision behind the input table in `sessions/final_parameters.md`.
+
+Two caveats bound full reproducibility. First, the input `pau_db.sessions` table derives from the Bluesky Firehose dataset, which is not redistributed: stage 1 requires access to the private database, so the pipeline can only be re-run end-to-end by the authors. Second, the per-unit result files are large ---the ten `gof__chunk*.tsv` alone occupy about 3 GB--- and are excluded from the repository; the compact derived tables (`family_summary.tsv`, `param_distributions.tsv`, `param_correlations.tsv`) suffice to verify every figure reported in this chapter.

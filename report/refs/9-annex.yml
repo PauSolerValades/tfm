@@ -107,3 +107,357 @@ soler2025bskydata:
     date: 2026-05-28
   parent:
     title: GitHub
+
+tukey1977eda:
+  type: Book
+  title: "Exploratory Data Analysis"
+  author: Tukey, John W.
+  date: 1977
+  publisher: Addison-Wesley
+  location: Reading, MA
+  note: Chapter 2
+  serial-number:
+    isbn: "0-201-07616-0"
+
+mcinnes2017hdbscan:
+  type: Article
+  title: "hdbscan: Hierarchical density based clustering"
+  author:
+    - McInnes, Leland
+    - Healy, John
+    - Astels, Steve
+  date: 2017
+  serial-number:
+    doi: "10.21105/joss.00205"
+  parent:
+    type: Periodical
+    title: Journal of Open Source Software
+    volume: 2
+    issue: 11
+
+campello2013hdbscan:
+  type: Article
+  title: "Density-Based Clustering Based on Hierarchical Density Estimates"
+  author:
+    - Campello, Ricardo J. G. B.
+    - Moulavi, Davoud
+    - Sander, Jörg
+  date: 2013
+  serial-number:
+    doi: "10.1007/978-3-642-37456-2_14"
+  page-range: 160-172
+  parent:
+    type: Conference
+    title: Advances in Knowledge Discovery and Data Mining (PAKDD 2013)
+    volume: 7819
+    publisher: Springer
+
+agner2024instruction:
+  type: Web
+  title: "Instruction Tables: Lists of Instruction Latencies, Throughputs and Micro-operation Breakdowns for Intel, AMD, and VIA CPUs"
+  author: Fog, Agner
+  date: 2024
+  url:
+    value: https://agner.org/optimize/instruction_tables.pdf
+    date: 2026-05-24
+  organization: Technical University of Denmark
+
+alstott2014powerlaw:
+  type: Article
+  title: "powerlaw: A Python Package for Analysis of Heavy-Tailed Distributions"
+  author:
+    - Alstott, Jeff
+    - Bullmore, Ed
+    - Plenz, Dietmar
+  date: 2014
+  serial-number:
+    doi: "10.1371/journal.pone.0085777"
+  parent:
+    type: periodical
+    title: "PLOS ONE"
+    volume: 9
+    number: 1
+    page-range: e85777
+
+amin2022scalefree:
+  type: Article
+  title: "Model for Generating Scale-Free Artificial Social Networks Using Small-World Networks"
+  author:
+    - Amin, Farhan
+    - Choi, Gyu Sang
+  date: 2022
+  serial-number:
+    doi: "10.32604/cmc.2022.029927"
+  parent:
+    type: Periodical
+    title: "Computers, Materials & Continua"
+    publisher:
+      name: Tech Science Press
+
+casella2002statistical:
+  type: Book
+  title: "Statistical Inference"
+  author:
+    - Casella, George
+    - Berger, Roger L.
+  date: 2002
+  edition: 2nd Edition
+  publisher: Duxbury/Thomson Learning
+  location: Pacific Grove, CA
+  serial-number:
+    isbn: "978-0-534-24312-8"
+
+devroye1986nonuniform:
+  type: Book
+  title: "Non-Uniform Random Variate Generation"
+  author: Devroye, Luc
+  date: 1986
+  publisher: Springer
+  location: New York, NY
+  serial-number:
+    isbn: "978-1-4613-8645-2"
+    doi: "10.1007/978-1-4613-8643-8"
+
+drepper2007memory:
+  type: Article
+  title: "What Every Programmer Should Know About Memory"
+  author: Drepper, Ulrich
+  date: 2007-11-21
+  url:
+    value: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+    date: 2026-05-22
+  organization: Red Hat, Inc.
+
+goldberg1991floating:
+  type: Article
+  title: "What Every Computer Scientist Should Know About Floating-Point Arithmetic"
+  author: Goldberg, David
+  date: 1991-03
+  serial-number:
+    doi: "10.1145/103162.103163"
+  parent:
+    type: Periodical
+    title: ACM Computing Surveys
+    volume: 23
+    issue: 1
+    page-range: 5-48
+
+ieee2019floating:
+  type: Misc
+  title: "IEEE Standard for Floating-Point Arithmetic"
+  author: IEEE
+  date: 2019
+  serial-number:
+    doi: "10.1109/IEEESTD.2019.8766229"
+
+kooti2016twitter:
+  type: Article
+  title: "Twitter Session Analytics: Profiling Users' Short-Term Behavioral Changes"
+  author:
+    - Kooti, Farshad
+    - Moro, Esteban
+    - Lerman, Kristina
+  date: 2016
+  page-range: 71-86
+  serial-number:
+    doi: "10.1007/978-3-319-47874-6_6"
+  parent:
+    type: proceedings
+    title: "Social Informatics: 8th International Conference, SocInfo 2016, Bellevue, WA, USA, November 11–14, 2016, Proceedings, Part II"
+    editor:
+      - Spiro, Emma
+      - Ahn, Yong-Yeol
+    publisher:
+      name: Springer International Publishing
+      location: Cham
+    serial-number:
+      isbn: "978-3-319-47874-6"
+      doi: "10.1007/978-3-319-47874-6"
+    volume: 10047
+    parent:
+      type: periodical
+      title: Lecture Notes in Computer Science
+      publisher: Springer
+
+kwak2017centrality:
+  type: Article
+  title: "Centrality Fairness: Measuring and Analyzing Structural Inequality of Online Social Networks"
+  author:
+    - Kwak, Heeyoung
+    - Kim, Joonyoung
+    - Lim, Yongsub
+    - Han, Shin-Kap
+    - Jung, Kyomin
+  date: 2017
+  serial-number:
+    doi: "10.6138/JIT.2017.18.7.20150408"
+  parent:
+    type: Periodical
+    title: Journal of Internet Technology
+    volume: 18
+    issue: 7
+    pages: "1515-1524"
+    publisher: "Taiwan Academic Network"
+
+marsaglia2000ziggurat:
+  type: Article
+  title: "The Ziggurat Method for Generating Random Variables"
+  author:
+    - Marsaglia, George
+    - Tsang, Wai Wan
+  date: 2000
+  serial-number:
+    doi: "10.18637/jss.v005.i08"
+  parent:
+    type: Periodical
+    title: Journal of Statistical Software
+    volume: 5
+    issue: 8
+
+satopaa2011kneedle:
+  type: Article
+  title: "Finding a \"kneedle\" in a Haystack: Detecting Knee Points in System Behavior"
+  author:
+    - Satopaa, Ville
+    - Albrecht, Jeannie
+    - Irwin, David
+    - Raghavan, Barath
+  date: 2011
+  page-range: 166-171
+  serial-number:
+    doi: "10.1109/ICDCSW.2011.20"
+  parent:
+    type: proceedings
+    title: "2011 31st International Conference on Distributed Computing Systems Workshops"
+    publisher:
+      name: IEEE
+    serial-number:
+      isbn: "978-1-4577-0384-1"
+
+soler2025eazyargs:
+  type: Repository
+  title: EazyArgs 
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/eazy-args
+    date: 2026-05-08
+  parent:
+    title: GitHub
+
+walker1977alias:
+  type: Article
+  title: "An Efficient Method for Generating Discrete Random Variables with General Distributions"
+  author: Walker, Alastair J.
+  date: 1977-09
+  serial-number:
+    doi: "10.1145/355744.355749"
+  parent:
+    type: Periodical
+    title: ACM Transactions on Mathematical Software
+    volume: 3
+    issue: 3
+    page-range: 253-256
+
+wiki-cache:
+  type: Web
+  title: CPU cache
+  url:
+    value: https://en.wikipedia.org/wiki/Cache_(computing)
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-context-switch:
+  type: Web
+  title: Context switch
+  url:
+    value: https://en.wikipedia.org/wiki/Context_switch
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-serialization:
+  type: Web
+  title: Serialization
+  url:
+    value: https://en.wikipedia.org/wiki/Serialization
+    date: 2026-05-27
+  organization: Wikipedia
+
+wiki-syscall:
+  type: Web
+  title: System call
+  url:
+    value: https://en.wikipedia.org/wiki/System_call
+    date: 2026-05-27
+  organization: Wikipedia
+
+zig-std-dynamic-bit-set:
+  type: Web
+  title: "std.DynamicBitSetUnmanaged — Dynamically-Sized Bitset"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-heap:
+  type: Web
+  title: "std.heap — GeneralPurposeAllocator and ArenaAllocator"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-io:
+  type: Web
+  title: "std.io — Buffered and Streaming I/O"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-json:
+  type: Web
+  title: "std.json — JSON Serialization and Deserialization"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-multi-array-list:
+  type: Web
+  title: "std.MultiArrayList — Structure of Arrays Container"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-priority-queue:
+  type: Web
+  title: "std.PriorityQueue — Binary Heap Implementation"
+  url:
+    value: https://ziglang.org/documentation/0.16.0/std/
+    date: 2026-05-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/

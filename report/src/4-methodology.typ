@@ -2,7 +2,7 @@
 
 This chapter justifies and explains several methodology choices, why the use of a discrete-event simulation methodology (see @sec-method-des) and why the DES framework has been chosen over ABM @sec-method-abm.
 
-As the Random Number Generation library `distributions` @soler2025distributions has been implemented from scratch to serve this project, the methodology is in @apx-rng but not included in the main body due to report length constraints.
+As the Random Number Generation library `distributions` @soler2025distributions has been implemented from scratch to serve this project, the methodology is in @apx-methodology but not included in the main body due to report length constraints.
 
 == Why a Simulation?
 
@@ -140,4 +140,31 @@ By removing user preferences, the model remains more akind to DES territory. DES
 Furthermore, human activity in microblogging is highly bursty @barabási2005bursts; the vast majority of users are offline at any given instant. DES natively exploits this by jumping chronologically from scheduled event to event, bypassing idle intervals entirely. This computational efficiency is critical for scaling to bigger networks, serving as a powerful empirical benefit of the chosen paradigm.
 
 Ultimately, DES was selected because the core research question ---aggregate diffusion dynamics under stochastic user activity--- does not require cognitive agent autonomy. The model operates as a combined DES/ABS architecture, using DES for process flow and ABS principles for heterogeneous parametrization. If future iterations lift the content-agnostic assumption and introduce semantic decision-making (see @sec-future-content), the architectural constraints of the model would need to be carefully re-evaluated, potentially prompting a paradigm shift toward a more traditional ABM framework.
+
+== Sessions Creation
+<sec-method-session>
+
+In order to find the both `session_lenght` and `inter_session_duration` variables, data from the Bluesky Firehose will be processed to obtain when the user is online or offline, replicating the $cal(O) (u)$ structure defined in @sec-model.
+
+As Barbási states in @barabási2005bursts, this won't be approximable by a Poission distirbution. In fact, this problem is known as the Burst Detection problem or State Detection Over an Event Stream in Data Mining @kleinberg2003bursty   or, in a more simple form, a sessionization problem #todo[look for a source for the sessionization].
+
+The data to obtain the sessions is a series of timestamps of events that mark the user performed one action at a timestamp $t$ (see @sec-data for a more in depth explanation of the events) in which we want to aggregate them into two states: the user being online and interacting with the platform of offline.
+
+It is believed by the author that the most theoretically grounded approach would be ---following the spirit of the two-state model in Kleinberg et al. @kleinberg2003bursty --- a hidden Markov model over the inter-arrival gaps. This method, however, is sophisticated and difficult to implement correctly, and was judged unjustified for this project given time and scope constraints.
+
+Regaring the alternative methods, Kleinberg @kleinberg2003bursty identifies the central weakness of fixed-threshold approaches to this problem: because activity rate is locally "rugged," a single global cutoff fragments long, low-intensity bursts into spurious short ones, therefore a more nuanced method than global threshold ---despite being used in some studies #todo[cite the twitter article]--- uniform across all users. Instead, this work explores density-based clustering methods such as DBSCAN #todo[ester1996density]  as a more tractable alternative for session creation.
+
+
+=== DBSCAN
+<sec-method-session-dbscan>
+
+DBSCAN (Density-Based Spatial Clustering of Applications with Noise ) is a density-based clustering paradigm that provides a non-hierarchical labeling of data objects based on a global density threshold @mcinnes2017hdbscan. 
+
+The algorithm operates on a few key concepts, which are often formalized as DBSCAN\* to remain consistent with statistical models of continuous density level sets @ester1996dbscan :
+- *Core Object*: An object is considered a core object with respect to a radius $epsilon$ and a smoothing parameter $m_"pts"$ if its $epsilon$-neighborhood contains at least $m_"pts"$ objects @mcinnes2017hdbscan. Objects that fail to meet this density criterion are labeled as noise @mcinnes2017hdbscan.
+- *$epsilon$-Reachable*: Two core objects are considered $epsilon$-reachable if they fall within each other's $epsilon$-neighborhood @ester1996dbscan.
+- *Density-Connected*: Two core objects are density-connected if they are either directly or transitively $epsilon$-reachable @ester1996dbscan.
+- *Cluster*: A cluster is defined as a non-empty, maximal subset of objects where every pair is density-connected @ester1996dbscan.
+
+While highly effective, DBSCAN's primary limitation lies in its reliance on a single, global density threshold ($epsilon$) @mcinnes2017hdbscan. This makes it difficult to properly characterize datasets containing nested clusters or clusters of widely varying densities @mcinnes2017hdbscan. This is the case with the sessionization problem this work tackles, as even within the same user events, the density of the clusters can vary according to certain external factors: user might be less engaged at night therefore there is less signal but the session is equally large, the short "checking a notification session" might have a very different density than more lengthy sessions. DBSCAN, despite using a different threshold per user $epsilon$ would not be able to detect distinct types of sessions inside the same user.
 

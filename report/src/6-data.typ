@@ -6,31 +6,38 @@ This chapter describes the Bluesky Firehose dataset —-its structure, content, 
 == Firehose Data Description
 <sec-data-firehose>
 
-The Bluesky Firehose is a continuous stream of all public AT Protocol events emitted by the network. The dataset contains all registered events from April 11th to 17th of 2026, six days of events.
+The Bluesky Firehose is a continuous stream of all public AT Protocol events emitted by the network. The dataset contains all registered events from April 11th to 17th of 2026, six days of events. @fig-eventtype-dist shows the distribution of the top 14 event types, which represent over 99.9% of all events. A full list of all the events can be found in @anx-data-eventlist.
 
-@fig-eventtype-dist shows the distribution of the top 14 event types, which represent over 99.9% of all events. A full list of all the events can be found in @anx-data-eventlist.
 
 #figure(
-  image("../images/data/61_eventtype_distribution.png", width: 100%),
+  image("../images/data/611_event_distribution.png", width: 100%),
   caption: flex-caption(
     [Distribution of the top 14 firehose event types.],
-    [Distribution of the top 14 event types in the Bluesky firehose. Events below 0.1% are omitted. See @tbl-full-event-types for the full breakdown.],
+    [Distribution of the events in the dataset ($N=240,565,133$) See @tbl-full-event-types for the full breakdown.],
   )
 ) <fig-eventtype-dist>
 
-As it can be seen, the majority of events on Bluesky are liking a post (`feed_like_create` 66.4%), reposting a post (`feed_repost_create` with 10.6%) and creating a post (`post_top` + `post_reply` with 11.7%). Specifically, the top 5 events represent a 95.5% of total events. Despite all other events being negligible, they act as a proxy for when a user is online, which is the information needed to define the sessions #todo[cite the report], therefore non event type will be excluded from the data.
+As it can be seen, the majority of events on Bluesky are liking a post (`feed_like_create` 66.4%), reposting a post (`feed_repost_create` with 10.6%) and creating a post (`post_top` and  `post_reply` with 11.7%). Specifically, the top 5 events represent a 95.5% of total events.
 
 There are a total of 3.08 million distinct users in the dataset, and events are not uniformly distributed among them. Specifically, the distributions of events per user, events per user in a day and events per user in an hour, follow a lognormal distribution as it can be seen in @fig-userevent-dist (see @anx-data-eventperuserfitting for the reasons and methodology of the fitting).
 
 #figure(
-  image("../images/data/62_ecdf_userevents.png", width: 100%),
+  image("../images/data/612_fitting_userevents.png", width: 100%),
   caption: flex-caption(
     [[ECDF with fitted lognormals for events per user, per active day, and per active hour.]],
     [Distribution of events per user (blue), events per user per hour (green) and events per user per day (yellow). Parameters: events per user $mu = 2.40$, $sigma = 1.85$, events per active day $mu = 1.43$, $sigma = 1.28$, events per active hour $mu = 0.94$, $sigma = 0.89$.],
   )
 ) <fig-userevent-dist>
 
-This proves that there are an enormous quantity of users with both very few events in general in the dataset. In order to obtain more informative data, the users with less than two $(<=2)$ events per day, representing a 29% of distinct users out of the dataset (2.19 million users). 
+This proves that there are an enormous quantity of users with both very few events in general in the dataset. In order to obtain more informative data, the users with less than two $(<=2)$ events per day, representing a 29% of distinct users out of the dataset (2.19 million users). Additionally, we intenionally exclude some outdated events in the dataset (check @anx-data-eventlist) as well as all the `update` and `delete` variants of all the events, as they do not have the `createdAt`, making them useless for the session construction (see #todo[cite session]).
+
+#figure(
+  image("../images/data/613_filtered_event_distribution.png", width: 100%),
+  caption: flex-caption(
+    [Filtered event type distribution.],
+    [Event type distribution after filtering by users with $<=2$ events and no `updates` nor `delete` events ($N=231,643,526$)],
+  )
+) <fig-filtered-eventtype-dist>
 
 #comment[Here we could enter into a lot of cool things but that kinda makes no sense to do due to space constraints. EG
 - user characterization for time

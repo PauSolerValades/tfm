@@ -190,10 +190,10 @@
 #include "src/annex/code.typ"
 
 #pagebreak()
-= Random Number Generation Methodology 
-<apx-rng>
+= Methodology 
+<apx-methodology>
 
-#include "src/annex/rng.typ"
+#include "src/annex/methodology.typ"
 
 #pagebreak()
 = Examples
