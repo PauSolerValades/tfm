@@ -24,7 +24,7 @@ For the puroposes of this work, the meaningfull sessions are considered to be eq
 - *Similiariy*: As consuming content from feeds is the main feature of the social network, it is reasonable to assume that users will be the majority of time checking those feeds. Therefore, we treat them to be the same and just as consuming feeds and content as an approximation.
 
 
-== Other Methods
+== Alternative Methods
 <apx-sessions-method>
 
 To create the sessions, apart from both DBSCAN and HDBSCAN, the Tukey Fence method has also been investigated. Specifically, apart from the inter-user global session ---known as a platform threshold #todo[cite the shitty twitter session article]--- which has been discarded from the beginnig, the following sweeps have been executed and tried in order to disect the most appropiate parameters per each method:
@@ -33,10 +33,6 @@ To create the sessions, apart from both DBSCAN and HDBSCAN, the Tukey Fence meth
 - *HDBSCAN*: minimum cluster size $"mc"_s in {2, 3, 5}$, minimum samples $m_s in {1, 2, 3}$, and spatial neighborhood radius $epsilon in {0, 60, 180, 300}$ seconds. That's 36 total executions.
 
 The different parameters sweep was performed over the 5% user sample, which consisted of 106,392 users with 11.8M events.
-
-
-
-
 
 == Tukey Discard
 
@@ -67,7 +63,7 @@ The obvious remedy, capping the threshold, e.g. $tau = min(Q_3 + k dot "IQR", 18
 
 Tukey's fences were consequently discarded in favour of DBSCAN and HDBSCAN, the density-based methods described above.
 
-=== HDBSCAN Discard
+== HDBSCAN Discard
 <apx-session-hdbscan>
 
 HDBSCAN was the most promisng one, and the one that had the most parameters to control. It was quckly found that $m_s >= 2$ and $"mc"_s >= 3$ degenerated the problem with very high singleton rates ($28-52%$), which essentially discards to much data as not sessionable. In the same reasoning, $epsilon=0$ are single-linkage event variants, which makes no sense for this problem once again.
@@ -173,7 +169,7 @@ Another very strong point in DBSCAN against HDBSCAN is that the first embraces t
   )
 ) <fig-session-gaps>
 
-=== Stability
+== Stability
 
 A sessionization parameter is only defensible if the output is stable under small perturbations of the parameter: a configuration that produces wildly different sessions for a slight change of $epsilon$ cannot support any downstream conclusion. To quantify this, @tbl-dbscan-stability compares the per-user session counts of the plateau and cliff configurations, using the stability analysis of the data-analysis repository @soler2025bskydata.
 
@@ -215,6 +211,7 @@ As stated in the first paragraph of @sec-method-session, a density based approac
 
 == Best-Fit Family Composition vs. Observation Cutoff
 
+#todo[Reread and review]
 The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the power-law family: with three points, a power law can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 11% power-law once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---power-law resurges for very active users (44.5% at $n_"obs" > 200$), and the log-logistic (Fisk) family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$). The composition therefore describes the activity stratum under study, not a single universal law.
 
 #figure(
@@ -261,9 +258,135 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
   )
 ) <tbl-composition-cutoff>
 
+== Per-Pair Parameter Histograms
+<anx-session-pairhist>
+
+For reference, this section collects the per-pair parameter histograms of all 24 (duration, gap) family pairs, sorted by the share of users they represent. No analysis is intended here; the interpretation is given in @sec-cal-acrossuser.
+
+#figure(
+  image("../../images/annex/pair_params/expon__weibull_min.png", width: 100%),
+  caption: [Exp $->$ Weibull (16.2%)],
+) <fig-hist-expon-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/weibull_min__weibull_min.png", width: 100%),
+  caption: [Weibull $->$ Weibull (10.1%)],
+) <fig-hist-weibull-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/weibull_min__lognorm.png", width: 100%),
+  caption: [Weibull $->$ Lognorm (8.4%)],
+) <fig-hist-weibull-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/gamma__weibull_min.png", width: 100%),
+  caption: [Gamma $->$ Weibull (8.4%)],
+) <fig-hist-gamma-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/lognorm__weibull_min.png", width: 100%),
+  caption: [Lognorm $->$ Weibull (8.0%)],
+) <fig-hist-lognorm-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/expon__lognorm.png", width: 100%),
+  caption: [Exp $->$ Lognorm (7.8%)],
+) <fig-hist-expon-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/gamma__lognorm.png", width: 100%),
+  caption: [Gamma $->$ Lognorm (5.9%)],
+) <fig-hist-gamma-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/power_tail__weibull_min.png", width: 100%),
+  caption: [Power-law $->$ Weibull (5.7%)],
+) <fig-hist-power-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/lognorm__lognorm.png", width: 100%),
+  caption: [Lognorm $->$ Lognorm (4.5%)],
+) <fig-hist-lognorm-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/weibull_min__power_tail.png", width: 100%),
+  caption: [Weibull $->$ Power-law (4.4%)],
+) <fig-hist-weibull-power>
+
+#figure(
+  image("../../images/annex/pair_params/power_tail__lognorm.png", width: 100%),
+  caption: [Power-law $->$ Lognorm (3.5%)],
+) <fig-hist-power-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/lognorm__power_tail.png", width: 100%),
+  caption: [Lognorm $->$ Power-law (3.1%)],
+) <fig-hist-lognorm-power>
+
+#figure(
+  image("../../images/annex/pair_params/gamma__power_tail.png", width: 100%),
+  caption: [Gamma $->$ Power-law (3.0%)],
+) <fig-hist-gamma-power>
+
+#figure(
+  image("../../images/annex/pair_params/expon__power_tail.png", width: 100%),
+  caption: [Exp $->$ Power-law (3.0%)],
+) <fig-hist-expon-power>
+
+#figure(
+  image("../../images/annex/pair_params/power_tail__power_tail.png", width: 100%),
+  caption: [Power-law $->$ Power-law (1.6%)],
+) <fig-hist-power-power>
+
+#figure(
+  image("../../images/annex/pair_params/weibull_min__fisk.png", width: 100%),
+  caption: [Weibull $->$ Fisk (1.5%)],
+) <fig-hist-weibull-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/lognorm__fisk.png", width: 100%),
+  caption: [Lognorm $->$ Fisk (1.0%)],
+) <fig-hist-lognorm-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/gamma__fisk.png", width: 100%),
+  caption: [Gamma $->$ Fisk (1.0%)],
+) <fig-hist-gamma-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/expon__fisk.png", width: 100%),
+  caption: [Exp $->$ Fisk (0.8%)],
+) <fig-hist-expon-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/fisk__weibull_min.png", width: 100%),
+  caption: [Fisk $->$ Weibull (0.6%)],
+) <fig-hist-fisk-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/power_tail__fisk.png", width: 100%),
+  caption: [Power-law $->$ Fisk (0.5%)],
+) <fig-hist-power-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/fisk__lognorm.png", width: 100%),
+  caption: [Fisk $->$ Lognorm (0.4%)],
+) <fig-hist-fisk-lognorm>
+
+#figure(
+  image("../../images/annex/pair_params/fisk__fisk.png", width: 100%),
+  caption: [Fisk $->$ Fisk (0.3%)],
+) <fig-hist-fisk-fisk>
+
+#figure(
+  image("../../images/annex/pair_params/fisk__power_tail.png", width: 100%),
+  caption: [Fisk $->$ Power-law (0.2%)],
+) <fig-hist-fisk-power>
+
 == How to Obtain a Better Dataset
 <apx-sessions-dataset>
 
 Explain that if you create a better appview, you can get information from everything, and the second next thing (and more feasible) is to create a feed that is served by you, therfore you will know exactly what's happening there.
 
 #todo[actually finish]
+

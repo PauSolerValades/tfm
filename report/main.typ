@@ -146,27 +146,21 @@
 #include "src/7-calibration.typ"
 
 #pagebreak()
-= Execution 
-<sec-exec>
-
-#include "src/8-execution.typ"
-
-#pagebreak()
 = Results
 <sec-results> 
 
-#include "src/9-results.typ"
+#include "src/8-results.typ"
 
 #pagebreak()
 = Conclusions
 
-#include "src/10-conclusions.typ"
+#include "src/9-conclusions.typ"
 
 #pagebreak()
 = Future Work
 <sec-future>
 
-#include "src/11-futurework.typ"
+#include "src/10-futurework.typ"
 
 #pagebreak()
 #bibliography(
@@ -220,16 +214,16 @@
 #include "src/annex/sessions.typ"
 
 #pagebreak()
+= Post Creation
+<apx-creation>
+
+#include "src/annex/postcreation.typ"
+
+#pagebreak()
 = Post Lifetime Cavilations 
 <apx-lifetime>
 
 #include "src/annex/lifetime.typ"
-
-#pagebreak()
-= Additional Evaluation Metrics
-<apx-metrics>
-
-#include "src/annex/metrics.typ"
 
 #pagebreak()
 = Additional Mechanics 
@@ -242,12 +236,6 @@
 <apx-software-stack>
 
 #include "src/annex/software-stack.typ"
-
-#pagebreak()
-= Session Finding Methods
-<apx-threshold>
-
-#include "src/annex/threshold.typ"
 
 #pagebreak()
 = Database Specification

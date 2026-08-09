@@ -2,6 +2,18 @@
 
 This chapter presents the empirical evaluation of the Continuous-Time Independent Cascade (CTIC) model. 
 
+== Execution
+
+=== Datasets
+
+Which datasets we have ran (all of them) and point toward the Firehose annex. as well as how many performance 100 runs
+
+=== Performance
+
+Talk scalability and run. This is just to be like "HELL YEAH THIS WORKS" and then point to the annex to make in depth there
+
+== Results
+
 #comment[
   I deleted everything here as i changed the simulation sustantially, soooo don't think they are appliable anymore.
 

@@ -63,6 +63,25 @@ $ X ~ x_m · exp{Y/alpha} $
 
 therefore being as efficient as generating an exponential with the ziggurat algorithm.
 
+=== Empirical Cumulative Distirbution Function
+<sec-method-rng-ecdf>
+
+Explaination of the dual categorical or binned categorical
+
+=== Lognormal
+
+It's just $X = exp(Y) quad Y ~ N(mu, sigma^2)$
+
+=== Weibull
+
+We use the inverse sampling method (make a small menction) but instead of using expensive log we reuse ziggurat
+
+$ X = lambda · -ln( U ) ^(1/k) = lambda · E^(1/k) $
+
+=== Gamma
+
+This is the only complicated algorithm to describe. It uses that a normal is almost a gamma most of the time, and it's a ziggurat style algorithm.
+ 
 === Goodness-of-fit Test
 
 To test the implementations of the above distributions
@@ -203,13 +222,14 @@ To provide a usable flat partition from this hierarchy, HDBSCAN employs a simpli
 == Reproducibility of the Distribution Fits
 <apx-method-repro>
 
+#todo[reread and reload]
 All the scripts and intermediate outputs behind @sec-cal-dist and the parameter histograms are available in the `bsky-data-analysis` repository @soler2025bskydata, under `sessions/distribution-fit/`. The pipeline runs in five stages, each with a single entry point:
 
 1. *Extraction* (`dump_data.py`): per-user session durations and inter-session gaps are dumped from the production table `pau_db.sessions` (DBSCAN $epsilon = 300$ s, $m_"pts" = 2$, see @apx-session-dbscanparams) into ten strided parquet chunks. Durations are non-singleton sessions only; gaps are the intervals between the end of a session and the start of the next.
 2. *Per-user fitting* (`fit_chunk.R`, `fit_lib.R`): each user--column unit is fitted by maximum likelihood against the eight candidate distributions of @apx-method-gof-dist; KS, Cramér--von Mises and Anderson--Darling statistics are computed in closed form. Writes `results/gof__chunk{0..9}.tsv` and `results/params__chunk{0..9}.tsv`.
 3. *Model selection* (`step2_build_best.py`): AIC winner per user and column, with the Pareto/Lomax/GPD siblings grouped under the `power_tail` family. Produces `results/best_per_user.tsv`, `results/best_params.tsv` and `results/family_summary.tsv` ---the source of @tbl-cal-dist-family.
 4. *Canonical power-law parameters* (`step3_powerlaw_canonical.py`): every `power_tail` winner is converted to the canonical GPD($xi$, $sigma$, $mu$) parametrization, verified to $|Delta "CDF"| <= 10^(-16)$.
-5. *Meta-fits and plots* (`step4_fit_parameters.R`, `step5_plot_param_distributions.R`): the across-user parameter series are themselves fitted ---AIC selection among exponential, gamma, lognormal, Weibull and normal, restricted to $n_"obs" >= 30$--- producing `results/param_distributions.tsv`, `results/param_correlations.tsv` and the parameter histograms (a subset is shown in @fig-cal-pair-param-hists). The meta-fits themselves are deliberately not used in the simulation: @sec-cal-acrossuser argues that they are unreliable (too few users in several families, multimodal parameter series) and that the per-user parameters are sampled empirically instead.
+5. *Meta-fits and plots* (`step4_fit_parameters.R`, `step5_plot_param_distributions.R`): the across-user parameter series are themselves fitted ---AIC selection among exponential, gamma, lognormal, Weibull and normal, restricted to $n_"obs" >= 30$--- producing `results/param_distributions.tsv`, `results/param_correlations.tsv` and the parameter histograms (a subset is shown in ). The meta-fits themselves are deliberately not used in the simulation: @sec-cal-acrossuser argues that they are unreliable (too few users in several families, multimodal parameter series) and that the per-user parameters are sampled empirically instead.
 
 The complete methodological write-up lives in `sessions/distribution-fit/METHODOLOGY.md` of the same repository, and the sessionization decision behind the input table in `sessions/final_parameters.md`.
 

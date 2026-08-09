@@ -1,15 +1,16 @@
 #import "@preview/lovelace:0.3.0": *
 #import "utils.typ": todo, comment, def, procedure, flex-caption
 
+#todo[reread and rewrite header]
 This chapter continues @sec-data findings into the definitions of the parameter values required by the simulation configuration. The rationale behind the following parameters is explained: `session_duration`, `user_inter_session` (in @sec-cal-sessions and @sec-cal-dist), `post_inter_creation` (@sec-cal-interpost), `user_inter_action` (@sec-cal-interaction), `user_policy` (@sec-cal-policy), and the `propagation_delay` as reference metric to remove the time units in the analysis results. 
 
-== Session Definition & Requirements
+== User Session Construction
 <sec-cal-sessions>
 
 The whole simulation design rests on the user defined behaviour of a "session", which has to be constructed from the Bluesky Firehose events descibed in @sec-data. Despite a mathematical modelization defined on @sec-model-sessions as an element of $cal(O)(u)$, this section will provide a more intuitive definition, as well as success crteria on what a good session is.
 
 #def(name: "Session")[
-  A session is an interval of time in which the user is connected and using the social network platform.  
+  A session is an interval of time in which the user is connected and using the social network platform.
 ]
 
 Despite being interested in a more restrictive definition, such as "the interval of time in which the user is _actively and meaningfully_ engaging with _content_", this definition of session is impossible to obtain with the data from the Firehose, despite the current one being more than enough for the puroposes of this work. More about this in @apx-sessions-def.
@@ -17,14 +18,14 @@ Despite being interested in a more restrictive definition, such as "the interval
 The primary intuition behind this definition is that sessions are formed by an aggregation of events, and a session must end when those events become too far apart timewise. The definition also specifies that events must be meaningful, opening the door to filtering out minor background telemetry in favor of high-engagement actions, such as reposts, creations, or replies.
 
 The upper definiton of session is the one that veryfies the following postulates:
-- Existance of short-sessions: it is very well known that users do notification checking, or check the social network in lots of microdoses (bathroom breaks, boredom while waiting on a queue), therefore the method must be able to produce singelton sessions (one element), and very short ones that are near: that is, it must be very fine grained.
-- Non existance of macrosessions: it is not expected to be a lot of very long sessions, as stated in the previous point: several 8 to 10 hour sessions can exist but not be a majority.
-- Akind to known distributions: the results must produce univariate distributions (at most clearly bivariate) as this serves as the input of a DES simulation.
-- Circadianty: the macropatterns of day night for non-globally spoken languages in the dataset must be coherent with its timezone (such as german, japanese or other labelled languages.)
+- *Existance of short-sessions*: it is very well known that users do notification checking, or check the social network in lots of microdoses (bathroom breaks, boredom while waiting on a queue), therefore the method must be able to produce singelton sessions (one element), and very short ones that are near: that is, it must be very fine grained.
+- *Non existance of macrosessions*: it is not expected to be a lot of very long sessions, as stated in the previous point: several 8 to 10 hour sessions can exist but not be a majority.
+- *Akind to known distributions*: the results must produce univariate distributions (at most clearly bivariate) as this serves as the input of a DES simulation.
+- *Circadianty*: the macropatterns of day night for non-globally spoken languages in the dataset must be coherent with its timezone (such as german, japanese or other labelled languages.)
 
 Now the key question is: given two consecutive actions by the same user, how long can the pause between them be before we consider the user to have logged off?
 
-== Session Creation
+=== Session Creation
 
 The method picked to create the session is DBSCAN (@sec-method-session-dbscan) with parameters `ms=2` and $epsilon=300$. See @apx-session-dbscanparams for details regarding candidates and why this method and these parameters are the correct choice for this problem.
 
@@ -103,7 +104,7 @@ The produced sessions verify the definition postulates of @sec-cal-sessions, as 
 ) <fig-cal-circadian>
 
 
-== Goodness-of-fit Session per User
+== Session Duration & Inter-Session Time
 <sec-cal-dist>
 
 With the sessions created, it is possible to fit distributions of `session_length` and `inter_session_lenght` per every user of the dataset. As a reminder
@@ -114,7 +115,7 @@ As this is inherently human behaviour ---as Barabási @barabási2005bursts state
 
 To select between the best fit, Akaike Information Criterion is used to favor parsimony. For the goodness-of-fit test, as the distributions have heavy tails, we also added Cramér-von Mises and Anderson-Darling statistics as well as the de facto Kolmogorov-Smirnov test, evaluated all agains the ECDF of the session and gaps data. See @apx-method-gof-dist for more information. Additionally, all users with less than 30 sessions or 30 gaps have been excluded from the fitting, which represent roughly 1.13M users (about 82% of the users with fits on both quantities, $1.37 times 10^6$ reduced to $2.43 times 10^5$).
 
-@tbl-cal-dist-family reports, for every family, the number and percentage of users for which it was the AIC winner, for the two columns separately.
+@tbl-cal-dist-family reports, for every family, the number and percentage of users for which it was the AIC winner, for both quantities separately.
 
 #figure(
   grid(
@@ -212,130 +213,244 @@ As it can be seen both in @tbl-cal-pair-dist and in @fig-pair-family-bars, the p
 
 The pairwise session-gap analysis proves that we cannot just use @tbl-cal-dist-family separately, but pairwise: the session must define the gap and viceversa. To recapitulate, from the original 1.37M users, 243K are active users (18%) which follow the distributions that we described in this section, and 1.13M are disconnected/not interacting in the whole dataset.
 
-== Sampling from Active Users
+=== Sampling from Active Users
 <sec-cal-acrossuser>
 
-#todo[rough sketch --- refine this section]
 
-Having selected a winning distribution per user, the natural next step would be to fit the distribution of the per-user parameters across the population ---a "meta-distribution"--- and sample new users from it inside the simulation. This is not done. The reason is visible by grabbing one (duration, gap) pair at a time and plotting the fitted parameters of its users, as @fig-cal-pair-param-hists does for the six most populated pairs: the across-user parameter series are multimodal, degenerate and in general not describable by any standard family ---fitting them would hide exactly the structure that matters.
+To sample from the active users poses a challenge in order to generalize. When picking a pair from @tbl-cal-pair-dist a parameter must be picked too. In @anx-session-pairhist we can see all the histograms of the parameters, and in this section we will highlight some of those to highlight why a fitting distribution approach is needed to sample from the pairs appropiately.
 
-1. *Too few observations in some families*: after the $n_"obs" >= 30$ filter, several across-user parameter series are too small to fit at all ---the gap exponential has 5 users and the gap gamma 109 (see the family counts of @tbl-cal-dist-family)--- and their meta-fit would describe noise. #todo[recompute these counts with the rerun]
-2. *Multimodality*: several parameter series are clearly multimodal. The power-law $xi$ in particular mixes a bounded subpopulation ($xi < 0$), a heavy one ($xi > 0$) and a very heavy one, so no standard family ---normal, gamma, lognormal, Weibull--- can describe it, and a parametric overlay would hide exactly the structure that matters.
-3. *Layered model risk*: every meta-layer stacks new model-selection error on top of the previous fit, and the cutoff sensitivity of @tbl-composition-cutoff shows how unreliable model selection is on limited data. The per-user fits are already a model; fitting them again adds risk without adding fidelity.
++ *Power-law bimodality*: all power laws show a lot of bimodality (such as in @fig-hist-power-power) which is very difficult to fit.
++ *Small sample*: for some of the pairs, sample should be bigger to trust more on what it is actually showing this.
++ *Parsimony Priniple*: This can come as a more of a design decision, but there should be a preference for parsimony: sampling from the ECDF of a small distribution in which the parameters are already result of a process of fitting is less complex than to fit the parameters into another distribution.
 
-The simulation therefore samples the across-user parameters empirically: a simulated user is drawn from the fitted per-user table (family and parameters jointly, so only combinations that actually occur together), and its session durations and gaps are generated with the coded families ---exponential, Pareto, Weibull, gamma and lognormal; the few Fisk users (1.5% of durations, 5.1% of gaps) are mapped to lognormal. This bootstrap-style resampling reproduces the exact across-user heterogeneity of the fitted population without any meta-model.
+The simulation therefore samples the across-user parameters empirically: a simulated user is drawn from the fitted per-user table (family and parameters jointly, so only combinations that actually occur together), and its session durations and gaps are generated with the coded families ---Exponential, Pareto, Weibull, Gamma and Lognormal; the few Fisk users (1.5% of durations, 5.1% of gaps) are mapped to lognormal to reduce the burden of new distributions from scratch that this work needs. This bootstrap-style resampling reproduces the exact across-user heterogeneity of the fitted population without any meta-model.
+
+Being able to define a session allows the next key unkown parameters to be directly calibrated from real data or right or to provide a good estimation for them.
+
+
+== Inter-Post Creation Times
+<sec-cal-interpost>
+
+The next quantity to calibrate needs of the session construct to exist. `inter_post_creation` is the time between two posts creations by the same user. The procedure to obtain it resembles the one used for `session_duration` and `inter_session_time` (see @sec-cal-dist), but with widly different results.
+
+All the post creation timestamp have been clustered into sessions. Therefore, we are measuring the gap between the any two posts creations within a session. @fig-cal-create-post-per-session shows all sessions for all users times that a post has been created inside a session. 
+
+#figure(
+  image("../images/calibration/interpost_posts_per_session.png", width: 100%),
+  caption: flex-caption(
+    [Post creations per session.],
+    [Share of sessions (%) by number of post creations inside them for all sessions, regardless of parametric fitting.],
+  )
+) <fig-cal-create-post-per-session>
+
+As it can clearly be seen, there are not many post creation in the created sessions, with a 90.34% of users without any computable gap (users without post creation and just one). This is not a byproduct of the session definition: it is known the post creation is the most sparse of the engaging events, #todo[cite an article that says that] in any microblogging social network.
+
+This sparsity of posts creation when sessionized indicates that a parametric goodness-of-fit is impossible, as verified in @anx-create-gof
+
+#todo[recompute this paragraph]
+ The measurement yields $11.1 times 10^6$ within gaps, from which $65,311$ users pass the $n_"obs" >= 30$ filter.
+
+=== Sampling Creation Gaps
+<sec-cal-create-dist>
+
+In @fig-cal-create-post-per-session demonstrates that there are not enought data point inside all the sessions to fit them to a parametric goodness-of-fit method to obtain a `inter_post_creation` distribution, and attemps to that can be found in @anx-create-gof. It is therefore resolved that the best approach is to use the Empirical Cumulative Distribution Function from the data.
+
+The ECDF inside the session is the truncated quantity the simulation must reproduce: with $11.1 times 10^6$ observations the ECDF is essentially exact, and no extrapolation beyond the session ceiling is ever needed. The rejection rule comes for free: creates are only dispatched while online (@proc-create), so the staleness gate drops any create scheduled past session end. This is the same principle already used for across-user parameter sampling (see @sec-cal-acrossuser): sample empirical rows rather than fitted marginals.
+
+In @sec-cal-dist we defined 16 familiy pairs of distributions that `session_duration` and `inter_session_time` variables follow. As ECDF is applied to the data, it is worth considering 16 different `inter_post_creation` in accordance to the sessions and the gaps. This is data verifiable, as the histograms of post creations per session and the ECDF do change if we narrow down the pair in which are sampled. As a showcase of this, @fig-cal-pair-hist and @fig-cal-pair-ecdf compare the gamma $times$ lognormal pair against the Weibull $times$ lognormal pair.
 
 #figure(
   grid(
     columns: 2,
     column-gutter: 0.8em,
-    row-gutter: 0.6em,
-    figure(image("../images/calibration/pair_param_expon__weibull_min.png"), caption: [expon $->$ weibull]),
-    figure(image("../images/calibration/pair_param_weibull_min__weibull_min.png"), caption: [weibull $->$ weibull]),
-    figure(image("../images/calibration/pair_param_weibull_min__lognorm.png"), caption: [weibull $->$ lognorm]),
-    figure(image("../images/calibration/pair_param_gamma__weibull_min.png"), caption: [gamma $->$ weibull]),
-    figure(image("../images/calibration/pair_param_lognorm__weibull_min.png"), caption: [lognorm $->$ weibull]),
-    figure(image("../images/calibration/pair_param_expon__lognorm.png"), caption: [expon $->$ lognorm]),
+    figure(image("../images/annex/interpost_pairs/posts_per_session__gamma__lognorm.png")),
+    figure(image("../images/annex/interpost_pairs/posts_per_session__weibull_min__lognorm.png")),
   ),
   caption: flex-caption(
-    [Per-pair histograms of the fitted parameters.],
-    [For each of the six most populated (duration, gap) distribution pairs, histograms of the fitted parameters of the users in that pair, computed over the $N = 243{,}217$ active users. The across-user parameter series show bimodality and degenerate spreads that no standard family describes.],
+    [Posts per session of pair (Gamma, Lognorm) and (Weibull, Lognorm)],
+    [Posts per session histograms for the Gamma $times$ Lognorm (Left) and Weibull $times$ Lognorm (right) pairs.],
   )
-) <fig-cal-pair-param-hists>
+) <fig-cal-pair-hist>
 
-== Inter-Post Creation Times
-<sec-cal-interpost>
+#figure(
+  grid(
+    columns: 2,
+    column-gutter: 0.8em,
+    figure(image("../images/annex/interpost_pairs/interpost_ecdf__gamma__lognorm.png")),
+    figure(image("../images/annex/interpost_pairs/interpost_ecdf__weibull_min__lognorm.png")),
+  ),
+  caption: flex-caption(
+    [Within-gap ECDFs of pair (Gamma, Lognorm) and (Weibull, Lognorm)],
+    [Pooled within-gap ECDFs for the Gamma $times$ Lognorm and Weibull $times$ Lognorm pairs: the within cadence differs with the pair.],
+  )
+) <fig-cal-pair-ecdf>
 
-The next parameter to calibrate is how many posts does a single user produce, the `post_inter_creation` parameter. This was measured from `data.engaged_events` with just normal creations and replies, using session boundaries from `data.sessions_engagement`.
 
-The data was analyzed in two ways: global (gap to the immediately preceding post by the same user, regardless of sessions) and within-session (gap within the same `sessions_engagement` session). For each user with $>= 10$ positive gaps, five distributions were fit via MLE on a 50,000-user sample.
+All the pairs ECDF and histograms can be found in @apx-create-pairs.
+The simulation draws `inter_post_creation` from `results/within_interpost_ecdf.txt`, a 1M uniform subsample of all within gaps (one gap per line) and constructs the ECDF as explained in @sec-method-rng-categorical
 
-#todo[REDO]
+=== Sampling Offset Creation
 
-#comment[table!]
+Taking a deeper look at the data, there is an important pattern in how posts land inside a session: the offset between the session start and each post creation. @fig-cal-offset-hist shows its distribution over the first 60 seconds in 1-second bins, and @tbl-cal-offset-stats reports its statistics.
+
+#figure(
+  image("../images/calibration/post_offsets_hist.png", width: 100%),
+  caption: flex-caption(
+    [Post offsets within sessions.],
+    [Share of all session posts (%) by offset from session start, 1-second bins over the first 15 s (331,132 posts from a 20k-user sample).],
+  )
+) <fig-cal-offset-hist>
+
+#figure(
+  table(
+    columns: 9,
+    align: (left, center, center, center, center, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*n posts*], [*min*], [*P25*], [*Median*], [*Mean*], [*P90*], [*P99*], [*< 1s*], [*< 15 s*],
+    table.hline(stroke: 0.5pt),
+    [331,132], [0 s], [0 s], [114 s], [453 s], [1,227 s], [5,351 s], [30.9%], [34.34%],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Statistics of the post offset within sessions.],
+    [Offset statistics over all posts inside sessions (20k sampled users)],
+  )
+) <tbl-cal-offset-stats>
+
+The offset is heavily concentrated at the session start: $30.9%$ of all session posts land within the first 1 second, so plenty of the sessions are started by a post creation. The offset is therefore its own law, not the within-gap distribution, and the first post of a session is sampled from its own empirical offset ECDF rather than from the within-gap. This offset are computed according to the pairs defined in @sec-cal-dist, @fig-offset-pair-expon-weibull-ex shows an ECDF, and all of them can be found in @apx-offset-pairs
+
+#figure(
+  grid(
+    columns: 1,
+    column-gutter: 0.8em,
+    image("../images/annex/interpost_pairs/offset_ecdf__expon__weibull_min.png"), 
+  ),
+  caption: flex-caption(
+    [Offset ECDF of Exp $times$ Weibull (40K users)],
+    [Empirical Cumulative Exponential Funciton of Exp $times$ Weibull (39,334 users) of the offset.]
+      ),
+) <fig-offset-pair-expon-weibull-ex>
+
 
 == Inter-Action Time
 <sec-cal-interaction>
 
-#comment[the idea is correct, but i have not revised this part. I don't think it does a good job explaining this]
+The `user_inter_action` is ---arguably--- the most crucial parameter in the
+simulation. It governs the time between consecutive posts a user sees on their
+timeline, i.e. how many posts the user is exposed to during a session.
+Paradoxically, it cannot be directly measured from the Firehose (see
+@apx-sessions-dataset), as it records actions, not passive views. This section
+explains the rationale for the chosen value and the data used to anchor it.
 
-The `user_inter_action` parameter governs the time between consecutive posts a user sees on their timeline — how frequently a post appears for evaluation. This quantity is one of the most important in the simulation and, paradoxically, cannot be directly measured from the firehose. The Bluesky Firehose records user *actions* (likes, reposts, follows, posts) but not *passive views*: there is no event emitted when a user scrolls past a post without interacting. To obtain this data one would need access to the Bluesky AppView logs (the frontend the user interacts with), which are not public. The value must therefore be justified by reasoning from observable platform behaviour.
+We model the inter-action time as $"Exp"(lambda)$. Two arguments support this
+choice.
 
-=== Exponential Distribution 
+The first is experiential. A user browsing a timeline almost never reads every
+post in full: they skim the grand majority and linger on a few. This pattern
+---many short gaps and a long, thin tail of longer ones--- is the hallmark of
+an exponential distribution.
 
-We model the inter-action time as $"Exp"(lambda)$. Two arguments support this choice.
+The second is structural: if the sequence of posts appearing on a user's
+timeline forms a Poisson process, the inter-arrival times are exponentially
+distributed and memoryless #todo[reference a Poisson process]. Memorylessness
+is reasonable here: the time a user has already spent on the current post
+carries no information about how long they will spend on the next one. Each
+post is an independent decision point.
 
-The first is experiential: microblogging consumption is dominated by rapid scrolling. Most posts receive a glance of one or two seconds before the user moves on; a minority receive deeper attention (reading the full text, inspecting an image, considering a reply), but these are few and far between. This pattern — many short gaps, a long thin tail of larger gaps — is the hallmark of an exponential distribution.
+What is a plausible value for the mean $1/lambda$, the average dwell time per
+post? Viewport-dwell and eye-tracking studies of feed browsing place the
+typical dwell per item at roughly 1.5--3 seconds
+#todo[cite dwell-time reference]. We therefore adopt $1/lambda = 3$ seconds
+per post, i.e. the user scrolls past about 20 posts per minute. The data let
+us sanity-check this choice (see @sec-cal-policy), and @fig-pi-sensitivity
+shows that our conclusions are robust to the exact value.
 
-The second is structural: if the sequence of posts appearing in a user's timeline forms a Poisson process, the inter-arrival times are exponentially distributed and memoryless #todo[reference a Poisson process]. The memoryless property is reasonable here: the time a user has already spent looking at the current post carries no information about how long they will spend on the next one. Each post is an independent decision point.
+In conclusion, the estimation `user_inter_action` $~ "Exp"(1/3)$ is
+reasonable both experientially and structurally, as we will see in the next
+section.
 
-=== Exponential Parameter 
-
-What is a plausible value for $1/lambda$, the average time a user spends per post? The `sessions_all` data provides empirical anchors: the median browsing session lasts 23 s and contains a median of 3 interactions (almost exclusively likes). The user is clearly not spending 23 seconds reading 3 posts — they are scrolling past many, acting on few.
-
-On a mobile microblogging client, a user can flick past a post in under a second; on desktop, a quick scan takes 2–3 seconds. Posts that trigger a like or repost require slightly longer (reading the text, reaching for the button). Weighing these, an average of $1/lambda = 3$ s per post is a conservative estimate: it allows for a mix of sub-second skips and occasional 5–10 second engagements. This translates to $lambda = 1/3$ posts per second, or 20 posts per minute of active browsing.
-
-#figure(
-  table(
-    columns: 3,
-    align: (left, center, left),
-    stroke: none,
-    table.hline(stroke: 0.8pt),
-    [*Quantity*], [*Value*], [*Rationale*],
-    table.hline(stroke: 0.5pt),
-    [Distribution], [$"Exp"(lambda)$], [Memoryless; matches rapid-scroll consumption pattern],
-    [Mean $1/lambda$], [3 s], [Conservative blend of sub-second skips and deeper reads],
-    [Posts per minute of browsing], [$approx 20$], [Consistent with microblogging UX],
-    table.hline(stroke: 0.8pt),
-  ),
-  caption: flex-caption(
-    [Inter-action time calibration.],
-    [Inter-action time calibration. The exponential distribution with mean 3 s is chosen as a justified estimate; sensitivity analysis varying this value from 1 s to 10 s should accompany simulation runs.],
-  )
-) <tbl-cal-interaction>
-
-The `user_inter_action` config expects an exponential with mean. A value of 3 s is recommended. Given that this parameter is an educated assumption rather than a direct measurement, sensitivity analysis should vary it across the 1–10 s range to assess its impact on diffusion outcomes.
-
-== Engagement Rate
+== User Policy $pi$
 <sec-cal-policy>
 
-#comment[the idea is correct, but i have not revised this part. I don't think it does a good job explaining this]
+The user policy is, together with `user_inter_action`
+(@sec-cal-interaction), the other crucial quantity we cannot estimate
+directly, and for the same reason: we do not know how many posts the user was
+exposed to. Unlike the latter, however, $pi$ can be derived once
+`user_inter_action` is fixed.
 
-With the inter-action time calibrated, we can now estimate how many posts a user sees per session and, from that, the probability they act on each one.
+Per simulation design, we assume $pi$ is homogeneous across users, so we drop
+the 16 pairs of families found when deducing the sessions (see
+@sec-cal-acrossuser) and treat all sessions equally.
 
-A session of duration $d$ with inter-action time $"Exp"(1/3)$ exposes the user to approximately $d / 3$ posts. However, 33.2% of sessions have zero duration (co-occurring events at the same microsecond), for which $d/3 = 0$ would imply the user saw nothing — clearly false, since these sessions contain real interactions. A floor is therefore applied:
-
-$
-"posts_seen"(s) = max( ("duration"(s)) / (3),  "interactions"(s) + 4 )
-$
-
-where $4$ is the assumed minimum number of unseen posts even in the briefest session.
-
-Computed over 47.4M sessions in `sessions_all`, the median engagement rate is:
-
-$
-"engagement_rate"(s) = ("interactions"(s)) / ("posts_seen"(s))
-$
-
-which yields a median of $approx 20%$ (mean $approx 19.5%$). In other words, the typical Bluesky user likes or reposts roughly one in five posts they see during a browsing session.
-
-=== The $pi$ Policy
-
-The categorical $pi$ policy required by the simulation (§@sec-method-des-assumptions) is decomposed from the engagement rate. Among all interactions (likes + reposts) in `sessions_all`, likes account for 93.8% and reposts for 6.2%. Therefore:
+The idea is simple. Under `user_inter_action` $~ "Exp"(1/3)$, a session of
+duration $t$ seconds exposes the user to $t slash 3$ posts on average. Counting
+likes and reposts per session therefore yields the policy probabilities:
 
 $
-pi_"ignore" approx 80% quad pi_"like" approx 18.8% quad pi_"repost" approx 1.2%
+  pi_"like" = frac(|{"likes"}|, T slash 3), quad
+  pi_"repost" = frac(|{"reposts"}|, T slash 3), quad
+  pi_"ignore" = 1 - pi_"like" - pi_"repost",
 $
 
-For the simulation's JSON `user_policy.categorical.weights` field, this translates to `[0.80, 0.188, 0.012]` corresponding to `["ignore", "like", "repost"]`.
+where $T$ is the total session time. Zero-duration sessions (isolated events,
+40.7% of sessions) are excluded: they contribute no observable exposure and
+hold only 6% of all engagements. From the remaining 26.6M sessions
+($T approx 6.11 times 10^9$ s, mean duration 229.5 s), we count
+148.5M likes (85.9% of engagements) and 24.4M reposts (14.1%), giving:
 
-The engagement rate is sensitive to the assumed inter-action time. With $1/lambda = 1$ s (rapid scanning), the median engagement rate drops to $approx 7%$; with $1/lambda = 10$ s (careful reading), it rises to $approx 50%$. The 3 s assumption places the estimate in the middle of this range.
+$
+  pi_"ignore" approx 91.5% quad pi_"like" approx 7.3% quad pi_"repost" approx 1.2%
+$
+
+For the simulation's JSON `user_policy.categorical.weights` field, this
+translates to `[0.915, 0.073, 0.012]` corresponding to
+`["ignore", "like", "repost"]`.
+
+Two consistency remarks. First, the data bound the dwell time from above:
+$pi_"like" <= 1$ requires $s <= T slash |{"likes"}| approx 41$ s per post,
+and any value beyond a few seconds would imply an implausibly high engagement
+rate --- the assumed 3 s sits comfortably inside the plausible range. Second,
+$pi$ is exactly linear in the assumed dwell time $s$;
+@fig-pi-sensitivity plots this dependence on $s in [1, 4]$ s per post: across
+the whole plausible range, users ignore around 90% of what they see, so the
+qualitative behaviour of the simulation does not hinge on the exact value of
+$1 slash lambda$.
+
+#figure(
+  image("../images/calibration/pi_sensitivity.png", width: 80%),
+  caption: [Sensitivity of the user policy $pi$ to the assumed dwell time
+    $s$ (seconds per post). Zero-duration sessions excluded. The dashed line
+    marks the chosen value $s = 3$ s per post.],
+) <fig-pi-sensitivity>
 
 == Warm-up time
 
 Explain the warmup experiment, detriments and pros and why we need just 2 ticks of warmup to get the simulation started!
 
 #todo[FINISH THIS]
+
+
+== Steady State of the Simulation
+<sec-exec-stationary>
+
+#comment[this is an unrevised section. Should be far shoretr and report the width of the window and the tolerance. the numbers are still from the older simulation (no timeline swap!)]
+
+Before committing to the full batch execution, a single representative run from each dataset scale was analysed to confirm that the simulation reaches a stationary regime within the configured horizon. The DES model involves stochastic session dynamics: users go online and offline according to calibrated Pareto distributions, and the system needs enough time for these rhythms to stabilise into a steady proportion of simultaneously active users. If the simulation were still burning in when the metrics are collected, the results would reflect transient startup behaviour rather than the equilibrium the CTIC model describes.
+
+#todo[FINISH WITH NEW DATA]
+
+== Time Agnostic Results
+<sec-exec-agnostic>
+
+#comment[THIS IS A FINAL VERSION!]
+
+To ensure the simulation results remain invariant to absolute wall-clock metrics and easily comparable across alternative contexts, all temporal findings are reported as multiples of the system's fundamental propagation delay ($Delta_p$). By normalizing absolute time ($t$) against this characteristic scale, we derive a dimensionless representation of post lifetimes:
+
+$ tau = frac(t, Delta_p) $
+
+In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, ubiquitous operational baseline of the environment, and one of the fundamental quantities defining the continuous cascade independent model. Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic.
+
 
 == Final Calibraiion
 <sec-calibration-summary>
@@ -354,7 +469,7 @@ The simulation engine (`config.zig`) expects specific distribution types for eac
     table.hline(stroke: 0.5pt),
     [`session_duration`], [Per-user $(alpha, x_min)$ from `params/session_duration_params.txt` (53% best-fit, median $alpha = 2.47$, $x_min = 98$ s)], [@sec-cal-dist],
     [`inter_session_time`], [Per-user $(alpha, x_min)$ from `params/inter_session_params.txt` (51% best-fit, median $alpha = 2.05$, $x_min = 5,806$ s)], [@sec-cal-dist],
-    [`inter_creation_time`], [Per-user $(alpha, x_min)$ from `params/inter_creation_params.txt` (53% best-fit, median $alpha = 1.80$, $x_min = 44$ min)], [@sec-cal-interpost],
+    [`inter_creation_time`], [Within-session ECDF matched to the user's global inter-post family (`within_ecdf__<family>.txt`; pooled `within_interpost_ecdf.txt` for gamma/expon)], [@sec-cal-interpost],
     [`user_inter_action`], [Global $lambda = 1/3$ (mean 3 s)], [@sec-cal-interaction],
     [`user_policy`], [Weights: $[0.80, 0.188, 0.012]$ on `ignore`, `like`, `repost`], [@sec-cal-policy],
     [`propagation_delay`], [1 s (platform overhead)], [@sec-method-ctic],
@@ -368,7 +483,7 @@ The simulation engine (`config.zig`) expects specific distribution types for eac
   ),
   caption: flex-caption(
     [Consolidated simulation calibration.],
-    [Consolidated simulation calibration as implemented in `config.zig` and `graph_network.zig`. The three Pareto-distributed fields use per-user parameter sampling from ECDF text files; `user_inter_action` uses a global exponential; delays are constant 1 s. The warmup post creation is uniform over the warmup window.],
+    [Consolidated simulation calibration as implemented in `config.zig` and `graph_network.zig`. The three Pareto-distributed fields and the inter-creation ECDF use per-user sampling from text files; `user_inter_action` uses a global exponential; delays are constant 1 s. The warmup post creation is uniform over the warmup window.],
   )
 ) <tbl-cal-sim-mapping>
 

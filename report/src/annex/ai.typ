@@ -16,7 +16,7 @@ The models have been used for the following utilities:
 - Reference finding and content exploration, together with Google Scholar.
 - Summary and ease of understanding of academic papers in State of the Art (@sec-sota).
 - Enhancing prose and correcting spelling and style in all written sections.
-- Assistance in code writing used in Data, Calibration, Execution and Results (@sec-data, @sec-calibration, @sec-exec, @sec-results respectively)
+- Assistance in code writing used in Data, Calibration and Results (@sec-data, @sec-calibration, @sec-results respectively)
 - Reference formatting.
 
 Generative AI has NOT been used in the following tasks:
