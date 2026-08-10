@@ -185,7 +185,7 @@
 
 #pagebreak()
 = Methodology 
-<apx-methodology>
+<apx-method>
 
 #include "src/annex/methodology.typ"
 

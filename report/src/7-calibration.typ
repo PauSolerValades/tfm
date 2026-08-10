@@ -27,7 +27,7 @@ Now the key question is: given two consecutive actions by the same user, how lon
 
 === Session Creation
 
-The method picked to create the session is DBSCAN (@sec-method-session-dbscan) with parameters `ms=2` and $epsilon=300$. See @apx-session-dbscanparams for details regarding candidates and why this method and these parameters are the correct choice for this problem.
+The method picked to create the session is DBSCAN (@sec-method-session) with parameters `ms=2` and $epsilon=300$. See @apx-session-dbscanparams for details regarding candidates and why this method and these parameters are the correct choice for this problem.
 
 The produced sessions verify the definition postulates of @sec-cal-sessions, as summarised in @tbl-cal-session-stats and @fig-cal-session-hists: $40.71%$ of the 44.9M sessions are singletons and $62.77%$ last under a minute (fine-grained short sessions); the median lasts 110 s and only $0.07%$ exceed one hour (no macro-sessions); the population histograms follow single heavy-tailed laws ; and session starts align with each language's timezone (circadianity, @fig-cal-circadian). The full statistics and candidate-method comparisons are reported in @apx-session-dbscanparams.
 
@@ -451,39 +451,4 @@ $ tau = frac(t, Delta_p) $
 
 In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, ubiquitous operational baseline of the environment, and one of the fundamental quantities defining the continuous cascade independent model. Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic.
 
-
-== Final Calibraiion
-<sec-calibration-summary>
-
-The simulation engine (`config.zig`) expects specific distribution types for each calibrated quantity. This section maps every empirical finding to its exact Zig type and initialization.
-
-@tbl-cal-sim-mapping maps each simulation field to its calibrated value and Zig type.
-
-#figure(
-  table(
-    columns: 3,
-    align: (left, left, left),
-    stroke: none,
-    table.hline(stroke: 0.8pt),
-    [*Simulation field*], [*Calibrated value*], [*Source*],
-    table.hline(stroke: 0.5pt),
-    [`session_duration`], [Per-user $(alpha, x_min)$ from `params/session_duration_params.txt` (53% best-fit, median $alpha = 2.47$, $x_min = 98$ s)], [@sec-cal-dist],
-    [`inter_session_time`], [Per-user $(alpha, x_min)$ from `params/inter_session_params.txt` (51% best-fit, median $alpha = 2.05$, $x_min = 5,806$ s)], [@sec-cal-dist],
-    [`inter_creation_time`], [Within-session ECDF matched to the user's global inter-post family (`within_ecdf__<family>.txt`; pooled `within_interpost_ecdf.txt` for gamma/expon)], [@sec-cal-interpost],
-    [`user_inter_action`], [Global $lambda = 1/3$ (mean 3 s)], [@sec-cal-interaction],
-    [`user_policy`], [Weights: $[0.80, 0.188, 0.012]$ on `ignore`, `like`, `repost`], [@sec-cal-policy],
-    [`propagation_delay`], [1 s (platform overhead)], [@sec-method-ctic],
-    [`interaction_delay`], [1 s], [@sec-method-des-assumptions],
-    [`creation_delay`], [1 s], [@sec-method-des-assumptions],
-    [`offline_startup_ratio`], [0.5 (half of users start offline)], [Assumption],
-    [`warmup_post_inter_creation`], [$cal(U)(0, 1000)$, `Interval.cc`], [Synthetic warmup],
-    [`warmup_time`], [1000], [Synthetic warmup],
-    [`horizon`], [5000], [@sec-exec-stationary],
-    table.hline(stroke: 0.8pt),
-  ),
-  caption: flex-caption(
-    [Consolidated simulation calibration.],
-    [Consolidated simulation calibration as implemented in `config.zig` and `graph_network.zig`. The three Pareto-distributed fields and the inter-creation ECDF use per-user sampling from text files; `user_inter_action` uses a global exponential; delays are constant 1 s. The warmup post creation is uniform over the warmup window.],
-  )
-) <tbl-cal-sim-mapping>
 

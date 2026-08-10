@@ -4,7 +4,7 @@
 This sections addresses methodological issues and concerns that, while extremely important, had to be moved into the appendix due to lenght constraints.
 
 == Random Number Generation
-<sec-method-rng>
+<apx-method-rng>
 
 #comment[This takes too long, i think we can safly add a methodology appendix with this explained and treat the RNG as an external library, despite being written from scratch]
 
@@ -47,7 +47,7 @@ However, to optimize the performance of the linear search, the following convent
 
 === Pareto Distribution
 
-The Pareto Distribution is fundamental when talking about social networks, as its the distribution associated with the power-law. It's defined by two parameters, scale $alpha$ and shape $x_m$, and has the following density and cumulative density functions:
+The Pareto Distribution is fundamental when talking about social networks, as its the distribution associated with the power-law. It's defined by two parameters, shape $alpha$ and scale $x_m$, and has the following density and cumulative density functions:
 
 $ f(x | alpha, x_m ) = cases(frac(alpha x_m^alpha, x^(alpha + 1)) & "if" x >= x_m, 0 & "if" x < x_m )  $
 
@@ -90,10 +90,81 @@ To test the implementations of the above distributions
 
 
 == Distribution Fitting
+<apx-method-gof>
 
 This section addresses tools and concepts used in distribution fitting and other related concerns.
 
-=== Vulong's Test
+== Pareto Family of Distributions
+
+Pareto is not just a distribution, but a familiy of them. In the distribution fitting list we are including three types of Paretos, which we describe ---and argue the need of--- in this section.
+
+Paretos are organized in 6 types of distributions: Paretos I to IV, with Pareto II with location 0 has a special name, and then the Generalized Pareto Distribution. This section will explain Pareto I ---the standard one parameter power-law---, Pareto II with $mu=0$ ---also known as Lomax--- and the Generalized Pareto Distribution.
+
+=== Generalized Pareto Distribution
+
+This section is sourced from the original article by James Pickands #todo[find the proper reference].
+
+The Generalized Pareto Distribution ---GPD from now on--- is a family of continous probability distributions, and it's specified by three parameters: location $mu$, scale $theta$ and shape $alpha$, although it can be seen with several reparametrizations. It has a Cumulative Probablity Distribution
+
+$
+
+  F(x| mu, theta, alpha) = cases(
+    1 - (1 + alpha frac(x - mu, theta))^(-1/alpha) "if" alpha != 0,
+    1 - exp(- frac(x - mu, theta)) "if" alpha = 0
+  )
+$
+
+where $mu, alpha in RR$ and $theta in RR^+$. The support changes according to the shape of the distribution: if $alpha >= 0$, $x >= mu$, and $mu <= x <= mu - theta/alpha$ otherwise.
+
+The shape parameter $alpha$ also changes the interpretation of the data a lot:
+
+$
+  cases(
+    "power-law" gamma = 1/alpha &"if" alpha > 0,
+    "light tail" ~ "Exp" &"if" alpha -> 0,
+    "bounded tail" x <= -theta/alpha "limit" &"if" alpha < 0,
+  )
+$
+
+This function has Pareto and Lomax as specific cases, see their respective sections (@apx-method-gof-lomax and @apx-method-gof-lomax respectively) to know them.
+
+=== Pareto
+<apx-method-gof-pareto>
+
+Pareto ---known as Type I Pareto--- has the following cumulative density funciton:
+
+$
+  F(x | theta, alpha) = 1 - (frac(x, theta))^(-alpha)
+$
+
+with $theta > 0, alpha > 0$, where the scale parameter is also sometimes referred to $x_"min"$. The support is $x in [theta, inf]$.
+
+This distribution is rellevant due to the defined support. If the data to be fitted can start at a certain distance of zero, will be detected by this distribution easily.
+
+Pareto is a specific case of $"GPD"(mu, sigma, xi)$ with $mu = theta, xi = 1/alpha, sigma = theta / alpha$.
+
+=== Lomax (Pareto II)
+<apx-method-gof-lomax>
+
+Pareto II is in essence the same as Pareto I, but with the support depending on the location parameter instead of the scale. It has the following cumulative density function:
+
+$
+  F(x | mu, theta, alpha) = 1 - (1 + frac(x-mu, theta))^(-alpha)
+$
+
+with $mu in RR$ and $alpha > 0, theta > 0$. The support is $x >= mu$. We call this a Lomax distribution when $mu=0$, and therefore it's cdf is
+
+$
+  F(x | theta, alpha) = 1 - (1 + frac(x, theta))^(-alpha)
+$
+
+and the support is $x>=0$, which makes is a perfect candidate to fit processes that generate only positive quantities, such is the case of this project with time intervals.
+
+
+Lomax is a specific case of $"GPD"(mu, sigma, xi)$ with $mu=0, xi = 1/alpha, sigma = theta / alpha$
+
+=== Vuong's Test
+<apx-method-gof-vuong>
 
 In social networks, power-laws ---data following a Pareto distribution--- appears usually due to the networks own nature and growth. Despite appearing naturally, one must be carefull to classify them as another very common heavy-tail function: the lognormal.
 
@@ -136,19 +207,33 @@ As $n -> infinity$, $T$ converges in distribution to $cal(N)(0, 1)$. At signific
 === Distributions and Goodness-of-fit
 <apx-method-gof-dist>
 
-#todo[recite and cite R and `fitdistplus`]
+#todo[recite and cite R and `fitdistplus`, `actuar` (paretoI, paretoII) and `edv` for `genpareto`]
 
-#todo[add also where the distributions not in fitdistplus distributions are found]
-For the sessions durations and gaps between sessions ---and partially for the events per user, day and hour in #todo[reference proper data section]--- it was clear the density and form of the outputs was very extreme, in the sense that all distributions either have a heavy-tail, high outliers as a peak, or both. So, our analysis has limited to the following `scipy.stats` distributions:
-- Pareto: type of powerlaw.
-- Gamma:
-- Lognormal:
-- Weibull (`weibull_min`)
-- min
+There is two types of procedures of goodness-of-fit in this work: finding the $gamma$ of a power-law and fitting distributions.
+
+==== Power-law
+
+To find if some data follows a power-law behaviour, we use the highly competent `powerlaw` package, which implements Vuong's Test, already described in @apx-method-gof-vuong. This has been used to fit the events of the firehose #todo[section data first] and to fit the total reposts of the users #todo[section data powerlaw and results powerlaw]
+
+==== Distributions Fittings
+
+To figure out the `session_duration`, `inter_session_time` and `inter_creation_time`, as they are positive heavy/light tail positive quantities, the following distributions are the ones usually picked from the list.
+- Exponential: `exp` from `fitdistplus`
+- Gamma from `fitdistplus`
+- Lognormal: `lognorm` from `fitdistplus`
+- Weibull: `weibull_min` from `fitdistplus`
+- Pareto: `paretoI` from `actuar`
+- Lomax: `paretoII` from `acutar`
+- GPD: `genpareto` from `edv`
+
+It is rellevant to outline the reasoning to why include three distributions from the pareto family.This responds to the change of the support previously described. Despite both the sessions or creations being positive, to know about the support they have if Pareto o Lomax have might be very informative for the data. Also, it is expected (and has been validated by results) that GPD shape $alpha$ is negative, that is, bounded behaviour. This is repored under `pareto` in the Calibration @sec-calibration and sampled by an implementation of the General Pareto Distribution, with the conversions explicitly stated already in sections @apx-method-gof-pareto and @apx-method-gof-lomax.
+
+The non pareto families distribution are the most common distributions for heavy-tail data, which are the ones listed above. 
+
 
 === Goodness-of-fit Strategy
 
-There are plenty of algorithms for goodness-of-fit, and the obtained result is not independent of the method for different factors. `distfit` settles by default to Residual Sum of Squares (RSS), but that is not an appropiate method for very heavy tailed or extreme outliers.
+#todo[Here we have to discuss anderson-darling vs ks for the heavy tail, or even wassermann. THis was a lot of the python version lol, dunno if even rellevant. ]
 
 #todo[cite some of this papers in the discussion ks vs anderson and RSS vs wasserbank]
 ks vs anderson:
@@ -161,6 +246,7 @@ Wasserstain:
 - Rüschendorf, L. (2001). "Wasserstein metric." Encyclopedia of Mathematics
 
 == Session Creation
+<apx-method-session>
 
 This section covers the Tukey Fences method, which is the only method not described in @sec-method-session for the sake of this document brevity
 
@@ -213,7 +299,7 @@ Algorithm @proc-tukey-sessions summarises the procedure. The fence is recomputed
 === HDBSCAN
 <apx-method-session-hdbscan>
 
-Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN) amplifies DBSCAN @sec-method-session-dbscan by generating a complete density-based clustering hierarchy @mcinnes2017hdbscan. Instead of relying on a fixed global threshold, HDBSCAN conceptually performs DBSCAN over varying $epsilon$ values and integrates the results to find a clustering structure that offers the best stability over $epsilon$ @campello2013hdbscan. This allows the algorithm to detect clusters of varying densities and makes it significantly more robust to parameter selection @campello2013hdbscan.
+Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN) amplifies DBSCAN (introduced in @sec-method-session) by generating a complete density-based clustering hierarchy @mcinnes2017hdbscan. Instead of relying on a fixed global threshold, HDBSCAN conceptually performs DBSCAN over varying $epsilon$ values and integrates the results to find a clustering structure that offers the best stability over $epsilon$ @campello2013hdbscan. This allows the algorithm to detect clusters of varying densities and makes it significantly more robust to parameter selection @campello2013hdbscan.
 
 HDBSCAN fundamentally relies on a single input parameter, $m_"pts"$, which acts as a smoothing factor for the density estimates @mcinnes2017hdbscan. The algorithm operates by computing a core distance for each object and defining a symmetric mutual reachability distance between object pairs @ester1996dbscan. These distances are used to conceptually construct a mutual reachability graph, from which a Minimum Spanning Tree (MST) is extracted and simplified to build a hierarchical dendrogram @mcinnes2017hdbscan.
 

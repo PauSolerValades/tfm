@@ -1,14 +1,10 @@
 #import "utils.typ": *
 
-This chapter justifies and explains several methodology choices, why the use of a discrete-event simulation methodology (see @sec-method-des) and why the DES framework has been chosen over ABM @sec-method-abm.
 
-As the Random Number Generation library `distributions` @soler2025distributions has been implemented from scratch to serve this project, the methodology is in @apx-methodology but not included in the main body due to report length constraints.
 
-== Why a Simulation?
+This chapter justifies and methodology elections: why the use of a discrete-event simulation methodology in @sec-method-des, why the DES framework has been chosen over the _de-facto_ standar of Complex and Social Science, Agent-Based Modelling in @sec-method-abm, and which method has been used to create the sessions in @sec-method-session.
 
-The model literally cannot be solved analitically due to much complexity.
-
-#comment[I don't know if this section makes actual sense. I thought it would be super easy to write but lol its actually quite difficult to narrow down why this method will analytically make no sense]
+Due to lenght constraints of this report, some important sections have been moved to @apx-method, specifically every aspect concerning the Random Number Generation algorithms in @apx-method-rng ---which is an in depth description of the tailored made for this project `distribution` library @soler2025distributions ---, which methods have been used for the goodness-of-fit tests in every distribution in @apx-method-gof, and the decision process on picking DBSCAN as the session algorithm in @apx-method-session.
 
 
 == Discrete-Event Simulation
@@ -155,8 +151,7 @@ It is believed by the author that the most theoretically grounded approach would
 Regaring the alternative methods, Kleinberg @kleinberg2003bursty identifies the central weakness of fixed-threshold approaches to this problem: because activity rate is locally "rugged," a single global cutoff fragments long, low-intensity bursts into spurious short ones, therefore a more nuanced method than global threshold ---despite being used in some studies #todo[cite the twitter article]--- uniform across all users. Instead, this work explores density-based clustering methods such as DBSCAN #todo[ester1996density]  as a more tractable alternative for session creation.
 
 
-=== DBSCAN
-<sec-method-session-dbscan>
+*DBSCAN*
 
 DBSCAN (Density-Based Spatial Clustering of Applications with Noise ) is a density-based clustering paradigm that provides a non-hierarchical labeling of data objects based on a global density threshold @mcinnes2017hdbscan. 
 
