@@ -111,7 +111,7 @@ With the sessions created, it is possible to fit distributions of `session_lengt
 - `session_length`: sampling the distribution should tell us how long will the user current session last. The goodness-of-fit test will be applied to the duration of all the user session length.
 - `inter_session_duration`: sampling the distribution should give for how long the user is going to be offline. The goodness-of-fit test will be applied to all the duration between the ending of a session and the start of the next consecutive one ---what has been called "gap" due to being in between sessions---. It is worth mentcioning that the DBSCAN method will produce a gaps distribution shifted by $epsilon=300$, as there cannot be gap smaller than $epsilon$; the histograms showcased are all already shifted that quantity $Y = X - 300$. 
 
-As this is inherently human behaviour ---as Barabási @barabási2005bursts states--- the distribution chosen for the goodness-of-fit test have to have heavy-tails and high peaks, as well as very "similar" forms. The ones chosen are the Exponential, Gamma, Lognormal, Weibull, Frisk (logistic dist), and Power-Law familiy distributions: Pareto, Lomax and Generalized Pareto Distribution.#footnote[Lomax is a reparametrization of the Generalized Pareto, and the Pareto looks to cover the boundary case.]
+As this is inherently human behaviour ---as Barabási @barabási2005bursts states--- the distribution chosen for the goodness-of-fit test have to have heavy-tails and high peaks, as well as very "similar" forms. The ones chosen are the Exponential, Gamma, Lognormal, Weibull, and Power-Law familiy distributions: Pareto, Lomax and Generalized Pareto Distribution.#footnote[Lomax is a reparametrization of the Generalized Pareto, and the Pareto (Type I, threshold fixed at the observed minimum) covers the boundary case of a lower bound away from zero; see @apx-powerlaw-breakdown.]
 
 To select between the best fit, Akaike Information Criterion is used to favor parsimony. For the goodness-of-fit test, as the distributions have heavy tails, we also added Cramér-von Mises and Anderson-Darling statistics as well as the de facto Kolmogorov-Smirnov test, evaluated all agains the ECDF of the session and gaps data. See @apx-method-gof-dist for more information. Additionally, all users with less than 30 sessions or 30 gaps have been excluded from the fitting, which represent roughly 1.13M users (about 82% of the users with fits on both quantities, $1.37 times 10^6$ reduced to $2.43 times 10^5$).
 
@@ -130,12 +130,11 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
         table.hline(stroke: 0.8pt),
         [*Family*], [*Users*], [*%*],
         table.hline(stroke: 0.5pt),
-        [Exp], [67,681], [27.83%],
-        [Weibull], [59,558], [24.49%],
-        [Gamma], [44,454], [18.28%],
-        [Lognorm], [40,585], [16.69%],
-        [Power-law], [27,349], [11.24%],
-        [Fisk], [3,590], [1.48%],
+        [Exp], [67,933], [27.93%],
+        [Weibull], [59,133], [24.31%],
+        [Gamma], [44,029], [18.10%],
+        [Lognorm], [36,101], [14.84%],
+        [Power-law], [36,021], [14.81%],
         table.hline(stroke: 0.5pt),
         [*Total*], [*243,217*], [*100%*],
         table.hline(stroke: 0.8pt),
@@ -150,11 +149,10 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
         table.hline(stroke: 0.8pt),
         [*Family*], [*Users*], [*%*],
         table.hline(stroke: 0.5pt),
-        [Weibull], [119,140], [48.99%],
-        [Lognorm], [74,284], [30.54%],
-        [Power-law], [37,364], [15.36%],
-        [Fisk], [12,412], [5.10%],
-        [Gamma], [14], [0.01%],
+        [Weibull], [119,526], [49.14%],
+        [Lognorm], [77,198], [31.74%],
+        [Power-law], [46,444], [19.10%],
+        [Gamma], [46], [0.02%],
         [Exp], [3], [0.00%],
         table.hline(stroke: 0.5pt),
         [*Total*], [*243,217*], [*100%*],
@@ -168,27 +166,26 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
   )
 ) <tbl-cal-dist-family>
 
-Session durations are spread across the exponential (27.8%), Weibull (24.5%), gamma (18.3%), lognormal (16.7%) and power-law (11.2%), accounting for 99.52% of total users. Fisk (1.5%) is the only minority, and can be neglected.
+Session durations are spread across the exponential (27.9%), Weibull (24.3%), gamma (18.1%), lognormal (14.8%) and power-law (14.8%) families, which together account for all active users.
 
-Gaps remain more concentrated than durations: the Weibull (49.0%), lognormal (30.5%) and power-law (15.4%) families account for roughly 95% of users, with Fisk (5.1%) and negligible gamma and exponential. The gap behaviour is therefore well captured by the majority families.
+Gaps remain more concentrated than durations: the Weibull (49.1%), lognormal (31.7%) and power-law (19.1%) families account for roughly 99.9% of users, with negligible gamma and exponential. The gap behaviour is therefore well captured by the majority families.
 
 Now we must study how the session-gap pair is distributed across users, as there might be a relationship between the session and the gap distributions. @tbl-cal-pair-dist shows the distribution of pairs over the same active users. In fact, adding the rows gives the same as @tbl-cal-dist-family left, and the colums of the right one.
 
 #figure(
   table(
-    columns: 8,
-    align: (left, center, center, center, center, center, center, center),
+    columns: 7,
+    align: (left, center, center, center, center, center, center),
     stroke: none,
     table.hline(stroke: 0.8pt),
-    [], table.vline(stroke: 0.5pt), [*Weibull*], [*Lognorm*], [*Power-law*], [*Fisk*], [*Gamma*], [*Exp*], [*Total*],
+    [], table.vline(stroke: 0.5pt), [*Weibull*], [*Lognorm*], [*Power-law*], [*Gamma*], [*Exp*], [*Total*],
     table.hline(stroke: 0.5pt),
-    [*Exp*], [16.2%], [7.8%], [3.0%], [0.8%], [0], [0], [*27.8%*],
-    [*Weibull*], [10.1%], [8.4%], [4.4%], [1.5%], [0], [0], [*24.5%*],
-    [*Gamma*], [8.4%], [5.9%], [3.0%], [1.0%], [0], [0], [*18.3%*],
-    [*Lognorm*], [8.0%], [4.5%], [3.1%], [1.0%], [0], [0], [*16.7%*],
-    [*Power-law*], [5.7%], [3.5%], [1.6%], [0.5%], [0], [0], [*11.2%*],
-    [*Fisk*], [0.6%], [0.4%], [0.2%], [0.3%], [0], [0], [*1.5%*],
-    [*Gap total*], [*49.0%*], [*30.5%*], [*15.4%*], [*5.1%*], [*0*], [*0*], [*100%*],
+    [*Exp*], [16.3%], [8.1%], [3.6%], [0], [0], [*27.9%*],
+    [*Weibull*], [10.0%], [8.7%], [5.6%], [0], [0], [*24.3%*],
+    [*Gamma*], [8.3%], [6.1%], [3.7%], [0], [0], [*18.1%*],
+    [*Lognorm*], [7.1%], [4.4%], [3.4%], [0], [0], [*14.8%*],
+    [*Power-law*], [7.5%], [4.5%], [2.8%], [0], [0], [*14.8%*],
+    [*Gap total*], [*49.1%*], [*31.7%*], [*19.1%*], [*0*], [*0*], [*100%*],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -197,7 +194,7 @@ Now we must study how the session-gap pair is distributed across users, as there
   )
 ) <tbl-cal-pair-dist>
 
-The same distribution is visualised in @fig-pair-family-bars, where the 24 largest combinations are shown in descending order (the eight smallest, 17 users in total, are omitted).
+The same distribution is visualised in @fig-pair-family-bars, where all 22 observed combinations are shown in descending order.
 
 As it can be seen both in @tbl-cal-pair-dist and in @fig-pair-family-bars, the pairwise distributions are far less dominant and more spread across, specially taking into account the more dominant distributions. As the table axis are sorted by decreasing amount of users as the original tables, the further from the beginning of (Exp, Weibull) the less significant the % will be.
 
@@ -207,7 +204,7 @@ As it can be seen both in @tbl-cal-pair-dist and in @fig-pair-family-bars, the p
   image("../images/calibration/pair_family_bars.png", width: 100%),
   caption: flex-caption(
     [Most common duration--gap family pairs.],
-    [Share of users (in %) for the 24 largest (duration, gap) family combinations in descending order. The eight smallest combinations ---17 users $< 0.01$%--- are omitted.],
+    [Share of users (in %) for all 22 observed (duration, gap) family combinations in descending order. The seven smallest combinations together account for 49 users ($< 0.02$%).],
   )
 ) <fig-pair-family-bars>
 
@@ -223,7 +220,7 @@ To sample from the active users poses a challenge in order to generalize. When p
 + *Small sample*: for some of the pairs, sample should be bigger to trust more on what it is actually showing this.
 + *Parsimony Priniple*: This can come as a more of a design decision, but there should be a preference for parsimony: sampling from the ECDF of a small distribution in which the parameters are already result of a process of fitting is less complex than to fit the parameters into another distribution.
 
-The simulation therefore samples the across-user parameters empirically: a simulated user is drawn from the fitted per-user table (family and parameters jointly, so only combinations that actually occur together), and its session durations and gaps are generated with the coded families ---Exponential, Pareto, Weibull, Gamma and Lognormal; the few Fisk users (1.5% of durations, 5.1% of gaps) are mapped to lognormal to reduce the burden of new distributions from scratch that this work needs. This bootstrap-style resampling reproduces the exact across-user heterogeneity of the fitted population without any meta-model.
+The simulation therefore samples the across-user parameters empirically: a simulated user is drawn from the fitted per-user table (family and parameters jointly, so only combinations that actually occur together), and its session durations and gaps are generated with the coded families ---Exponential, Pareto, Weibull, Gamma and Lognormal---. This bootstrap-style resampling reproduces the exact across-user heterogeneity of the fitted population without any meta-model.
 
 Being able to define a session allows the next key unkown parameters to be directly calibrated from real data or right or to provide a good estimation for them.
 

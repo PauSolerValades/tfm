@@ -212,7 +212,7 @@ As stated in the first paragraph of @sec-method-session, a density based approac
 == Best-Fit Family Composition vs. Observation Cutoff
 
 #todo[Reread and review]
-The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the power-law family: with three points, a power law can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 11% power-law once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---power-law resurges for very active users (44.5% at $n_"obs" > 200$), and the log-logistic (Fisk) family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$). The composition therefore describes the activity stratum under study, not a single universal law.
+The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the power-law family: with three points, a power law can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 15--16% power-law once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---power-law resurges for very active users (65.2% at $n_"obs" > 200$), and the lognormal family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$ on the duration side). The composition therefore describes the activity stratum under study, not a single universal law.
 
 #figure(
   [
@@ -225,12 +225,11 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
     table.hline(stroke: 0.8pt),
     [*Family*], [*0*], [*5*], [*10*], [*15*], [*20*], [*25*], [*30*], [*40*], [*50*], [*75*], [*100*], [*200*], [*300*], [*500*], [*750*], [*1000*],
     table.hline(stroke: 0.5pt),
-    [*Power-law*], [45.0], [21.3], [14.0], [12.2], [11.6], [11.3], [11.2], [11.2], [11.2], [11.1], [11.0], [9.4], [7.3], [7.7], [5.0], [0],
-    [*Weibull*], [7.4], [11.3], [15.3], [18.3], [20.8], [22.9], [24.9], [28.3], [31.3], [37.5], [42.5], [54.6], [45.1], [12.8], [5.0], [0],
-    [*Lognorm*], [12.2], [18.0], [19.2], [18.7], [18.0], [17.2], [16.6], [15.3], [14.2], [12.2], [10.7], [8.4], [17.8], [24.4], [10.0], [0],
-    [*Gamma*], [6.0], [10.1], [13.3], [15.2], [16.6], [17.6], [18.4], [19.6], [20.5], [21.9], [22.4], [20.4], [12.0], [11.5], [10.0], [11.1],
-    [*Exp*], [27.7], [36.5], [35.9], [33.6], [31.3], [29.3], [27.4], [24.3], [21.5], [16.0], [12.1], [3.6], [0.8], [0], [0], [0],
-    [*Fisk*], [1.8], [2.8], [2.3], [2.0], [1.8], [1.6], [1.5], [1.3], [1.2], [1.2], [1.3], [3.7], [17.0], [43.6], [70.0], [88.9],
+    [*Power-law*], [59.1], [34.1], [21.7], [17.6], [16.0], [15.2], [14.8], [14.2], [14.0], [13.7], [13.4], [12.3], [16.5], [25.6], [25.0], [22.2],
+    [*Weibull*], [6.5], [11.1], [15.1], [18.1], [20.6], [22.8], [24.7], [28.2], [31.1], [37.4], [42.3], [54.5], [44.9], [12.8], [5.0], [0],
+    [*Lognorm*], [6.4], [11.2], [14.7], [15.7], [15.7], [15.3], [14.7], [13.8], [12.8], [11.1], [9.8], [9.0], [24.0], [43.6], [55.0], [66.7],
+    [*Gamma*], [5.5], [9.5], [12.9], [14.9], [16.3], [17.4], [18.3], [19.4], [20.4], [21.8], [22.4], [20.6], [13.8], [17.9], [15.0], [11.1],
+    [*Exp*], [22.4], [34.0], [35.6], [33.6], [31.4], [29.4], [27.5], [24.4], [21.6], [16.0], [12.2], [3.6], [0.8], [0], [0], [0],
     table.hline(stroke: 0.8pt),
   )
   #v(0.8em)
@@ -243,12 +242,11 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
     table.hline(stroke: 0.8pt),
     [*Family*], [*0*], [*5*], [*10*], [*15*], [*20*], [*25*], [*30*], [*40*], [*50*], [*75*], [*100*], [*200*], [*300*], [*500*], [*750*], [*1000*],
     table.hline(stroke: 0.5pt),
-    [*Power-law*], [35.7], [22.7], [17.4], [14.5], [12.9], [12.5], [12.6], [13.8], [15.8], [21.9], [28.2], [44.5], [37.1], [16.2], [8.1], [1.8],
-    [*Weibull*], [43.3], [53.7], [58.3], [59.5], [59.1], [57.6], [55.5], [50.6], [45.1], [31.8], [20.9], [3.7], [5.0], [10.1], [6.9], [3.0],
-    [*Lognorm*], [18.8], [20.8], [21.4], [22.6], [24.1], [25.5], [26.9], [29.5], [31.8], [35.9], [37.3], [23.3], [9.6], [9.1], [6.2], [3.7],
-    [*Gamma*], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0.1], [0.1], [0.3], [1.1], [5.5], [10.0], [14.6],
-    [*Exp*], [0.1], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0],
-    [*Fisk*], [2.0], [2.7], [2.9], [3.4], [3.9], [4.5], [5.0], [6.1], [7.2], [10.3], [13.5], [28.2], [47.2], [59.1], [68.8], [76.8],
+    [*Power-law*], [46.9], [30.3], [21.7], [17.9], [16.2], [15.8], [16.1], [17.9], [20.7], [29.0], [37.7], [65.2], [66.7], [39.5], [24.6], [11.6],
+    [*Weibull*], [40.5], [52.7], [58.1], [59.6], [59.2], [57.8], [55.7], [50.9], [45.4], [32.1], [21.2], [4.0], [5.7], [10.7], [8.1], [4.3],
+    [*Lognorm*], [12.5], [16.9], [20.1], [22.5], [24.6], [26.4], [28.1], [31.1], [33.8], [38.7], [40.9], [30.0], [24.4], [37.3], [44.6], [52.4],
+    [*Gamma*], [0], [0], [0], [0], [0], [0.1], [0.1], [0.1], [0.1], [0.2], [0.3], [0.8], [3.3], [12.5], [22.7], [31.7],
+    [*Exp*], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0],
     table.hline(stroke: 0.8pt),
   ),
   ],
@@ -258,130 +256,148 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
   )
 ) <tbl-composition-cutoff>
 
+== Inside the Power-Law Family
+<apx-powerlaw-breakdown>
+
+The power-law family of @tbl-cal-dist-family groups three sibling candidates: the Generalized Pareto Distribution (GPD), the Lomax (Pareto Type II), and the Pareto Type I. The GPD and the Lomax are exact reparametrizations of one another on a zero-based support, so the AIC choice between them is partly arbitrary ---on simulated data the two cross-confuse freely--- and their split should not be interpreted. The Pareto Type I, by contrast, frees the lower bound: its threshold is fixed at the observed minimum $hat(theta) = min(x)$ (the boundary MLE, counted as an estimated parameter in the AIC penalty), so it can represent data bounded away from zero that a zero-based family cannot express. @tbl-powerlaw-breakdown reports how the power-law users of @tbl-cal-dist-family split among the three siblings.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Sibling*], [*Duration users*], [*%*], [*Gap users*], [*%*],
+    table.hline(stroke: 0.5pt),
+    [GPD], [19,955], [55.4%], [10,216], [22.0%],
+    [Lomax], [7,070], [19.6%], [35,454], [76.3%],
+    [Pareto I], [8,996], [25.0%], [774], [1.7%],
+    table.hline(stroke: 0.5pt),
+    [*Total*], [*36,021*], [*100%*], [*46,444*], [*100%*],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [AIC-winner split inside the power-law family.],
+    [Number and share of power-law users whose AIC winner is each sibling distribution, for session durations and inter-session gaps. The GPD/Lomax split is not interpretable (reparametrizations of one another); the Pareto I column is, through its non-zero threshold.],
+  )
+) <tbl-powerlaw-breakdown>
+
+The Pareto I column carries information about the support of the data. On gaps ---shifted by $-epsilon$ and therefore zero-based by construction--- the Pareto I almost never wins (1.7% of power-law users): the non-zero threshold has nothing to explain, confirming that shifted gaps really do start at zero. On durations it wins for a quarter of power-law users (9.0k users): those sessions are genuinely bounded away from zero. This asymmetry is the empirical justification for keeping all three siblings in the battery instead of collapsing them into a single GPD candidate: the redundant pair costs nothing to fit, and the third sibling answers a question the other two cannot.
+
 == Per-Pair Parameter Histograms
 <anx-session-pairhist>
 
-For reference, this section collects the per-pair parameter histograms of all 24 (duration, gap) family pairs, sorted by the share of users they represent. No analysis is intended here; the interpretation is given in @sec-cal-acrossuser.
+For reference, this section collects the per-pair parameter histograms of all 22 observed (duration, gap) family pairs, sorted by the share of users they represent. No analysis is intended here; the interpretation is given in @sec-cal-acrossuser.
 
 #figure(
   image("../../images/annex/pair_params/expon__weibull_min.png", width: 100%),
-  caption: [Exp $->$ Weibull (16.2%)],
+  caption: [Exp $->$ Weibull (16.3%)],
 ) <fig-hist-expon-weibull>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__weibull_min.png", width: 100%),
-  caption: [Weibull $->$ Weibull (10.1%)],
+  caption: [Weibull $->$ Weibull (10.0%)],
 ) <fig-hist-weibull-weibull>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__lognorm.png", width: 100%),
-  caption: [Weibull $->$ Lognorm (8.4%)],
+  caption: [Weibull $->$ Lognorm (8.7%)],
 ) <fig-hist-weibull-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/gamma__weibull_min.png", width: 100%),
-  caption: [Gamma $->$ Weibull (8.4%)],
+  caption: [Gamma $->$ Weibull (8.3%)],
 ) <fig-hist-gamma-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__weibull_min.png", width: 100%),
-  caption: [Lognorm $->$ Weibull (8.0%)],
-) <fig-hist-lognorm-weibull>
-
-#figure(
   image("../../images/annex/pair_params/expon__lognorm.png", width: 100%),
-  caption: [Exp $->$ Lognorm (7.8%)],
+  caption: [Exp $->$ Lognorm (8.1%)],
 ) <fig-hist-expon-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__lognorm.png", width: 100%),
-  caption: [Gamma $->$ Lognorm (5.9%)],
-) <fig-hist-gamma-lognorm>
-
-#figure(
   image("../../images/annex/pair_params/power_tail__weibull_min.png", width: 100%),
-  caption: [Power-law $->$ Weibull (5.7%)],
+  caption: [Power-law $->$ Weibull (7.5%)],
 ) <fig-hist-power-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__lognorm.png", width: 100%),
-  caption: [Lognorm $->$ Lognorm (4.5%)],
-) <fig-hist-lognorm-lognorm>
+  image("../../images/annex/pair_params/lognorm__weibull_min.png", width: 100%),
+  caption: [Lognorm $->$ Weibull (7.1%)],
+) <fig-hist-lognorm-weibull>
+
+#figure(
+  image("../../images/annex/pair_params/gamma__lognorm.png", width: 100%),
+  caption: [Gamma $->$ Lognorm (6.1%)],
+) <fig-hist-gamma-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__power_tail.png", width: 100%),
-  caption: [Weibull $->$ Power-law (4.4%)],
+  caption: [Weibull $->$ Power-law (5.6%)],
 ) <fig-hist-weibull-power>
 
 #figure(
   image("../../images/annex/pair_params/power_tail__lognorm.png", width: 100%),
-  caption: [Power-law $->$ Lognorm (3.5%)],
+  caption: [Power-law $->$ Lognorm (4.5%)],
 ) <fig-hist-power-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__power_tail.png", width: 100%),
-  caption: [Lognorm $->$ Power-law (3.1%)],
-) <fig-hist-lognorm-power>
+  image("../../images/annex/pair_params/lognorm__lognorm.png", width: 100%),
+  caption: [Lognorm $->$ Lognorm (4.4%)],
+) <fig-hist-lognorm-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/gamma__power_tail.png", width: 100%),
-  caption: [Gamma $->$ Power-law (3.0%)],
+  caption: [Gamma $->$ Power-law (3.7%)],
 ) <fig-hist-gamma-power>
 
 #figure(
   image("../../images/annex/pair_params/expon__power_tail.png", width: 100%),
-  caption: [Exp $->$ Power-law (3.0%)],
+  caption: [Exp $->$ Power-law (3.6%)],
 ) <fig-hist-expon-power>
 
 #figure(
+  image("../../images/annex/pair_params/lognorm__power_tail.png", width: 100%),
+  caption: [Lognorm $->$ Power-law (3.4%)],
+) <fig-hist-lognorm-power>
+
+#figure(
   image("../../images/annex/pair_params/power_tail__power_tail.png", width: 100%),
-  caption: [Power-law $->$ Power-law (1.6%)],
+  caption: [Power-law $->$ Power-law (2.8%)],
 ) <fig-hist-power-power>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__fisk.png", width: 100%),
-  caption: [Weibull $->$ Fisk (1.5%)],
-) <fig-hist-weibull-fisk>
+  image("../../images/annex/pair_params/power_tail__gamma.png", width: 100%),
+  caption: [Power-law $->$ Gamma (0.01%)],
+) <fig-hist-power-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__fisk.png", width: 100%),
-  caption: [Lognorm $->$ Fisk (1.0%)],
-) <fig-hist-lognorm-fisk>
+  image("../../images/annex/pair_params/lognorm__gamma.png", width: 100%),
+  caption: [Lognorm $->$ Gamma ($<$0.01%)],
+) <fig-hist-lognorm-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__fisk.png", width: 100%),
-  caption: [Gamma $->$ Fisk (1.0%)],
-) <fig-hist-gamma-fisk>
+  image("../../images/annex/pair_params/weibull_min__gamma.png", width: 100%),
+  caption: [Weibull $->$ Gamma ($<$0.01%)],
+) <fig-hist-weibull-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/expon__fisk.png", width: 100%),
-  caption: [Exp $->$ Fisk (0.8%)],
-) <fig-hist-expon-fisk>
+  image("../../images/annex/pair_params/gamma__gamma.png", width: 100%),
+  caption: [Gamma $->$ Gamma ($<$0.01%)],
+) <fig-hist-gamma-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/fisk__weibull_min.png", width: 100%),
-  caption: [Fisk $->$ Weibull (0.6%)],
-) <fig-hist-fisk-weibull>
+  image("../../images/annex/pair_params/weibull_min__expon.png", width: 100%),
+  caption: [Weibull $->$ Exp ($<$0.01%)],
+) <fig-hist-weibull-expon>
 
 #figure(
-  image("../../images/annex/pair_params/power_tail__fisk.png", width: 100%),
-  caption: [Power-law $->$ Fisk (0.5%)],
-) <fig-hist-power-fisk>
+  image("../../images/annex/pair_params/lognorm__expon.png", width: 100%),
+  caption: [Lognorm $->$ Exp ($<$0.01%)],
+) <fig-hist-lognorm-expon>
 
 #figure(
-  image("../../images/annex/pair_params/fisk__lognorm.png", width: 100%),
-  caption: [Fisk $->$ Lognorm (0.4%)],
-) <fig-hist-fisk-lognorm>
-
-#figure(
-  image("../../images/annex/pair_params/fisk__fisk.png", width: 100%),
-  caption: [Fisk $->$ Fisk (0.3%)],
-) <fig-hist-fisk-fisk>
-
-#figure(
-  image("../../images/annex/pair_params/fisk__power_tail.png", width: 100%),
-  caption: [Fisk $->$ Power-law (0.2%)],
-) <fig-hist-fisk-power>
+  image("../../images/annex/pair_params/expon__gamma.png", width: 100%),
+  caption: [Exp $->$ Gamma ($<$0.01%)],
+) <fig-hist-expon-gamma>
 
 == How to Obtain a Better Dataset
 <apx-sessions-dataset>
