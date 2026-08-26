@@ -207,7 +207,7 @@ As $n -> infinity$, $T$ converges in distribution to $cal(N)(0, 1)$. At signific
 === Distributions and Goodness-of-fit
 <apx-method-gof-dist>
 
-#todo[recite and cite R and `fitdistplus`, `actuar` (paretoI, paretoII) and `edv` for `genpareto`]
+The distribution fits are performed in R with `fitdistrplus` @fitdistrplus-cran for maximum-likelihood estimation, `actuar` @actuar-cran for the Pareto family, and `evd` @evd-cran for the Generalized Pareto Distribution.
 
 There is two types of procedures of goodness-of-fit in this work: finding the $gamma$ of a power-law and fitting distributions.
 
@@ -218,13 +218,13 @@ To find if some data follows a power-law behaviour, we use the highly competent 
 ==== Distributions Fittings
 
 To figure out the `session_duration`, `inter_session_time` and `inter_creation_time`, as they are positive heavy/light tail positive quantities, the following distributions are the ones usually picked from the list.
-- Exponential: `exp` from `fitdistplus`
-- Gamma from `fitdistplus`
-- Lognormal: `lognorm` from `fitdistplus`
-- Weibull: `weibull_min` from `fitdistplus`
-- Pareto: `paretoI` from `actuar`
-- Lomax: `paretoII` from `acutar`
-- GPD: `genpareto` from `edv`
+- Exponential: `exp` from `fitdistrplus` @fitdistrplus-cran
+- Gamma: `gamma` from `fitdistrplus` @fitdistrplus-cran
+- Lognormal: `lognorm` from `fitdistrplus` @fitdistrplus-cran
+- Weibull: `weibull_min` from `fitdistrplus` @fitdistrplus-cran
+- Pareto: `paretoI` from `actuar` @actuar-cran
+- Lomax: `paretoII` from `actuar` @actuar-cran
+- GPD: `genpareto` from `evd` @evd-cran
 
 It is rellevant to outline the reasoning to why include three distributions from the pareto family.This responds to the change of the support previously described. Despite both the sessions or creations being positive, to know about the support they have if Pareto o Lomax have might be very informative for the data. Also, it is expected (and has been validated by results) that GPD shape $alpha$ is negative, that is, bounded behaviour. This is repored under `pareto` in the Calibration @sec-calibration and sampled by an implementation of the General Pareto Distribution, with the conversions explicitly stated already in sections @apx-method-gof-pareto and @apx-method-gof-lomax.
 

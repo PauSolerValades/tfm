@@ -78,6 +78,38 @@ distfit-parametric:
     date: 2026-06-01
   organization: distfit Documentation
 
+fitdistrplus-cran:
+  type: Web
+  title: "fitdistrplus: Help to Fit of a Parametric Distribution to Non-Censored or Censored Data"
+  author:
+    - Delignette-Muller, Marie Laure
+    - Dutang, Christophe
+  url:
+    value: https://cran.r-project.org/package=fitdistrplus
+    date: 2026-08-11
+  organization: CRAN
+
+actuar-cran:
+  type: Web
+  title: "actuar: Actuarial Functions"
+  author:
+    - Dutang, Christophe
+    - Goulet, Vincent
+    - Pigeon, Mathieu
+  url:
+    value: https://cran.r-project.org/package=actuar
+    date: 2026-08-11
+  organization: CRAN
+
+evd-cran:
+  type: Web
+  title: "evd: Functions for Extreme Value Distributions"
+  author: Stephenson, Alec G.
+  url:
+    value: https://cran.r-project.org/package=evd
+    date: 2026-08-11
+  organization: CRAN
+
 soler2025dsbskysim:
   type: Repository
   title: ds-bskysim
@@ -390,12 +422,36 @@ wiki-syscall:
     date: 2026-05-27
   organization: Wikipedia
 
+zig-std-c-allocator:
+  type: Web
+  title: "std.heap.c_allocator — C Allocator Interface"
+  url:
+    value: https://github.com/ziglang/zig/blob/master/lib/std/heap.zig
+    date: 2026-08-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-std-hash-map:
+  type: Web
+  title: "std.AutoHashMapUnmanaged — Hash Map"
+  url:
+    value: https://github.com/ziglang/zig/blob/master/lib/std/hash_map.zig
+    date: 2026-08-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
 zig-std-dynamic-bit-set:
   type: Web
   title: "std.DynamicBitSetUnmanaged — Dynamically-Sized Bitset"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/bit_set.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
@@ -404,10 +460,10 @@ zig-std-dynamic-bit-set:
 
 zig-std-heap:
   type: Web
-  title: "std.heap — GeneralPurposeAllocator and ArenaAllocator"
+  title: "std.heap — ArenaAllocator and built-in allocators"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/heap.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
@@ -416,10 +472,10 @@ zig-std-heap:
 
 zig-std-io:
   type: Web
-  title: "std.io — Buffered and Streaming I/O"
+  title: "std.Io — Buffered and Streaming I/O"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/Io.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
@@ -430,8 +486,8 @@ zig-std-json:
   type: Web
   title: "std.json — JSON Serialization and Deserialization"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/json.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
@@ -442,8 +498,8 @@ zig-std-multi-array-list:
   type: Web
   title: "std.MultiArrayList — Structure of Arrays Container"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/multi_array_list.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
@@ -454,10 +510,84 @@ zig-std-priority-queue:
   type: Web
   title: "std.PriorityQueue — Binary Heap Implementation"
   url:
-    value: https://ziglang.org/documentation/0.16.0/std/
-    date: 2026-05-26
+    value: https://github.com/ziglang/zig/blob/master/lib/std/priority_queue.zig
+    date: 2026-08-26
   organization: Zig Software Foundation
   parent:
     type: Web
     title: Zig Standard Library (v0.16.0)
     url: https://ziglang.org/documentation/0.16.0/std/
+
+lazzaroni2025blueskyfirehose:
+  type: Repository
+  title: bluesky-firehose-py
+  author: ["Lazzaroni, Ruggero", "Neto, Joao"]
+  url:
+    value: https://github.com/joaopn/bluesky-firehose-py
+    date: 2026-05-27
+  parent:
+    title: GitHub
+
+julia:
+  type: Article
+  title: "Julia: A Fresh Approach to Numerical Computing"
+  author:
+    - Bezanson, Jeff
+    - Edelman, Alan
+    - Karpinski, Stefan
+    - Shah, Viral B.
+  date: 2017
+  serial-number:
+    doi: "10.1137/141000671"
+  parent:
+    type: Periodical
+    title: SIAM Review
+    volume: 59
+    issue: 1
+    page-range: 65-98
+
+vanderplas2014python:
+  type: Web
+  title: "Why Python Is Slow: Looking Under the Hood"
+  author: VanderPlas, Jake
+  url:
+    value: https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/
+    date: 2026-08-26
+  organization: Jake VanderPlas' Blog
+
+jemalloc:
+  type: Repository
+  title: jemalloc
+  author: Evans, Jason
+  url:
+    value: https://github.com/jemalloc/jemalloc
+    date: 2026-08-26
+  parent:
+    title: GitHub
+
+freebsd:
+  type: Web
+  title: "The FreeBSD Project"
+  url:
+    value: https://www.freebsd.org/
+    date: 2026-08-26
+  organization: The FreeBSD Project
+
+ziglang-set:
+  type: Repository
+  title: ziglang-set
+  author: Caraveo, Ralph
+  url:
+    value: https://github.com/deckarep/ziglang-set
+    date: 2026-08-26
+  parent:
+    title: GitHub
+
+cro2023asynchrony:
+  type: Web
+  title: "Asynchrony is not Concurrency"
+  author: Cro, Loris
+  url:
+    value: https://kristoff.it/blog/asynchrony-is-not-concurrency/
+    date: 2026-08-26
+  organization: kristoff.it

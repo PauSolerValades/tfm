@@ -28,8 +28,8 @@ This chapter presents the empirical evaluation of the Continuous-Time Independen
     [`creation_delay`], [1 s], [@sec-method-des-assumptions],
     [`offline_startup_ratio`], [0.5], [Assumption],
     [`warmup_post_inter_creation`], [$"Unif"(0, "warmup_time")$], [Synthetic warmup],
-    [`warmup_time`], [], [Synthetic warmup],
-    [`horizon`], [], [@sec-exec-stationary],
+    [`warmup_time`], [2,000 ticks], [@sec-cal-warmup],
+    [`horizon`], [42,000 ticks], [@sec-exec-stationary],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(

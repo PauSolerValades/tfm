@@ -143,6 +143,7 @@ $ cal(H)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) =
 
 
 === User Decisions and Policy
+<sec-model-def-policy>
 
 The interactions within the network are driven by the decision-making processes of the users. We model user behavior through a policy $pi$, which governs the probability of executing specific actions. Because consuming existing content and generating new content are fundamentally different mechanisms, the policy is bifurcated into two distinct components: a reactive policy and a spontaneous generative policy.
 

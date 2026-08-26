@@ -39,11 +39,6 @@ This proves that there are an enormous quantity of users with both very few even
   )
 ) <fig-filtered-eventtype-dist>
 
-#comment[Here we could enter into a lot of cool things but that kinda makes no sense to do due to space constraints. EG
-- user characterization for time
-- user characterization for most common type of event
-- *user characarteization for types of events (more post creation, more liking, more reposting)*
-]
 
 == Post Lifetime
 <sec-data-lifetime>

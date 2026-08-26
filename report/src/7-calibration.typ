@@ -1,8 +1,8 @@
 #import "@preview/lovelace:0.3.0": *
 #import "utils.typ": todo, comment, def, procedure, flex-caption
 
-#todo[reread and rewrite header]
-This chapter continues @sec-data findings into the definitions of the parameter values required by the simulation configuration. The rationale behind the following parameters is explained: `session_duration`, `user_inter_session` (in @sec-cal-sessions and @sec-cal-dist), `post_inter_creation` (@sec-cal-interpost), `user_inter_action` (@sec-cal-interaction), `user_policy` (@sec-cal-policy), and the `propagation_delay` as reference metric to remove the time units in the analysis results. 
+This chapter describes how the parameters required by simulation design ---introduced either in @sec-model (Model) or @sec-design (Design)--- have been measured from the Firehose Data introduced in @sec-data (Bluesky Data Analysis). First, an actuable definition of a session is introduced and those are created from all the events in @sec-cal-sessions. Then it is possible to measure the following parameters: `session_duration` and `inter_session_time` in @sec-cal-dist, times between post creation (`inter_creation_time`) in @sec-cal-interpost, how often does a user see a post while scrolling (`inter_action_time`) in @sec-cal-interaction, and the $pi$ policy described in @sec-model-def-policy in @sec-cal-policy. Lastly, we measure the simulation phases change timestamps introduced in @sec-design-lifecycle (Simulation Phases): minium warmup time $t_w$ in @sec-cal-warmup and minimum horizon $t_h$ in @sec-exec-stationary, as well as estabishing an adimentional framework to analyze the results @sec-exec-agnostic. 
+
 
 == User Session Construction
 <sec-cal-sessions>
@@ -99,7 +99,7 @@ The produced sessions verify the definition postulates of @sec-cal-sessions, as 
   ),
   caption: flex-caption(
     [Circadian patterns of session starts by language.],
-    [Distribution of the session-start hour for German, Korean and Japanese users; the evening peaks follow each language's main timezone.],
+    [Distribution of the session-start hour for German, Korean and Japanese users. X-axis: 24h, Y-axis: density. The evening peaks follow each language's main timezone.],
   )
 ) <fig-cal-circadian>
 
@@ -111,7 +111,7 @@ With the sessions created, it is possible to fit distributions of `session_lengt
 - `session_length`: sampling the distribution should tell us how long will the user current session last. The goodness-of-fit test will be applied to the duration of all the user session length.
 - `inter_session_duration`: sampling the distribution should give for how long the user is going to be offline. The goodness-of-fit test will be applied to all the duration between the ending of a session and the start of the next consecutive one ---what has been called "gap" due to being in between sessions---. It is worth mentcioning that the DBSCAN method will produce a gaps distribution shifted by $epsilon=300$, as there cannot be gap smaller than $epsilon$; the histograms showcased are all already shifted that quantity $Y = X - 300$. 
 
-As this is inherently human behaviour ---as Barabási @barabási2005bursts states--- the distribution chosen for the goodness-of-fit test have to have heavy-tails and high peaks, as well as very "similar" forms. The ones chosen are the Exponential, Gamma, Lognormal, Weibull, and Power-Law familiy distributions: Pareto, Lomax and Generalized Pareto Distribution.#footnote[Lomax is a reparametrization of the Generalized Pareto, and the Pareto (Type I, threshold fixed at the observed minimum) covers the boundary case of a lower bound away from zero; see @apx-powerlaw-breakdown.]
+As this is inherently human behaviour ---as Barabási @barabási2005bursts states--- the distribution chosen for the goodness-of-fit test have to have heavy-tails and high peaks, as well as very "similar" forms. The ones chosen are the Exponential, Gamma, Lognormal, Weibull, and Pareto familiy distributions: Pareto, Lomax and Generalized Pareto Distribution.#footnote[Lomax is a reparametrization of the Generalized Pareto, and the Pareto (Type I, threshold fixed at the observed minimum) covers the boundary case of a lower bound away from zero; see @apx-session-pareto.]
 
 To select between the best fit, Akaike Information Criterion is used to favor parsimony. For the goodness-of-fit test, as the distributions have heavy tails, we also added Cramér-von Mises and Anderson-Darling statistics as well as the de facto Kolmogorov-Smirnov test, evaluated all agains the ECDF of the session and gaps data. See @apx-method-gof-dist for more information. Additionally, all users with less than 30 sessions or 30 gaps have been excluded from the fitting, which represent roughly 1.13M users (about 82% of the users with fits on both quantities, $1.37 times 10^6$ reduced to $2.43 times 10^5$).
 
@@ -134,7 +134,7 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
         [Weibull], [59,133], [24.31%],
         [Gamma], [44,029], [18.10%],
         [Lognorm], [36,101], [14.84%],
-        [Power-law], [36,021], [14.81%],
+        [Pareto], [36,021], [14.81%],
         table.hline(stroke: 0.5pt),
         [*Total*], [*243,217*], [*100%*],
         table.hline(stroke: 0.8pt),
@@ -151,7 +151,7 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
         table.hline(stroke: 0.5pt),
         [Weibull], [119,526], [49.14%],
         [Lognorm], [77,198], [31.74%],
-        [Power-law], [46,444], [19.10%],
+        [Pareto], [46,444], [19.10%],
         [Gamma], [46], [0.02%],
         [Exp], [3], [0.00%],
         table.hline(stroke: 0.5pt),
@@ -166,9 +166,9 @@ To select between the best fit, Akaike Information Criterion is used to favor pa
   )
 ) <tbl-cal-dist-family>
 
-Session durations are spread across the exponential (27.9%), Weibull (24.3%), gamma (18.1%), lognormal (14.8%) and power-law (14.8%) families, which together account for all active users.
+Session durations are spread across the exponential (27.9%), Weibull (24.3%), gamma (18.1%), lognormal (14.8%) and Pareto (14.8%) families, which together account for all active users.
 
-Gaps remain more concentrated than durations: the Weibull (49.1%), lognormal (31.7%) and power-law (19.1%) families account for roughly 99.9% of users, with negligible gamma and exponential. The gap behaviour is therefore well captured by the majority families.
+Gaps remain more concentrated than durations: the Weibull (49.1%), lognormal (31.7%) and Pareto (19.1%) families account for roughly 99.9% of users, with negligible gamma and exponential. The gap behaviour is therefore well captured by the majority families.
 
 Now we must study how the session-gap pair is distributed across users, as there might be a relationship between the session and the gap distributions. @tbl-cal-pair-dist shows the distribution of pairs over the same active users. In fact, adding the rows gives the same as @tbl-cal-dist-family left, and the colums of the right one.
 
@@ -178,13 +178,13 @@ Now we must study how the session-gap pair is distributed across users, as there
     align: (left, center, center, center, center, center, center),
     stroke: none,
     table.hline(stroke: 0.8pt),
-    [], table.vline(stroke: 0.5pt), [*Weibull*], [*Lognorm*], [*Power-law*], [*Gamma*], [*Exp*], [*Total*],
+    [], table.vline(stroke: 0.5pt), [*Weibull*], [*Lognorm*], [*Pareto*], [*Gamma*], [*Exp*], [*Total*],
     table.hline(stroke: 0.5pt),
     [*Exp*], [16.3%], [8.1%], [3.6%], [0], [0], [*27.9%*],
     [*Weibull*], [10.0%], [8.7%], [5.6%], [0], [0], [*24.3%*],
     [*Gamma*], [8.3%], [6.1%], [3.7%], [0], [0], [*18.1%*],
     [*Lognorm*], [7.1%], [4.4%], [3.4%], [0], [0], [*14.8%*],
-    [*Power-law*], [7.5%], [4.5%], [2.8%], [0], [0], [*14.8%*],
+    [*Pareto*], [7.5%], [4.5%], [2.8%], [0], [0], [*14.8%*],
     [*Gap total*], [*49.1%*], [*31.7%*], [*19.1%*], [*0*], [*0*], [*100%*],
     table.hline(stroke: 0.8pt),
   ),
@@ -216,7 +216,7 @@ The pairwise session-gap analysis proves that we cannot just use @tbl-cal-dist-f
 
 To sample from the active users poses a challenge in order to generalize. When picking a pair from @tbl-cal-pair-dist a parameter must be picked too. In @anx-session-pairhist we can see all the histograms of the parameters, and in this section we will highlight some of those to highlight why a fitting distribution approach is needed to sample from the pairs appropiately.
 
-+ *Power-law bimodality*: all power laws show a lot of bimodality (such as in @fig-hist-power-power) which is very difficult to fit.
++ *Pareto bimodality*: all Pareto distributions show a lot of bimodality (such as in @fig-hist-power-power) which is very difficult to fit.
 + *Small sample*: for some of the pairs, sample should be bigger to trust more on what it is actually showing this.
 + *Parsimony Priniple*: This can come as a more of a design decision, but there should be a preference for parsimony: sampling from the ECDF of a small distribution in which the parameters are already result of a process of fitting is less complex than to fit the parameters into another distribution.
 
@@ -422,25 +422,142 @@ $1 slash lambda$.
 ) <fig-pi-sensitivity>
 
 == Warm-up time
+<sec-cal-warmup>
 
-Explain the warmup experiment, detriments and pros and why we need just 2 ticks of warmup to get the simulation started!
+The warm-up phase (the stageOne @proc-stageone in @sec-design-lifecycle-warmup) exists to fill every timeline before the measurement phase begins. At $t = 0$ all timelines are empty: if measurement started immediately, the first user to log in would find nothing to read, drain the empty feed, and leave out of boredom (@sec-design-sources-sessions), so every downstream metric ---impressions, engagement, session length, cascade size--- would be measured on an empty system.
 
-#todo[FINISH THIS]
+This section describes the experiment to find the smaller $t_w$ such that a user's first session has a normal amount of post to check according to it's positioning within the topology. There are two key metrics to measure it:
++ *Backlog*: how many posts does the user start the session.
++ *Boredom*: how many users end the first session by boredom.
+
+@tbl-cal-warmup-sweep reports both for $t_w in {0, 100, 500, 1000, 2000, 5000, 10000}$ ticks on the 10K and 100K networks, as this experiment is time-consuming to run.
+
+#figure(
+  table(
+    columns: 5,
+    align: (right, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*$t_w$ (ticks)*], [*Backlog 10K*], [*Backlog 100K*], [*Bore 10K (%)*], [*Bore 100K (%)*],
+    table.hline(stroke: 0.5pt),
+    [0], [19], [77], [46.9], [34.7],
+    [100], [26], [98], [32.7], [21.7],
+    [500], [28], [99], [24.9], [15.4],
+    [1000], [27], [105], [20.8], [12.0],
+    [2000], [32], [107], [15.7], [8.8],
+    [5000], [32], [113], [9.4], [5.7],
+    [10000], [31], [114], [6.7], [4.2],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Warm-up sweep: first-session backlog and boredom rate.],
+    [Median backlog at first-session start and share of first sessions ending in boredom, per warm-up length, on the 10K and 100K networks with `offline_startup_ratio = 0.976`.],
+  )
+) <tbl-cal-warmup-sweep>
+
+#figure(
+  image("../images/calibration/warmup_100K_boredom_timeline.png", width: 100%),
+  caption: flex-caption(
+    [Boredom over time on the 100K network.],
+    [Cumulative percentage of users ending a session in boredom over ticks after warm-up, one line per warm-up length.],
+  )
+) <fig-cal-warmup-100k-boredom>
+
+#figure(
+  image("../images/calibration/warmup_100K_attention_decay.png", width: 100%),
+  caption: flex-caption(
+    [Warm-up post attention decay on the 100K network.],
+    [Share of actions on warm-up posts over time, one line per warm-up length.],
+  )
+) <fig-cal-warmup-100k-attention>
 
 
-== Steady State of the Simulation
+The two figures make the trade-off visible. At $t_w = 0$ no posts are produced during warm-up, so the first session starts from an empty timeline: @fig-cal-warmup-100k-attention has nothing to plot for it, and @fig-cal-warmup-100k-boredom shows the steepest boredom growth right after warm-up, reaching the highest first-session boredom rate of the sweep (46.9% at 10K, 34.7% at 100K in @tbl-cal-warmup-sweep).
+
+At the opposite extreme, $t_w = 10,000$ yields the flattest boredom curve and the lowest first-session boredom rate (6.7% at 10K, 4.2% at 100K) ---a residual that never vanishes, being the natural boredom floor of tiny and singleton sessions. But @fig-cal-warmup-100k-attention shows warm-up posts still being consumed deep into the measurement phase: the backlog is over-saturated, so most of that extra content is never read and is discarded from the analysis. The backlog column of @tbl-cal-warmup-sweep confirms the saturation ---it stops growing past $t_w = 2000$ (32 posts at 10K, 107 at 100K)--- so beyond that point extra warm-up only adds memory, not value.
+
+In between, the dominant gain is already won by $t_w = 500$, where the boredom rate roughly halves. Therefore the elected value is $t_w = 2000$ ticks: the knee of the curve, where the backlog has just saturated and the first-session boredom rate (15.7% at 10K, 8.8% at 100K) has crossed below steady state and keeps falling slowly. It is a $approx 15$× reduction from the previous 30,000-tick assumption, and it dissolves the memory problem ---warm-up memory is proportional to $t_w$, so a 1M run needs $approx 72$ GB instead of $approx 2$ TB.
+
+
+== Stability Regiment
 <sec-exec-stationary>
 
-#comment[this is an unrevised section. Should be far shoretr and report the width of the window and the tolerance. the numbers are still from the older simulation (no timeline swap!)]
+With the warm-up length fixed, the remaining temporal parameter is the horizon $t_h$: how long the measurement phase must run for the system to be in steady state. The steady state of the simulation is to check which amount of users of the simulation converges being online starting from an arbitrary fraction and after how long does the simulation need for it to happen?
 
-Before committing to the full batch execution, a single representative run from each dataset scale was analysed to confirm that the simulation reaches a stationary regime within the configured horizon. The DES model involves stochastic session dynamics: users go online and offline according to calibrated Pareto distributions, and the system needs enough time for these rhythms to stabilise into a steady proportion of simultaneously active users. If the simulation were still burning in when the metrics are collected, the results would reflect transient startup behaviour rather than the equilibrium the CTIC model describes.
+The measured quantity is the share of online users over time, under three initial conditions set by `offline_startup_ratio`: 0.0 (everyone online at warm-up end), 0.5 (half) and 1.0 (everyone offline). If the three curves collapse onto the same plateau, the system will enter in equilibrium ---the session distributions--- and not of the initial state, which is exactly what a steady-state claim requires. Proving that starting from three different points converges to the same amount of users also proves that the starting value of `offline_startup_ratio` is independent, therefore an arbitrary value makes sense.
 
-#todo[FINISH WITH NEW DATA]
+*Methodology*: networks of 10K, 100K, 500K and 1M users topologies, warm-up of 2,000 ticks (see @sec-cal-warmup), duration of 60,000 ticks (to make sure that convergence is reached) with 3 replications per (size, ratio); results will be the median (the central one) over the runs.
+
+Window configuration wise, the online fraction of users is binned over 60s bins and smoothed with a 300 s rolling mean; stability is the earliest time after which the rolling mean stays within $plus.minus 10%$ of its final value for the rest of the run.
+
+
+@fig-cal-stable-convergence shows the three initial-condition curves on the 1M network, @tbl-cal-stable-equil reports the equilibrium online fraction and @tbl-cal-stable-time the stabilization time, and the plots for all the other datasets can be found in @apx-stability-plots.
+
+#figure(
+  image("../images/calibration/initial_conditions_1M_log.png", width: 80%),
+  caption: flex-caption(
+    [Convergence of the online fraction on the 1M network.],
+    [Online-user fraction over time for the three initial conditions ($r_0$, $r_50$, $r_100$) after a 2,000-tick warm-up, on the 1M monotonic network (logarithmic scale). The three curves collapse onto the same equilibrium.],
+  )
+) <fig-cal-stable-convergence>
+
+#grid(
+  columns: 2,
+  column-gutter: 1em,
+  [
+    #figure(
+      table(
+        columns: 4,
+        align: (left, center, center, center),
+        stroke: none,
+        table.hline(stroke: 0.8pt),
+        [*Size*], [*0%*], [*50%*], [*100%*],
+        table.hline(stroke: 0.5pt),
+        [10K], [1.90 %], [1.85 %], [1.71 %],
+        [100K], [2.20 %], [2.24 %], [2.21 %],
+        [500K], [2.40 %], [2.37 %], [2.39 %],
+        [1M], [2.09 %], [2.08 %], [2.10 %],
+        table.hline(stroke: 0.8pt),
+      ),
+      caption: flex-caption(
+        [Equilibrium online fraction per size and initial condition.],
+        [Final online-user fraction (%, median over 3 runs) for the three initial conditions, after warm-up 2,000 ticks and 60,000 ticks of duration.],
+      ),
+    ) <tbl-cal-stable-equil>
+  ],
+  [
+    #figure(
+      table(
+        columns: 4,
+        align: (left, right, right, right),
+        stroke: none,
+        table.hline(stroke: 0.8pt),
+        [*Size*], [*users*], [*%*], [*Stable at*],
+        table.hline(stroke: 0.5pt),
+        [10K\*], [$approx$185], [1.85], [$approx$58K s],
+        [100K], [$approx$2,210], [2.21], [30--32K s],
+        [500K], [$approx$11,950], [2.39], [26--29K s],
+        [1M], [$approx$20,900], [2.09], [28--31K s],
+        table.hline(stroke: 0.8pt),
+      ),
+      caption: flex-caption(
+        [Stabilization time and equilibrium of the online fraction.],
+        [Earliest time after warm-up at which the rolling mean of the online stabilized and the population it converges to],
+      ),
+    ) <tbl-cal-stable-time>
+  ],
+)
+
+\*10K: the $approx$58K s is noise-limited, not a slower equilibrium ---at $approx$180 online users the Poisson noise ($plus.minus 7%$) is comparable to the $plus.minus 10%$ detection band, so the equilibrium is reached early but cannot be pinned tighter at this size.
+
+We can obtain three meaningfull findings, in all of them 10K is excluded:
++ *Initial-condition independence holds*: @tbl-cal-stable-equil shows the numbers, distergarding the number of users online, converge to the same number within $0.2$ pp.
++ *Equilibrium is topology dependent*: different topologies reach different equilibriums. It is not also scaling with size, as 1M (2.1%) is lower than 500K (2.4%), but depends on the network topology.
++ *Convergence time*: convergence happens around 30.000 ticks in all three big topologies, despite all of the topologies wobbling a little in that regard.
 
 == Time Agnostic Results
 <sec-exec-agnostic>
 
-#comment[THIS IS A FINAL VERSION!]
 
 To ensure the simulation results remain invariant to absolute wall-clock metrics and easily comparable across alternative contexts, all temporal findings are reported as multiples of the system's fundamental propagation delay ($Delta_p$). By normalizing absolute time ($t$) against this characteristic scale, we derive a dimensionless representation of post lifetimes:
 

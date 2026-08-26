@@ -220,13 +220,25 @@
 #include "src/annex/postcreation.typ"
 
 #pagebreak()
+= Stability Plots
+<apx-stability-plots>
+
+#include "src/annex/stability-plots.typ"
+
+#pagebreak()
 = Post Lifetime Cavilations 
 <apx-lifetime>
 
 #include "src/annex/lifetime.typ"
 
 #pagebreak()
-= Additional Mechanics 
+= Pipeline
+<apx-pipeline>
+
+#include "src/annex/pipeline.typ"
+
+#pagebreak()
+= Discarded Features
 <apx-mechanics>
 
 #include "src/annex/mechanics.typ"
@@ -258,5 +270,4 @@
 <apx-space>
 
 #include "src/annex/space-analysis.typ"
-
 

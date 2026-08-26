@@ -212,7 +212,7 @@ As stated in the first paragraph of @sec-method-session, a density based approac
 == Best-Fit Family Composition vs. Observation Cutoff
 
 #todo[Reread and review]
-The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the power-law family: with three points, a power law can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 15--16% power-law once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---power-law resurges for very active users (65.2% at $n_"obs" > 200$), and the lognormal family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$ on the duration side). The composition therefore describes the activity stratum under study, not a single universal law.
+The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition (per-user maximum-likelihood fits with `fitdistrplus` @fitdistrplus-cran) changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the Pareto family: with three points, a Pareto distribution can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 15--16% Pareto once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---Pareto resurges for very active users (65.2% at $n_"obs" > 200$), and the lognormal family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$ on the duration side). The composition therefore describes the activity stratum under study, not a single universal law.
 
 #figure(
   [
@@ -225,7 +225,7 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
     table.hline(stroke: 0.8pt),
     [*Family*], [*0*], [*5*], [*10*], [*15*], [*20*], [*25*], [*30*], [*40*], [*50*], [*75*], [*100*], [*200*], [*300*], [*500*], [*750*], [*1000*],
     table.hline(stroke: 0.5pt),
-    [*Power-law*], [59.1], [34.1], [21.7], [17.6], [16.0], [15.2], [14.8], [14.2], [14.0], [13.7], [13.4], [12.3], [16.5], [25.6], [25.0], [22.2],
+    [*Pareto*], [59.1], [34.1], [21.7], [17.6], [16.0], [15.2], [14.8], [14.2], [14.0], [13.7], [13.4], [12.3], [16.5], [25.6], [25.0], [22.2],
     [*Weibull*], [6.5], [11.1], [15.1], [18.1], [20.6], [22.8], [24.7], [28.2], [31.1], [37.4], [42.3], [54.5], [44.9], [12.8], [5.0], [0],
     [*Lognorm*], [6.4], [11.2], [14.7], [15.7], [15.7], [15.3], [14.7], [13.8], [12.8], [11.1], [9.8], [9.0], [24.0], [43.6], [55.0], [66.7],
     [*Gamma*], [5.5], [9.5], [12.9], [14.9], [16.3], [17.4], [18.3], [19.4], [20.4], [21.8], [22.4], [20.6], [13.8], [17.9], [15.0], [11.1],
@@ -242,7 +242,7 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
     table.hline(stroke: 0.8pt),
     [*Family*], [*0*], [*5*], [*10*], [*15*], [*20*], [*25*], [*30*], [*40*], [*50*], [*75*], [*100*], [*200*], [*300*], [*500*], [*750*], [*1000*],
     table.hline(stroke: 0.5pt),
-    [*Power-law*], [46.9], [30.3], [21.7], [17.9], [16.2], [15.8], [16.1], [17.9], [20.7], [29.0], [37.7], [65.2], [66.7], [39.5], [24.6], [11.6],
+    [*Pareto*], [46.9], [30.3], [21.7], [17.9], [16.2], [15.8], [16.1], [17.9], [20.7], [29.0], [37.7], [65.2], [66.7], [39.5], [24.6], [11.6],
     [*Weibull*], [40.5], [52.7], [58.1], [59.6], [59.2], [57.8], [55.7], [50.9], [45.4], [32.1], [21.2], [4.0], [5.7], [10.7], [8.1], [4.3],
     [*Lognorm*], [12.5], [16.9], [20.1], [22.5], [24.6], [26.4], [28.1], [31.1], [33.8], [38.7], [40.9], [30.0], [24.4], [37.3], [44.6], [52.4],
     [*Gamma*], [0], [0], [0], [0], [0], [0.1], [0.1], [0.1], [0.1], [0.2], [0.3], [0.8], [3.3], [12.5], [22.7], [31.7],
@@ -256,10 +256,10 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
   )
 ) <tbl-composition-cutoff>
 
-== Inside the Power-Law Family
-<apx-powerlaw-breakdown>
+== Pareto Family Aggregation
+<apx-session-pareto>
 
-The power-law family of @tbl-cal-dist-family groups three sibling candidates: the Generalized Pareto Distribution (GPD), the Lomax (Pareto Type II), and the Pareto Type I. The GPD and the Lomax are exact reparametrizations of one another on a zero-based support, so the AIC choice between them is partly arbitrary ---on simulated data the two cross-confuse freely--- and their split should not be interpreted. The Pareto Type I, by contrast, frees the lower bound: its threshold is fixed at the observed minimum $hat(theta) = min(x)$ (the boundary MLE, counted as an estimated parameter in the AIC penalty), so it can represent data bounded away from zero that a zero-based family cannot express. @tbl-powerlaw-breakdown reports how the power-law users of @tbl-cal-dist-family split among the three siblings.
+The Pareto family of @tbl-cal-dist-family groups three sibling candidates: the Generalized Pareto Distribution (GPD) @evd-cran, the Lomax (Pareto Type II) @actuar-cran, and the Pareto Type I @actuar-cran. The GPD and the Lomax are exact reparametrizations of one another on a zero-based support #todo[cite annex/methodology], so the AIC choice between them is partly arbitrary ---on simulated data the two cross-confuse freely--- and their split should not be interpreted. The Pareto Type I, by contrast, frees the lower bound: its threshold is fixed at the observed minimum $hat(theta) = min(x)$ (the boundary MLE, counted as an estimated parameter in the AIC penalty), so it can represent data bounded away from zero that a zero-based family cannot express. @tbl-powerlaw-breakdown reports how the Pareto users of @tbl-cal-dist-family split among the three siblings.
 
 #figure(
   table(
@@ -277,12 +277,55 @@ The power-law family of @tbl-cal-dist-family groups three sibling candidates: th
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [AIC-winner split inside the power-law family.],
-    [Number and share of power-law users whose AIC winner is each sibling distribution, for session durations and inter-session gaps. The GPD/Lomax split is not interpretable (reparametrizations of one another); the Pareto I column is, through its non-zero threshold.],
+    [AIC-winner split inside the Pareto family.],
+    [Number and share of Pareto users whose AIC winner is each sibling distribution, toghether for session durations and inter-session gaps.],
   )
 ) <tbl-powerlaw-breakdown>
 
-The Pareto I column carries information about the support of the data. On gaps ---shifted by $-epsilon$ and therefore zero-based by construction--- the Pareto I almost never wins (1.7% of power-law users): the non-zero threshold has nothing to explain, confirming that shifted gaps really do start at zero. On durations it wins for a quarter of power-law users (9.0k users): those sessions are genuinely bounded away from zero. This asymmetry is the empirical justification for keeping all three siblings in the battery instead of collapsing them into a single GPD candidate: the redundant pair costs nothing to fit, and the third sibling answers a question the other two cannot.
+The Pareto I column carries information about the support of the data.
+- On gaps (shifted by $-epsilon$ and therefore zero-based by construction #todo[cite the session creation subsection]) the Pareto I is almost never the best fit (1.7% of Pareto users): the non-zero threshold has nothing to explain, confirming that shifted gaps really do start at zero.
+- On durations it wins for a quarter of Pareto users (9.0k users): those sessions are genuinely bounded away from zero.
+
+This asymmetry justifies keeping all three versions of the Pareto in the selected distributions, instead of collapsing them into a single GPD candidate.
+
+It is also worth looking into the shape parameter of the GPD, as it will allow us to properly characterize how the session creation has modified its users, as @tbl-pareto-gpd-shape shows, as well as the histograms of the just the shape parameter for the sessions and the gaps in @fig-pareto-xi-hists.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [], [$alpha < -epsilon$], [$|alpha| <= epsilon$], [$alpha > epsilon$], [total],
+    table.hline(stroke: 0.5pt),
+    [duration],  [35.2%], [3.8%], [61.0%], [36,002],
+    [gap],  [4.5%], [1.4%], [94.1%], [46,444],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [GPD shape parameter $xi$ regimes.],
+    [Share of users by GPD shape parameter $alpha$ regime with $epsilon=0.1$, for session durations and inter-session gaps. $alpha < epsilon$ bounded support, $|alpha| <= epsilon$ exponential-like, $alpha > epsilon$ heavy-tailed.],
+  )
+) <tbl-pareto-gpd-shape>
+
+Gaps are overwhelmingly heavy-tail (94.1%), which is what it intuitevly makes sense. The other two categories are minorized, specially the exponential like distribution. For sessions there is a clear different distribution, despite the heavy-tail category (61%) is also the majority, with the smallest category also being a exponential-like with less than 4%. Interestingly, the other large category is the bounded support, meaning that we can guarantee that the sessions will have an upper bound, as the support cannot grow to infinite. 
+
+#figure(
+  grid(
+    columns: 2,
+    column-gutter: 0.8em,
+    figure(image("../../images/annex/xi_tails/xi_hist_duration.png")),
+    figure(image("../../images/annex/xi_tails/xi_hist_gap.png")),
+  ),
+  caption: flex-caption(
+    [GPD shape parameter $alpha$ histograms.],
+    [Distribution of the GPD shape parameter $alpha$ for session durations (left) and inter-session gaps (right), shaded by tail regime with $epsilon = 0.1$ ($alpha < -epsilon$ bounded, $|alpha| <= epsilon$ exponential, $alpha > epsilon$ heavy); axes clipped to the 1--99% central mass.],
+  )
+) <fig-pareto-xi-hists>
+
+This histograms showcase the need of ECDF usage, as there are three clear modalities on the parameter distribution. Sessions have the bounded behaviour, a peak with near to zero heavy tail and another peak arround 2.75. This histogram indicates that with a smaller $epsilon$ we would see that the shape parameter is clearly either support bounded ($alpha < 0$) or non support bounded with small values or higher ones (0.3 or 2.75).
+
+On the contrary, it seems that gaps could exhibit this behaviour also, but far less pronounced. I'd rather say that we could assimilate gaps distribution to just heavy-tail and we would not lose that much data.
 
 == Per-Pair Parameter Histograms
 <anx-session-pairhist>
@@ -291,112 +334,112 @@ For reference, this section collects the per-pair parameter histograms of all 22
 
 #figure(
   image("../../images/annex/pair_params/expon__weibull_min.png", width: 100%),
-  caption: [Exp $->$ Weibull (16.3%)],
+  caption: [Session: Exp, gaps: Weibull (16.3%)],
 ) <fig-hist-expon-weibull>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__weibull_min.png", width: 100%),
-  caption: [Weibull $->$ Weibull (10.0%)],
+  caption: [Session: Weibull, gaps: Weibull (10.0%)],
 ) <fig-hist-weibull-weibull>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__lognorm.png", width: 100%),
-  caption: [Weibull $->$ Lognorm (8.7%)],
+  caption: [Session: Weibull, gaps: Lognorm (8.7%)],
 ) <fig-hist-weibull-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/gamma__weibull_min.png", width: 100%),
-  caption: [Gamma $->$ Weibull (8.3%)],
+  caption: [Session: Gamma, gaps: Weibull (8.3%)],
 ) <fig-hist-gamma-weibull>
 
 #figure(
   image("../../images/annex/pair_params/expon__lognorm.png", width: 100%),
-  caption: [Exp $->$ Lognorm (8.1%)],
+  caption: [Session: Exp, gaps: Lognorm (8.1%)],
 ) <fig-hist-expon-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/power_tail__weibull_min.png", width: 100%),
-  caption: [Power-law $->$ Weibull (7.5%)],
+  caption: [Session: Pareto, gaps: Weibull (7.5%)],
 ) <fig-hist-power-weibull>
 
 #figure(
   image("../../images/annex/pair_params/lognorm__weibull_min.png", width: 100%),
-  caption: [Lognorm $->$ Weibull (7.1%)],
+  caption: [Session: Lognorm, gaps: Weibull (7.1%)],
 ) <fig-hist-lognorm-weibull>
 
 #figure(
   image("../../images/annex/pair_params/gamma__lognorm.png", width: 100%),
-  caption: [Gamma $->$ Lognorm (6.1%)],
+  caption: [Session: Gamma, gaps: Lognorm (6.1%)],
 ) <fig-hist-gamma-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__power_tail.png", width: 100%),
-  caption: [Weibull $->$ Power-law (5.6%)],
+  caption: [Session: Weibull, gaps: Pareto (5.6%)],
 ) <fig-hist-weibull-power>
 
 #figure(
   image("../../images/annex/pair_params/power_tail__lognorm.png", width: 100%),
-  caption: [Power-law $->$ Lognorm (4.5%)],
+  caption: [Session: Pareto, gaps: Lognorm (4.5%)],
 ) <fig-hist-power-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/lognorm__lognorm.png", width: 100%),
-  caption: [Lognorm $->$ Lognorm (4.4%)],
+  caption: [Session: Lognorm, gaps: Lognorm (4.4%)],
 ) <fig-hist-lognorm-lognorm>
 
 #figure(
   image("../../images/annex/pair_params/gamma__power_tail.png", width: 100%),
-  caption: [Gamma $->$ Power-law (3.7%)],
+  caption: [Session: Gamma, gaps: Pareto (3.7%)],
 ) <fig-hist-gamma-power>
 
 #figure(
   image("../../images/annex/pair_params/expon__power_tail.png", width: 100%),
-  caption: [Exp $->$ Power-law (3.6%)],
+  caption: [Session: Exp, gaps: Pareto (3.6%)],
 ) <fig-hist-expon-power>
 
 #figure(
   image("../../images/annex/pair_params/lognorm__power_tail.png", width: 100%),
-  caption: [Lognorm $->$ Power-law (3.4%)],
+  caption: [Session: Lognorm, gaps: Pareto (3.4%)],
 ) <fig-hist-lognorm-power>
 
 #figure(
   image("../../images/annex/pair_params/power_tail__power_tail.png", width: 100%),
-  caption: [Power-law $->$ Power-law (2.8%)],
+  caption: [Session: Pareto, gaps: Pareto (2.8%)],
 ) <fig-hist-power-power>
 
 #figure(
   image("../../images/annex/pair_params/power_tail__gamma.png", width: 100%),
-  caption: [Power-law $->$ Gamma (0.01%)],
+  caption: [Session: Pareto, gaps: Gamma (0.01%)],
 ) <fig-hist-power-gamma>
 
 #figure(
   image("../../images/annex/pair_params/lognorm__gamma.png", width: 100%),
-  caption: [Lognorm $->$ Gamma ($<$0.01%)],
+  caption: [Session: Lognorm, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-lognorm-gamma>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__gamma.png", width: 100%),
-  caption: [Weibull $->$ Gamma ($<$0.01%)],
+  caption: [Session: Weibull, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-weibull-gamma>
 
 #figure(
   image("../../images/annex/pair_params/gamma__gamma.png", width: 100%),
-  caption: [Gamma $->$ Gamma ($<$0.01%)],
+  caption: [Session: Gamma, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-gamma-gamma>
 
 #figure(
   image("../../images/annex/pair_params/weibull_min__expon.png", width: 100%),
-  caption: [Weibull $->$ Exp ($<$0.01%)],
+  caption: [Session: Weibull, gaps: Exp ($<$0.01%)],
 ) <fig-hist-weibull-expon>
 
 #figure(
   image("../../images/annex/pair_params/lognorm__expon.png", width: 100%),
-  caption: [Lognorm $->$ Exp ($<$0.01%)],
+  caption: [Session: Lognorm, gaps: Exp ($<$0.01%)],
 ) <fig-hist-lognorm-expon>
 
 #figure(
   image("../../images/annex/pair_params/expon__gamma.png", width: 100%),
-  caption: [Exp $->$ Gamma ($<$0.01%)],
+  caption: [Session: Exp, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-expon-gamma>
 
 == How to Obtain a Better Dataset

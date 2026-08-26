@@ -556,9 +556,9 @@ To maximize performance by reducing the cache misses and avoid pointer chasing, 
 
 === User Timeline
 
-Each user's timeline $cal(T)(u)$ must maintain posts in reverse-chronological order, supporting both efficient insertion of newly propagated posts and extraction of the most recent one when the user scrolls. This is the same problem as the Future Event Set, but the priority of the queue is the maximum element, not the minimum. So a MaxHeap has the same advantages as explained in @sec-design-datastructrues-queue for the Future Event Set.
+Each user's timeline $cal(T)(u)$ must maintain posts in reverse-chronological order, and allow to pop the most recent (biggest time $t$) element, on the contrary with $Q$ which has to return the oldest (smallest time $t$) element. This might seem solvable by a MaxHeap, but due to the simulation propagateEvent #todo[cite the pseudocode] workings and how do we store the time, the elements will always be inserted in order, making a LIFO list, a classic Stack #todo[cite the stack] data structure.
 
-Implementation-wise, however, this is not one timeline but two — and that duplication is what cleanly delimits the information diffusion context. The active heap holds what the user *can* see; the passive heap accumulates everything propagating *toward* them. See @apx-impl-queue for more details.
+However, when the user scrolls into past posts, new ones arrive that must get stored, and they cannot be in the same timeline. Implementation-wise, therefore, a timeline is not one stack but two ---and that duplication is what cleanly delimits the information diffusion context. The active stack holds what the user can see; the passive stack accumulates everything propagating toward them. See @apx-impl-queue for more details.
 
 === Follower Topology
 <sec-design-datastructures-topology>
@@ -580,25 +580,29 @@ When representing an adjacency matrix $A$, the `values` array is just full of on
 
 The User entity carries both frequently accessed fields (e.g., online status, session generation) and rarely accessed fields (e.g., behavioral policy). Design wise, this structure is nothing but an array of user structs; implementation wise, the "array of structs" paradigm ---the most known due to the prominence of Object-Oriented Programming" is definitely not performance friendly due to cache locality. The struct user (see @apx-impl-users) is pretty big, and to iterate for just one of the elements when stored as an array of structs involves loading the full object in the cache, and as they are big, the actual relevant information is not dense. The struct of arrays implementation provided @apx-impl-users changes the paradigm as it's just one struct with the arrays: now to search one field of the struct is perfectly optimized for cache locality, which implies less time waiting for memory to load, leading to a better performance. This is approached in @apx-impl-users.
 
-=== Post Storage
-<sec-design-datastructrues-post>
+// === Post Storage
+// <sec-design-datastructrues-post>
 
-Posts are created dynamically throughout the simulation and can be theoretically limitless. Also, any strategy to determine a potential upper bound with the number of users $N$, the distribution of `post_inter_creation` and the $t_h$ duration is information known at runtime ---not at compile time--- so no stack memory structure can be used. 
+// Posts are created dynamically throughout the simulation and can be theoretically limitless. Also, any strategy to determine a potential upper bound with the number of users $N$, the distribution of `post_inter_creation` and the $t_h$ duration is information known at runtime ---not at compile time--- so no stack memory structure can be used. 
 
-The problem with using a flat dynamic array are periodic $O(n)$ reallocation costs. A dynamic array needs contiguous memory, and as the number of posts keeps growing, the more contiguous memory needs to be found by the Operating System, and more data needs to be copied to a new location, which for a very common entity such as posts will really hurt performance.
+// The problem with using a flat dynamic array are periodic $O(n)$ reallocation costs. A dynamic array needs contiguous memory, and as the number of posts keeps growing, the more contiguous memory needs to be found by the Operating System, and more data needs to be copied to a new location, which for a very common entity such as posts will really hurt performance.
 
-The strategy is to paginate the list into manageable chunks for the computer. Pagination is a memory strategy involving the purposeful segmentation of data into pages to avoid the contiguous memory requirement of arrays. When a page is full, memory for another page is allocated, making OS life easier as there is no need for bigger and bigger contiguous memory blocks, but lots of fixed size blocks.
+// The strategy is to paginate the list into manageable chunks for the computer. Pagination is a memory strategy involving the purposeful segmentation of data into pages to avoid the contiguous memory requirement of arrays. When a page is full, memory for another page is allocated, making OS life easier as there is no need for bigger and bigger contiguous memory blocks, but lots of fixed size blocks.
 
-The specific data structure used is a `SegmentedList`, also called a Library structure @apx-impl-posts. A library has shelves (the pages from the pagination) and each shelf has books (the contents of the post); when a library is full, another library is created, avoiding all the contiguous memory requirements of a normal list. In other words, a SegmentedList is just a list (dynamic, variable elements) of arrays (static, fixed-size).
+// The specific data structure used is a `SegmentedList`, also called a Library structure @apx-impl-posts. A library has shelves (the pages from the pagination) and each shelf has books (the contents of the post); when a library is full, another library is created, avoiding all the contiguous memory requirements of a normal list. In other words, a SegmentedList is just a list (dynamic, variable elements) of arrays (static, fixed-size).
 
-The trade-off is that accessing the list involves the computation of the offset by the operator `[ ]`, as now requires two operations to access the wanted book: in which library is the book and which shelf, which makes this structure slower than a traditional list. In @apx-impl-posts the strategy for indexing is provided.
+// The trade-off is that accessing the list involves the computation of the offset by the operator `[ ]`, as now requires two operations to access the wanted book: in which library is the book and which shelf, which makes this structure slower than a traditional list. In @apx-impl-posts the strategy for indexing is provided.
 
-=== Impression and Seen Tracking 
+=== Reposted and Liked Posts
+<sec-design-datastructures-engaged>
 
-The simulation needs to keep track of which posts has every user seen or interacted with. As the posts can grow unbounded, also can the interactions from a user to a post. To check a binary relationship from a user to a post, only a bit is needed per post and per user, so assuming a fixed number of posts $M$, we could represent if a user has interacted with a post with the matrix $A$ with dimensions $N times (N times M) = N^2 M$.
+The simulation needs to keep track of which posts has every user interacted with. As the posts can grow unbounded, also can the interactions from a user to a post. The solution is to use a set data structure, which does not allow duplicates. Despite being unbounded, the set is backed by a hashmap, making it very resilient to a bing amount of posts seen per user, more detail in @apx-impl-impressions.
 
-If we flatten that matrix into a $N^2 M$, we can represent it with a BitSet @apx-impl-impressions. A BitSet is a fixed size collection of bits, which can be manipulated with bit operations. In other words, a BitSet is just a sequence of zeroes and ones.
 
-As posts can grow unbounded, we use the same Pagination strategy from post storage (@sec-design-datastructrues-post) and we generate a PaginatedBitSet, which is a BitSet split in several pages.
+// To check a binary relationship from a user to a post, only a bit is needed per post and per user, so assuming a fixed number of posts $M$, we could represent if a user has interacted with a post with the matrix $A$ with dimensions $N times (N times M) = N^2 M$.
 
-The impression matrix tracks which of the $N$ users have seen which of the (unbounded) $M$ posts. A monolithic bitset would require reserving memory for all $N times M$ bits upfront, which is infeasible. A paged bitset allocates memory in fixed-size pages, growing horizontally as new posts are created. The page allocation strategy is covered in @apx-impl-impressions.
+// If we flatten that matrix into a $N^2 M$, we can represent it with a BitSet @apx-impl-impressions. A BitSet is a fixed size collection of bits, which can be manipulated with bit operations. In other words, a BitSet is just a sequence of zeroes and ones.
+
+// As posts can grow unbounded, we use the same Pagination strategy from post storage (@sec-design-datastructrues-post) and we generate a PaginatedBitSet, which is a BitSet split in several pages.
+
+// The impression matrix tracks which of the $N$ users have seen which of the (unbounded) $M$ posts. A monolithic bitset would require reserving memory for all $N times M$ bits upfront, which is infeasible. A paged bitset allocates memory in fixed-size pages, growing horizontally as new posts are created. The page allocation strategy is covered in @apx-impl-impressions.
