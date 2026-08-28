@@ -320,3 +320,31 @@ All the scripts and intermediate outputs behind @sec-cal-dist and the parameter 
 The complete methodological write-up lives in `sessions/distribution-fit/METHODOLOGY.md` of the same repository, and the sessionization decision behind the input table in `sessions/final_parameters.md`.
 
 Two caveats bound full reproducibility. First, the input `pau_db.sessions` table derives from the Bluesky Firehose dataset, which is not redistributed: stage 1 requires access to the private database, so the pipeline can only be re-run end-to-end by the authors. Second, the per-unit result files are large ---the ten `gof__chunk*.tsv` alone occupy about 3 GB--- and are excluded from the repository; the compact derived tables (`family_summary.tsv`, `param_distributions.tsv`, `param_correlations.tsv`) suffice to verify every figure reported in this chapter.
+
+
+== Stability & Execution
+<apx-method-exec>
+
+This section documents how the performance figures of @tbl-res-time and @tbl-res-ram in @sec-results Results were measured, and states the caveats that bound their interpretation. All measurements come from the final runs of @tbl-res-finalbatch, executed on the dedicated server _artemis_ (@tbl-hardware).
+
+=== Data collection
+
+RAM usage is recorded by an external monitor script ---`des-ctic/python-utils/ram-monitor.sh`--- that runs approximately every 10 s and appends one line per sample:
++ cnt: number of live `bskysim` proceesses
++ maxrss: largest resident set among them in MB
+
+The `cnt` field comes from `pgrep -x bskysim`, and `maxrss` is the largest `VmRSS` (resident set size, converted from KB to MB) across those processes. Each line is therefore a 10 s snapshot of the biggest `bskysim` process, not a per-run measurement. Every dataset size runs as a single `bskysim` process (launched as `bskysim -w<workers> -n100 …`), so all of a size's runs share one address space.
+
+Execution time is read from the simulation's own bookkeeping, `execution_times.ssv`, which records one `worker run_idx duration_ms` tuple per run. This is obtained with the `Clock` #todo[add reference] and uses `time option` #todo[which time option]
+
+=== Derivation of the reported quantities
+
+The RAM per run reported in @tbl-res-ram is reconstructed in two steps. First, the time window of each size is delimited by two mtimes the process writes itself: the first write of `used_config.json` (start) and the newest `*.bin` trace (end). Second, within that window the peak `maxrss` is taken over each individual run's time slice ---reconstructed from the `duration_ms` column of `execution_times.ssv`--- and divided by the worker count to approximate a single isolated run.
+
+Execution time is summarized directly from `execution_times.ssv`: mean, 95% confidence interval, median, minimum and maximum (@tbl-res-time).
+
+=== Known Problems
+
+Three limitations bound the RAM figures. First, 10 s sampling of instantaneous RSS misses the true peak between samples, so every value is a lower-bound approximation. Second, with more than one worker the runs overlap and share a single process, so a per-run slice still contains concurrent and accumulated memory; the worker-normalized value is an upper bound on a truly isolated run. Third, RSS accumulates across runs because state is reused rather than freed, so the per-run peak grows run-over-run.
+
+Finally, the server was not an isolated environment: _artemis_ is a shared 2× AMD EPYC 9654 machine with 1.1 TB of RAM (@tbl-hardware), and other jobs may have been resident during the runs. The measurements are therefore not to be takes as an exact data point, but as an strong intuition of what the actual data would behave as.

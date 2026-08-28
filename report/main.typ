@@ -208,6 +208,12 @@
 #include "src/annex/data.typ"
 
 #pagebreak()
+= Topology Ingestion and Sampling 
+<apx-topology>
+
+#include "src/annex/topology.typ"
+
+#pagebreak()
 = Sessions
 <apx-sessions>
 
@@ -255,19 +261,9 @@
 
 #include "src/annex/database.typ"
 
-#pagebreak()
-= Topology Ingestion and Sampling 
-<apx-topology>
-
-#include "src/annex/topology.typ"
-
-#pagebreak()
-= Performance Analysis 
-<apx-performance>
+pagebreak()
+= Hardware Specifications
+<apx-hardware>
 
 #include "src/annex/hardware.typ"
-
-<apx-space>
-
-#include "src/annex/space-analysis.typ"
 

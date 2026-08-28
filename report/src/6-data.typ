@@ -39,6 +39,32 @@ This proves that there are an enormous quantity of users with both very few even
   )
 ) <fig-filtered-eventtype-dist>
 
+== Reposts Power-law
+<sec-data-reposts>
+
+To characterize the virality of posts in the dataset, we fit a power law to the number of reposts received per post. @fig-data-reposts-hist shows the distribution of reposts per post (log-binned, log-log scale): the bulk of posts receive very few reposts, while a small fraction accumulates thousands.
+
+#figure(
+  image("../images/data/reposts_histogram.png", width: 100%),
+  caption: flex-caption(
+    [Histogram of reposts per post.],
+    [Log-binned histogram of reposts per post ($N = 2,493,540$ posts with at least one repost), log-log scale.],
+  )
+) <fig-data-reposts-hist>
+
+The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite lots of literature descibing them as power-law, it is perfectly normal for this to behave as a power-law. #todo[maybe a small citation here?]
+
+== Structural Virality
+<sec-data-structural-virality>
+
+#comment[
+  Kinda similar moment from post lifetime analysis, but we've introduced structural virality in methodology. Maybe the proper idea should be to not do this here and explain it in methodology.
+]
+Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
+
+#todo[ do it bro ]
+
+
 
 == Post Lifetime
 <sec-data-lifetime>
@@ -53,16 +79,6 @@ This proves that there are an enormous quantity of users with both very few even
 ]
 
 #todo[do it bro]
-
-== Structural Virality
-<sec-data-structural-virality>
-
-#comment[
-  Kinda similar moment from post lifetime analysis, but we've introduced structural virality in methodology. Maybe the proper idea should be to not do this here and explain it in methodology.
-]
-Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
-
-#todo[ do it bro ]
 
 
 == Topology Extraction
