@@ -62,7 +62,39 @@ The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_
 ]
 Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
 
-#todo[ do it bro ]
+Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repost at all, leaving $2,493,540$ (16.32%) that form a non-trivial cascade (at least one repost). @tbl-data-cascade-stats summarises the tree-level metrics of these cascades: the typical cascade is tiny and shallow (median size 3, median depth 1), but the heavy tail reaches a cascade of $12,720$ nodes, depth $131$ and a maximum out-degree of $7,768$.
+
+#figure(
+  table(
+    columns: 4,
+    align: (left, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Metric*], [*Mean*], [*Median*], [*Max*],
+    table.hline(stroke: 0.5pt),
+    [Size], [9.18], [3], [12,720],
+    [Depth], [1.50], [1], [131],
+    [Max out-degree], [5.82], [2], [7,768],
+    [Structural virality $nu(T)$], [1.454], [1.333], [50.27],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Cascade-level statistics.],
+    [Tree metrics for the $2,493,540$ cascades with at least one repost.],
+  )
+) <tbl-data-cascade-stats>
+
+Following @goel2016structural, the cascades split into *broadcast* (depth 1: a star, every repost hangs directly off the root) and *viral* (depth ≥ 2: at least one repost-of-repost). Broadcast diffusion dominates: $1,771,631$ cascades (71.05%) are broadcasts and only $721,909$ (28.95%) are viral.
+
+For the viral cascades alone, $nu(T)$ has mean $2.142$ (95% CI $[2.140, 2.144]$), median $2.000$, minimum $1.333$ and maximum $50.269$. @fig-data-nu-density shows the distribution: it is concentrated right at the broadcast floor $nu = 2$ and decays as a heavy tail, with only $311$ cascades (0.04% of viral) above $nu = 10$ and none reaching $nu >= 100$ — a genuinely viral chain would need a repost chain roughly 300 hops deep, which never occurs inside the six-day window.
+
+#figure(
+  image("../images/data/viral_nu_density.png", width: 100%),
+  caption: flex-caption(
+    [Structural virality of viral cascades.],
+    [Log-$x$ density of $nu(T)$ for the $721,909$ viral cascades (depth ≥ 2), with the broadcast floor $nu = 2$ (dashed) and the median (dotted) marked.],
+  )
+) <fig-data-nu-density>
 
 
 
