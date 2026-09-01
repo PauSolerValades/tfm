@@ -1,7 +1,8 @@
 #import "utils.typ": todo, comment, flex-caption
 
 #todo[Rewrite this header when the actual section is done]
-This chapter describes the Bluesky Firehose dataset —-its structure, content, and the statistical properties of the content it carries. The post lifetime dynamics and structural virality are characterised here as properties of the platform itself, and described accordingly to Methodology @sec-method-des-metrics. The translation of these findings into simulation calibration parameters is deferred to @sec-calibration. The technology stack used throughout the data pipeline is documented in @apx-software-stack.
+This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in #todo[appendix data]. Then, the two quantities described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's est in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in the #todo[mark appendix]
+
 
 == Firehose Data Description
 <sec-data-firehose>
@@ -55,11 +56,8 @@ To characterize the virality of posts in the dataset, we fit a power law to the 
 The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite lots of literature descibing them as power-law, it is perfectly normal for this to behave as a power-law. #todo[maybe a small citation here?]
 
 == Structural Virality
-<sec-data-structural-virality>
+<sec-data-virality>
 
-#comment[
-  Kinda similar moment from post lifetime analysis, but we've introduced structural virality in methodology. Maybe the proper idea should be to not do this here and explain it in methodology.
-]
 Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
 
 Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repost at all, leaving $2,493,540$ (16.32%) that form a non-trivial cascade (at least one repost). @tbl-data-cascade-stats summarises the tree-level metrics of these cascades: the typical cascade is tiny and shallow (median size 3, median depth 1), but the heavy tail reaches a cascade of $12,720$ nodes, depth $131$ and a maximum out-degree of $7,768$.
@@ -97,24 +95,10 @@ For the viral cascades alone, $nu(T)$ has mean $2.142$ (95% CI $[2.140, 2.144]$)
 ) <fig-data-nu-density>
 
 
-
-== Post Lifetime
-<sec-data-lifetime>
-
-#comment[
-  This is how this session should unfold: 
-  1. Explain which quantities are important and why
-  2. Explain (defer to appendix if needed) the datasets (which are the same as the traces)
-  3. Present the actual values of the metrics.
-
-  The quantities explained here should be the interesting ones out of the dataset
-]
-
-#todo[do it bro]
-
-
 == Topology Extraction
 <sec-data-topology>
+
+#todo[read as a whole with the appendix and revise]
 
 The simulation requires a social graph to run on: that is, users and follows upon the information diffuses. This section covers the obtention of a subset of the Bluesky topology.
 

@@ -76,40 +76,6 @@ When designing a simulation, one must have a good distinction between desired qu
 According to the CTIC model, the number of reposts of a post should follow a power law, with $gamma in [2,3]$. That is, the log-log plot of the most to least sorted repost different post has should be drawn as a line. This is the same concept introduced in @sec-sota-topo-scalefree.
 
 
-==== Post Lifetimes
-
-Let's define in this context what's is a lifetime:
-
-#def(name: "Post Lifetime")[time $T$ that encompasses the creation of the post until the last time it's reposted.]
-
-Of course, $T$ is a random variable. The interest quantity is to find the survival function of the posts within one run $S(t) = P(T > t)$, the probability of the post still being alive at time $t$. Additionally, we will report the median post survival ---the smallest $t$ that $S(t) <= 0.5$--- and the confidence intervals.
-
-Each post is created at calendar time $c$ and observed until the simulation horizon $t_h$, so its observation window is the interval $[c, t_h]$. The length of that window,
-
-$ C = t_h - c $
-
-is the post's censoring time. Let $u$ be the time of the last observed repost. If the cascade ended before the horizon ($u < t_h$), its lifetime is fully observed as $T = u - c$; if it is still active when the simulation stops, the lifetime is only known to exceed $C$, i.e. the observation is right-censored.
-
-Because the simulation emits no explicit "death" event ---a post could sit dormant in a follower's backlog and be reposted much later--- death must be defined operationally through a quiet threshold $delta$:
-
-$ e_i := cases("dead if" u <= t_h - delta, "censored if" u > t_h - delta) $
-
-The parameter $delta$ is the maximum silence tolerated before declaring death ---a modelling choice, not an estimated quantity--- and is therefore swept over as a sensitivity analysis rather than fixed a priori.
-
-Each cascade contributes a pair $(x_i, e_i)$, where $x_i = u_i - c_i$ for a dead cascade ($e_i = 1$) and $x_i = C_i$ for a censored one ($e_i = 0$). This censoring is administrative and non-informative: the cutoff $t_h$ is fixed by the study design and independent of the cascade's own lifetime, so the censoring mechanism does not bias the estimator.
-
-The survival function is then estimated with the Kaplan--Meier product-limit estimator with the package #todo[name of the R package]
-
-#comment[
-  As the simulation is a simulation, i could make a run ran longer than duration and see which posts empirically survive (eg, duration + 10000 = horizon), as well as manually examine the future event set and the timelines of the users to see whcih posts from the original simulation are still waiting to be propagated. This takes advantage of what the simulation is, and makes sense to do, but implies changes!
-]
-
-Post lifetime can be expressed in this model as the interaction between the activity based and the queue dynamics. We can express the lifetime of a post in the simulation as 
-
-$ tau = Delta_"idle" + Delta_"scroll" $
-
-When a post arrives in a follower's timeline while the user is offline, it sits idle for a duration $Delta_"idle"$ ---the gap until the next session begins. During this idle window, newer posts continue to pile on top. Once the user logs in, the feed is consumed reverse-chronologically: the post cannot be seen until the user scrolls past every newer post that arrived after it, incurring an additional delay $Delta_"scroll"$. If $Delta_"scroll"$ exceeds the user's session duration $Delta_k$, the post will never be seen ---the transmission opportunity is lost, and the cascade stalls at that edge. If $Delta_"scroll" < Delta_k$, the post survives and may propagate further.
-
 ==== Structural Virality
 
 Virality is a concept that is more nuanced than it first appears. While content is said to have "gone viral" when it rapidly becomes popular through person-to-person contagion, popularity alone does not imply virality: a piece of content may reach a large audience through a single broadcast event (e.g., a post by a celebrity with millions of followers) just as easily as through multi-generational peer-to-peer propagation @goel2016structural. Distinguishing between these two mechanisms requires examining the fine-grained structure of the diffusion cascade itself, not just its aggregate size.

@@ -1,3 +1,5 @@
+#import "src/utils.typ": *
+
 #let margins = (
   top: 3.5cm,
   bottom: 3cm,
@@ -106,6 +108,7 @@
 
 #pagebreak()
 = Introduction
+#todo[warning: this is not the final version, do not review.]
 
 #include "src/1-introduction.typ"
 
@@ -154,6 +157,7 @@
 #pagebreak()
 = Conclusions
 
+#todo[warning: this is not the final version. Do not review]
 #include "src/9-conclusions.typ"
 
 #pagebreak()
@@ -232,12 +236,6 @@
 #include "src/annex/stability-plots.typ"
 
 #pagebreak()
-= Post Lifetime Cavilations 
-<apx-lifetime>
-
-#include "src/annex/lifetime.typ"
-
-#pagebreak()
 = Pipeline
 <apx-pipeline>
 
@@ -256,12 +254,6 @@
 #include "src/annex/software-stack.typ"
 
 #pagebreak()
-= Database Specification
-<apx-database>
-
-#include "src/annex/database.typ"
-
-pagebreak()
 = Hardware Specifications
 <apx-hardware>
 

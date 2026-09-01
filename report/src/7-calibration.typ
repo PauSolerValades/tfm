@@ -559,7 +559,7 @@ We can obtain three meaningfull findings, in all of them 10K is excluded:
 <sec-exec-agnostic>
 
 
-To ensure the simulation results remain invariant to absolute wall-clock metrics and easily comparable across alternative contexts, all temporal findings are reported as multiples of the system's fundamental propagation delay ($Delta_p$). By normalizing absolute time ($t$) against this characteristic scale, we derive a dimensionless representation of post lifetimes:
+To ensure the simulation results remain invariant to absolute wall-clock metrics and easily comparable across alternative contexts, all temporal findings are reported as multiples of the system's fundamental propagation delay ($Delta_p$). By normalizing absolute time ($t$) against this characteristic scale, we derive a dimensionless representation of all metrics:
 
 $ tau = frac(t, Delta_p) $
 
