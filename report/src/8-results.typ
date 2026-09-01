@@ -183,6 +183,89 @@ No run is a power law: the lognormal is preferred in every case, matching the re
 
 == Structural Virality
 
+Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree, distinguishing *broadcast* diffusion (one-to-many) from *viral* spread (person-to-person chains). As with the repost power law, the statistics are pooled across all runs of each dataset: the cascades produced by different runs of the same topology are statistically indistinguishable (per-run mean $nu(T)$ spans at most $0.012$ within a dataset, apart from the aborted 1M run noted in @tbl-res-finalbatch), so a per-run breakdown adds noise without information.
+
+Almost no post ever becomes a cascade. Across the four datasets between 92.2% and 93.4% of all posts receive no repost at all (`CascadeSize` = 1), leaving only 6.6%–7.8% that form a non-trivial cascade (at least one repost). This is roughly half the rate observed in the real Bluesky data (16.32% in @sec-data-structural-virality), consistent with the calibrated 1.2% repost weight of the user policy. @tbl-res-cascade-stats summarises the tree-level metrics of these cascades: the typical cascade is tiny and shallow (median size 2, median depth 1) in every dataset, but the heavy tail grows with the network, from a maximum of $32$ nodes at 10K up to $1,697$ nodes at 1M, with a maximum out-degree of $1,599$.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Metric*], [*10K*], [*100K*], [*500K*], [*1M*],
+    table.hline(stroke: 0.5pt),
+    [Size (mean / median / max)], [2.54 / 2 / 32], [2.70 / 2 / 174], [2.92 / 2 / 779], [2.97 / 2 / 1,697],
+    [Depth (mean / median / max)], [1.26 / 1 / 10], [1.27 / 1 / 12], [1.25 / 1 / 13], [1.24 / 1 / 13],
+    [Max out-degree (mean / median / max)], [1.26 / 1 / 28], [1.38 / 1 / 161], [1.59 / 1 / 726], [1.65 / 1 / 1,599],
+    [$nu(T)$ (mean / median / max)], [1.157 / 1.0 / 4.69], [1.187 / 1.0 / 5.64], [1.205 / 1.0 / 6.08], [1.198 / 1.0 / 6.25],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Cascade-level statistics per dataset.],
+    [Tree metrics for the cascades with at least one repost, pooled over all runs. Each cell reports mean / median / maximum.],
+  )
+) <tbl-res-cascade-stats>
+
+Following @goel2016structural, the cascades split into *broadcast* (depth 1: a star, every repost hangs directly off the root) and *viral* (depth ≥ 2: at least one repost-of-repost). Broadcast diffusion dominates everywhere: 79.4%–81.6% of cascades are broadcasts and only 18.4%–20.6% are viral (@tbl-res-broadcast), a slightly stronger broadcast bias than the real data (71.05% broadcast). The split is flat across the four sizes, so the broadcast/viral balance does not depend on the network size.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Cascades*], [*10K*], [*100K*], [*500K*], [*1M*],
+    table.hline(stroke: 0.5pt),
+    [Total], [1,757,831], [19,610,289], [93,989,047], [150,417,598],
+    [Broadcast], [1,407,646 (80.1%)], [15,566,432 (79.4%)], [75,493,250 (80.3%)], [122,798,835 (81.6%)],
+    [Viral], [350,185 (19.9%)], [4,043,857 (20.6%)], [18,495,797 (19.7%)], [27,618,763 (18.4%)],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Broadcast vs. viral cascades per dataset.],
+    [Split of the non-trivial cascades into broadcast (depth 1) and viral (depth ≥ 2), pooled over all runs.],
+  )
+) <tbl-res-broadcast>
+
+For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K and rises gently to $1.716$ at 1M, with a median of $1.5$–$1.667$ and a maximum of $4.7$–$6.3$ (@tbl-res-viral-sv). @fig-res-nu-density shows the distributions: all four are concentrated just above the minimum $nu = 4/3$ (a single repost-of-repost) and decay quickly, so they sit *below* the broadcast floor $nu = 2$ — the simulated "viral" cascades are barely more viral than a large star. This is where the simulation diverges most from the data: real viral cascades have mean $2.142$, median $2.000$ and a tail reaching $50.27$ (@sec-data-structural-virality), i.e. half of them sit above the broadcast floor, whereas the simulation never produces the long repost-of-repost chains that push $nu(T)$ past it.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*$nu(T)$ (viral)*], [*10K*], [*100K*], [*500K*], [*1M*],
+    table.hline(stroke: 0.5pt),
+    [Mean], [1.585], [1.641], [1.704], [1.716],
+    [95% CI ($±$)], [0.001], [0.0004], [0.0002], [0.0001],
+    [Median], [1.500], [1.667], [1.667], [1.667],
+    [Min], [1.333], [1.333], [1.333], [1.333],
+    [Max], [4.69], [5.64], [6.08], [6.25],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Structural virality of viral cascades per dataset.],
+    [Mean (with 95% bootstrap confidence interval), median, minimum and maximum of $nu(T)$ over the viral cascades (depth ≥ 2), pooled over all runs.],
+  )
+) <tbl-res-viral-sv>
+
+#figure(
+  grid(
+    columns: 2,
+    column-gutter: 0.8em,
+    image("../images/results/viral_nu_density_10K.png", width: 100%),
+    image("../images/results/viral_nu_density_100K.png", width: 100%),
+    image("../images/results/viral_nu_density_500K.png", width: 100%),
+    image("../images/results/viral_nu_density_1M.png", width: 100%),
+  ),
+  caption: flex-caption(
+    [Structural virality of viral cascades.],
+    [Log-$x$ density of $nu(T)$ for the viral cascades (depth ≥ 2) in each dataset, with the broadcast floor $nu = 2$ (dashed) and the median (dotted) marked.],
+  )
+) <fig-res-nu-density>
+
 == Post Lifetime
 
 == Comparison with Bluesky Data
