@@ -448,7 +448,7 @@ The three models differ only in *where* the randomness sits. In the *homogeneous
   image("../images/results/gw_falsification_100K.png", width: 100%),
   caption: flex-caption(
     [Cascade-size CCDF of the branching models (log-log).],
-    [Complementary CDF of the cascade size for the simulated 100K cascades and the four branching models, with the real Bluesky exponent $alpha = 2.05$ as reference. The homogeneous models collapse onto the simulation; the heterogeneous shared-fitness model lifts the tail by orders of magnitude.],
+    [Complementary CDF of the cascade size for the simulated 100K cascades and the four branching models, with the real Bluesky exponent $alpha = 2.05$ as reference. The homogeneous models collapse onto the simulation; the heterogeneous shared-fitness models decay more slowly, and their dotted levels mark the fraction of supercritical cascades censored at the network ceiling.],
   )
 ) <fig-res-gw-falsification>
 
