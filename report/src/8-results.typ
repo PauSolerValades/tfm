@@ -345,43 +345,44 @@ The following points explitit the main differences between real data and the sim
 + *Broadcast share.* The sim is more broadcast-shaped (79.4–81.6% vs. 71.05%).
 + *Reposts.* Lognormal in both, but the simulated exponent ($2.5$–$2.9$) decays faster than the real $2.053$, with a much lower cutoff ($x_"min" approx 1$–$5$ vs. $12$), consistent with the missing deep cascades.
 
-The simluation manages to replicate all the medians and averages of almost all the quantities: cascade size (2), cascade depth (3), max out-degree (4). There are some other quantities such as the broadcast share (7), and $nu(T)$ (5) where the simulation follows short of actual human behaviour (more broadcast than the real data, shallower virality than real data) almost like the model did not allow the content to propagate as far as it's real counterpart. Lastly, the simulation did not manage to reproduce any true depth viral cascade (6), nor generate as many real cascades (1).
+The simulation manages to replicate all the medians and averages of almost all the quantities: cascade size (2), cascade depth (3), max out-degree (4). There are some other quantities such as the broadcast share (7), and $nu(T)$ (5) where the simulation falls short of actual human behaviour (more broadcast than the real data, shallower virality than real data), almost like the model did not allow the content to propagate as far as its real counterpart. Lastly, the simulation did not manage to reproduce any truly deep viral cascade (6), nor generate as many cascades as the real data (1).
 
-*Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model be a good representation of the nature of the problem. Despite matching accurately the bulk, it consistenlty underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
+*Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model a good representation of the nature of the problem. Despite matching the bulk accurately, it consistently underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
 
 == Finding the Missing Tail
 
-This section offers an explanation of why the simulation manages to accurately reproduce accurately the bulk of the distribution but falls short of replicating the tail part while modeling cascades as a Galton-Watson process. #todo[cite]. Summarizing, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
+This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process. #todo[cite]. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
 === Cascades are Galton–Watson Processes
 
-Let us first define what a Galton-Watson process is. Let us consider a simple stochastic model for how a population size grows ${X_n}_(n in NN)$.
+Let us first define what a Galton–Watson process is. Consider a simple stochastic model for how a population grows in size, ${Z_n}_(n in NN)$.
 
 Assumptions:
-+ The population grows in generations: $forall k in ZZ^+$ let $Z_k$ denote the number of members in the $k+1$ generation.
-+ Each member of the $k$-th generation gives birth to a familiy (can be empty) of members of the $k+1$ generation.
-+ The number of descendants of a given individual is $X$, where $PP(X = i) = p_i$
-+ The familiy form a collection of independent random variables iid to $X$ 
++ The population grows in generations: $forall k in ZZ^+$, let $Z_k$ denote the number of members in the $k$-th generation.
++ Each member of the $k$-th generation gives birth to a family (possibly empty) of members of the $(k+1)$-th generation.
++ The number of descendants of a given individual is $X$, where $PP(X = i) = p_i$.
++ The families form a collection of independent random variables, each distributed as $X$.
 
 #def(name: "Galton-Watson process")[
-  Concising all the assumptions in one, a Galton-Watson process is the stochastic process defined by the following recursion
+  Condensing all the assumptions into one, a Galton–Watson process is the stochastic process defined by the recursion
   $
-    X_(k+1) = sum_(j=1)^X_k Z_i^(k)
-  $ 
+    Z_(k+1) = sum_(i=1)^(Z_k) X_i^((k)),
+  $
+  where $X_i^((k))$ are independent and identically distributed copies of $X$.
 ]
 
-Let's map now the cascades concepts to the GW assumptions. A cascade is an stochastic process ${X_n}_(n in NN)$ which grows its population in generations $Z_k$. The generation growth can be empty (a user does not repost therefore the cascade will not expand from that node), and the users that have seen this post is exactly the sum of all the users seen so far plus the users expanded in this generation. As the $pi$ policy is non changing and homogenerous per user, as well as posts not having content, both 3 and 4 from the assumptions are prefectly satisfied, which are the homogeneous assumptions of @sec-method-des-assumptions: every node draws the number of children from the same distribution, independently of everything else.
+Let us now map the cascade concepts to these assumptions. A cascade is a stochastic process ${Z_n}_(n in NN)$ whose population is the set of users that have *reposted* the post, arranged in generations: $Z_k$ are the reposters at depth $k$ of the cascade tree. A generation can be empty (a user does not repost, so the cascade does not expand from that node). Because the policy $pi$ is fixed and homogeneous across users, and posts carry no content, assumptions 3 and 4 are satisfied --- every reposter draws its number of children from the same distribution, independently of everything else --- which are precisely the homogeneous assumptions of @sec-method-des-assumptions.
 
-As the cascades are a GW process, now we can know without the need of costly simulations how long is the cascade is going to survive, with the reproduction number $R_0$.
+Once a cascade is a Galton–Watson process, its long-run behaviour is known without costly simulations, governed entirely by the reproduction number $R_0$.
 
 #def(name: "Reproduction Number")[
-  The reproduction number is defined as $R_0 := E(X)$. We can classigfy the GW process as the following according to the value of $R_0$.
-  - $R_0 < 0$: the process is not self-sustaniable and will extinguish.
-  - $R_0 = 0$: the process is self-sustainable and will extinguish.
-  - $R_0 > 0$: the process will not extinguish, and the probability of not extintion is $1 - d > 0$, where $d$ is the probability of ultimate extintion.
+  The reproduction number is defined as $R_0 := EE(X)$. The Galton–Watson process is classified by its value:
+  - $R_0 < 1$: *subcritical* --- the population dies out with probability 1, and its size has an exponentially bounded tail.
+  - $R_0 = 1$: *critical* --- the population dies out with probability 1, but the extinction time and size are heavy-tailed.
+  - $R_0 > 1$: *supercritical* --- the population survives with probability $1 - d > 0$, where $d$ is the probability of ultimate extinction.
 ]
 
-We can compute $R_0$ from the simulation traces, which are the contents of @tbl-res-r0.  It is $approx 0.22$ in every dataset, while the mean seed (direct reposts of the root) is $approx 1.2$–$1.3$. Since $R_0 < 1$, the process is subcritical: every repost replaces itself with less than one further repost, the cascade will extinct after a few generations, and the size distribution is exponentially bounded. A heavy tail is mathematically impossible at $R_0 approx 0.22$, regardless of the topology.
+We can compute $R_0$ from the simulation traces, which are the contents of @tbl-res-r0.  It is $approx 0.22$ in every dataset, while the mean seed (direct reposts of the root) is $approx 1.2$–$1.3$. Since $R_0 < 1$, the process is subcritical: every repost replaces itself with less than one further repost, the cascade goes extinct after a few generations, and the size distribution is exponentially bounded. A heavy tail is mathematically impossible at $R_0 approx 0.22$, regardless of the topology.
 
 #figure(
   table(
@@ -404,7 +405,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
   )
 ) <tbl-res-r0>
 
-@fig-res-offspring shows the offspring distribution $Z$: roughly 83% of reposts generate no further repost, and the mean sits far below one. This is the reason why the tail will always be truncated, and why @tbl-res-vs-data shows this consistenlty in all metrics: it is a property of the model consequence of the homogeneous policy, not of the network.
+@fig-res-offspring shows the offspring distribution $Z$: roughly 83% of reposts generate no further repost, and the mean sits far below one. This is the reason why the tail will always be truncated, and why @tbl-res-vs-data shows this consistently across all metrics: it is a property of the model, a consequence of the homogeneous policy, not of the network.
 
 #figure(
   image("../images/results/offspring_distribution_100K.png", width: 100%),
@@ -416,11 +417,13 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Reach Is Throttled by the Feed, Not the Policy
 
-#comment[this sections does appear out of nowhere: why is it related with the last part? Where did we showcased the simulation had this problem? this is a problem of the attention mechanics, but in depth it is not related to the actual stacks stuff, this is the nature of the platforms. the stack is the chosen algorithm, but this is far more fundamental.]
+@tbl-res-r0 reduces the entire tail to a single number, $R_0 approx 0.22$. That immediately raises a question: the sampled graph has a heavy-tailed degree distribution (@sec-data-topology), so high-degree nodes ought to push $R_0$ upward --- unless audience size does not translate into reach. @fig-res-attention-cap tests exactly this.
 
-Subcriticality explains why chains are short; it does not explain why even the *broadcast* reach is capped. @fig-res-attention-cap compares each reposting node's cascade out-degree against its total follower count. A pure Independent Cascade on the static graph predicts out-degree $prop$ followers; instead the realized out-degree is essentially *flat* across four orders of magnitude of follower count (log-log slope $approx 0$), and the efficiency (children per follower) decays from $approx 18%$ to $approx 5 dot 10^(-4)%$. The reverse-chronological timeline, the short sessions and the $approx 2%$ concurrent online fraction bury a post before its audience can see it: audience size does not translate into reach. This attention bottleneck operates independently of $pi$.
+For every node that reposted, the figure compares its cascade out-degree ---the number of its followers that reposted it--- against its total follower count. A pure Independent Cascade on the static graph exposes every follower once, and each reposts with probability $pi_"repost"$, so the expected out-degree grows linearly as $pi_"repost" times ("followers")$: the red line. If the only constraint were that $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), the expectation would be $pi_"repost" times 0.02 times ("followers")$: the orange line. The blue curve is what the simulation actually produces.
 
-#comment[where did figure came from exactly??? why are we multiplying the porbability with x?]
+That curve is essentially flat across four orders of magnitude of follower count (log-log slope $approx 0$): a node with ten followers and a node with ten thousand both generate $approx 0.2$ cascade children. The realized efficiency (children per follower) therefore decays from $approx 18%$ to $approx 5 dot 10^(-4)%$ as the audience grows.
+
+This decoupling is not an artifact of the LIFO stack specifically: it is the finite-attention nature of feed-based platforms. A user reads only a handful of posts per session, so a post is buried under whatever arrives after it; the stack is one implementation of that ceiling, but the ceiling itself is fundamental to any reverse-chronological feed. The direct consequence for the branching-process account is that $R_0$ cannot be rescued by degree heterogeneity --- the feed throttles the exposure of even the largest accounts, which is the second, independent reason the tail stays truncated.
 
 #figure(
   image("../images/results/attention_cap_100K.png", width: 100%),
