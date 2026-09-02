@@ -591,3 +591,47 @@ cro2023asynchrony:
     value: https://kristoff.it/blog/asynchrony-is-not-concurrency/
     date: 2026-08-26
   organization: kristoff.it
+
+otter1949:
+  type: Article
+  title: "The Multiplicative Process"
+  author: Otter, Richard
+  date: 1949
+  parent:
+    type: Periodical
+    title: Annals of Mathematical Statistics
+    volume: 20
+    issue: 2
+    page-range: 206-224
+
+dwass1969:
+  type: Article
+  title: "The total progeny in a branching process and a related random walk"
+  author: Dwass, Meyer
+  date: 1969
+  parent:
+    type: Periodical
+    title: Journal of Applied Probability
+    volume: 6
+    issue: 3
+    page-range: 682-686
+
+athreya1972branching:
+  type: Book
+  title: "Branching Processes"
+  author:
+    - Athreya, Krishna B.
+    - Ney, Peter E.
+  date: 1972
+  publisher: Springer
+  location: Berlin
+
+kersting2017discrete:
+  type: Book
+  title: "Discrete Time Branching Processes in Random Environment"
+  author:
+    - Kersting, Götz
+    - Vatutin, Vladimir
+  date: 2017
+  publisher: Wiley
+  location: London

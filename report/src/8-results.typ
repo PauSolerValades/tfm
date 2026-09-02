@@ -419,48 +419,28 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Content as a Fix Hypothesis
 
-Could removing some homogeneity assumptions make the simulation produce a longer tail? Of course, this is not actually implemented and ran in the simulation as its clearly out of scope and more fitting into a Future Work section #todo[cite], but taking advantage as we know cascades are a Galton-Watson process, we can modify the stochastic process in order to explore if a content simulation would indeed have a heavyer tail.
+Could lifting the homogeneity assumptions lengthen the tail? This is not implemented in the simulation ---it is out of scope and belongs to Future Work--- but, since the reposter process is a Galton–Watson process, the effect of content can be explored by modifying the stochastic process directly. The argument below is the first-moment version; the full derivation, including the exact tail exponent, is in @apx-branching.
 
-To prove it, the following experiment is introduced. We will create three models that ensable differents types of stochastic process (cascades), that is, the simulation: one with homogeneous cascades ---representing the current simulation---, another with homogenous cascades ---representing a more active simulation--- and a heterogenous one ---which represents if every post propagates differently per node. All the cascades will share the same empirically found $R_0$, but they shift where the randomness exists in them:
-+ *Homogeneous*: the model the simulation implements, and the offspring follows a $"Poisson"(R_0)$ distribution: the reproduction is a constant shared by every post.
-+ *Homogeneous Heavy-Offspring*: every node independenlty draws the offspring from the same distribution, but instead of a Possion ---which does not heavy tail naturally--- we make the offspring follow a $"Poisson-Lognormal"$ with $E(X) = R_0$.
-+ *Heterogeneous*: each post draws a fitness $a_i ~ "Lognorm"$ such that $E(a_i) = 1$, so every node has a _different_ offspring probability following a $"Poisson"(R_0 a_i)$: the post quality (the random $a_i$) is influencing every repost change, which is what the introduction of content would achieve.
+Consider two regimes that share the same *average* reproduction number $R_0$:
 
++ *Homogeneous (current model).* Every post shares the same reproduction number $m = R_0 < 1$, so the cascade is a subcritical Galton–Watson process. For a fixed $m < 1$ the expected size is finite and the size distribution has an exponentially bounded tail @athreya1972branching.
++ *Heterogeneous (content).* Each post draws its own reproduction number $m ~ F$ with $EE(m) = R_0$, but with positive density at $m = 1$ --- posts whose latent quality makes them near-critical. The cascade is then a *mixture* of subcritical branching processes, one per post quality.
 
-The results of the experiment are in @fig-res-gw-falsification
+For a fixed subcritical $m$,
 
-#figure(
-  table(
-    columns: 5,
-    align: (left, center, center, center, center),
-    stroke: none,
-    table.hline(stroke: 0.8pt),
-    [*Model*], [*Mean*], [*Max*], [*$P("size" >= 100)$*], [*$P("size" >= 1000)$*],
-    table.hline(stroke: 0.5pt),
-    [Simulation (100K)], [2.70], [174], [$1.8 times 10^(-5)$], [0],
-    [Homogeneous, Poisson], [2.43], [15], [0], [0],
-    [Homogeneous, heavy offspring ($sigma=0.6$)], [2.48], [22], [0], [0],
-    [Heterogeneous, shared fitness ($sigma=0.5$)], [2.76], [2,829], [0.012%], [0.001%],
-    [Heterogeneous, shared fitness ($sigma=0.6$)], [3.22], [28,209], [0.057%], [0.004%],
-    table.hline(stroke: 0.8pt),
-  ),
-  caption: flex-caption(
-    [Branching-process falsification of the missing tail.],
-    [Cascade-size statistics of four branching models sharing the empirical $R_0 approx 0.22$, compared against the simulated 100K cascades. The fitness is truncated so every post stays subcritical, so every cascade dies on its own; the tail thickens from heterogeneity alone. The homogeneous Poisson model reproduces the simulation; only the heterogeneous shared-fitness model produces a heavier tail, and it does so with essentially the same mean $R_0$.],
-  )
-) <tbl-res-gw-falsification>
+$
+  EE(S | m) = frac(1, 1 - m),
+$
 
-#figure(
-  image("../images/results/gw_falsification_100K.png", width: 100%),
-  caption: flex-caption(
-    [Cascade-size CCDF of the branching models (log-log).],
-    [Complementary CDF of the cascade size for the simulated 100K cascades and the four branching models, with the real Bluesky exponent $alpha = 2.05$ as reference. The homogeneous models collapse onto the simulation; the heterogeneous shared-fitness models decay more slowly, so their tail reaches tens of thousands of nodes instead of tens, and every cascade still dies out.],
-  )
-) <fig-res-gw-falsification>
+so mixing over the post quality gives
 
-@tbl-res-gw-falsification and @fig-res-gw-falsification lead to three conclusions. First, the homogeneous Poisson model lands on top of the simulation: the simulation *is* a homogeneous subcritical branching process, and it behaves exactly as such. This is a validation of the CTIC/homogeneous-IC implementation, not an indictment of it. Second, a heavy-tailed offspring law is *not* sufficient: the homogeneous heavy-offspring model barely moves the maximum (from $15$ to $22$), because a lucky node's burst does not compound --- its children are fresh independent draws. Third, it is the *shared* per-post fitness that does the work: when one $a_i$ multiplies the reproduction of every node in the cascade, posts with a higher $a_i$ sustain more generations before dying out, lifting the maximum from $approx 15$ to $approx 28,000$ --- while the mean $R_0$ stays essentially the same, and every cascade still dies out on its own. The truncation is deliberate: a genuinely viral post is *temporarily* supercritical, and its growth would only be bounded by the finite audience and attention decay of @sec-missing-width, which this toy omits.
+$
+  EE(S) = integral_0^1 frac(1, 1 - m) d F(m).
+$
 
-The missing heavy tail is therefore not a bug, and not primarily a matter of the queue, the topology, or the calibrated repost weight. It is the *content-agnostic* and *homogeneous-policy* assumptions of @sec-method-des-assumptions: they collapse the reproduction number to a single subcritical value shared by every post, and a branching process cannot turn that into a heavy tail. The remedy is a per-post latent quality ---an embedding that modulates the policy--- exactly the direction of @sec-future-content and @sec-future-content-homophily. Because the branching-process account predicts both the thin tail of the homogeneous simulation and the heavy tail of the heterogeneous extension, it converts that future work from a speculation into a falsifiable, well-motivated next step.
+If $F$ has positive density at $m = 1$ --- a non-negligible fraction of posts sitting arbitrarily close to criticality --- this integral diverges and $EE(S) = infinity$: the mixture has a heavy tail, while every fixed $m$ produces a thin one. The same average $R_0$, but the tail changes from exponential to heavy purely by moving the randomness from *which node reproduces* to *which post reproduces* --- which is exactly what a per-post latent quality, the content signal that modulates the policy, would achieve.
+
+The missing heavy tail is therefore not a bug, and not primarily a matter of the queue or the topology. It is the *content-agnostic* and *homogeneous-policy* assumptions of @sec-method-des-assumptions: they collapse the reproduction number to a single subcritical value shared by every post, and a homogeneous branching process cannot turn that into a heavy tail. Homogeneity removes the tail; heterogeneity is sufficient to restore it. The remedy ---a per-post latent quality that modulates the policy--- is precisely the direction of @sec-future-content and @sec-future-content-homophily, and the branching-process account turns it from a speculation into a quantitatively testable next step.
 
 == The Missing Width <sec-missing-width>
 
@@ -470,7 +450,7 @@ The reason is that the out-degree factorizes into two terms, and only one of the
 
 $ "out-degree" = "impressions" times "repost rate" $
 
-Content --- the per-post fitness $a_i$ of the previous section --- lives in the second term: it multiplies the probability of reposting *given* that a follower sees the post. The truncation studied here lives in the first term: the number of followers that ever *see* the post is capped, so no amount of content can widen the cascade.
+Content --- the per-post reproduction number $m$ of the previous section --- lives in the second term: it multiplies the probability of reposting *given* that a follower sees the post. The truncation studied here lives in the first term: the number of followers that ever *see* the post is capped, so no amount of content can widen the cascade.
 
 @fig-res-attention-cap measures the impression factor directly. For every node that reposted, it compares the node's cascade out-degree against its total follower count. A pure Independent Cascade exposes every follower once, and each reposts with probability $pi_"repost"$, so the expected out-degree grows linearly as $pi_"repost" times ("followers")$ (red). If the only constraint were the $approx 2%$ of users online at any instant (@tbl-cal-stable-equil), the expectation would be $pi_"repost" times 0.02 times ("followers")$ (orange). The blue curve is what the simulation actually produces.
 
