@@ -417,11 +417,17 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
   )
 ) <fig-res-offspring>
 
-=== Content Is the Missing Ingredient
+=== Content as a Fix Hypothesis
 
-Subcriticality explains why the tail is thin, but it does not say *which* assumption to lift to recover it. The remaining question is whether adding per-post content ---while keeping every other mechanic fixed--- recovers the tail. @fig-res-gw-falsification answers it with a minimal branching-process falsification in which all models share the empirical $R_0$ of @tbl-res-r0.
+Could removing some homogeneity assumptions make the simulation produce a longer tail? Of course, this is not actually implemented and ran in the simulation as its clearly out of scope and more fitting into a Future Work section #todo[cite], but taking advantage as we know cascades are a Galton-Watson process, we can modify the stochastic process in order to explore if a content simulation would indeed have a heavyer tail.
 
-The three models differ only in *where* the randomness sits. In the *homogeneous* model every post has offspring $~"Poisson"(R_0)$: the reproduction number is a single constant shared by every post. In the *homogeneous heavy-offspring* model every node independently draws offspring from the same heavy-tailed law (a Poisson–lognormal with the same mean): the offspring law is heavy, but no post has a property of its own. In the *heterogeneous* model each post draws a fitness $a_i ~ "Lognormal"$ with $EE(a_i) = 1$ once, and every node of that post's cascade has offspring $~"Poisson"(R_0 a_i)$: the post's quality is a shared latent variable, so a post with a higher $a_i$ has a higher reproduction number in every generation, and its growth compounds across generations even while it remains subcritical. The fitness is a lognormal truncated at $a_i = 1 slash R_0$, so every post stays subcritical ($R_0 a_i < 1$) and every cascade dies on its own, exactly as in the simulation and in reality; the two scales $sigma = 0.5$ and $0.6$ vary how close the tail reaches to the critical point.
+To prove it, the following experiment is introduced. We will create three models that ensable differents types of stochastic process (cascades), that is, the simulation: one with homogeneous cascades ---representing the current simulation---, another with homogenous cascades ---representing a more active simulation--- and a heterogenous one ---which represents if every post propagates differently per node. All the cascades will share the same empirically found $R_0$, but they shift where the randomness exists in them:
++ *Homogeneous*: the model the simulation implements, and the offspring follows a $"Poisson"(R_0)$ distribution: the reproduction is a constant shared by every post.
++ *Homogeneous Heavy-Offspring*: every node independenlty draws the offspring from the same distribution, but instead of a Possion ---which does not heavy tail naturally--- we make the offspring follow a $"Poisson-Lognormal"$ with $E(X) = R_0$.
++ *Heterogeneous*: each post draws a fitness $a_i ~ "Lognorm"$ such that $E(a_i) = 1$, so every node has a _different_ offspring probability following a $"Poisson"(R_0 a_i)$: the post quality (the random $a_i$) is influencing every repost change, which is what the introduction of content would achieve.
+
+
+The results of the experiment are in @fig-res-gw-falsification
 
 #figure(
   table(
