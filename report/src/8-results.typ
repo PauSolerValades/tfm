@@ -421,7 +421,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 Subcriticality explains why the tail is thin, but it does not say *which* assumption to lift to recover it. The remaining question is whether adding per-post content ---while keeping every other mechanic fixed--- recovers the tail. @fig-res-gw-falsification answers it with a minimal branching-process falsification in which all models share the empirical $R_0$ of @tbl-res-r0.
 
-The three models differ only in *where* the randomness sits. In the *homogeneous* model every post has offspring $~"Poisson"(R_0)$: the reproduction number is a single constant shared by every post. In the *homogeneous heavy-offspring* model every node independently draws offspring from the same heavy-tailed law (a Poisson–lognormal with the same mean): the offspring law is heavy, but no post has a property of its own. In the *heterogeneous* model each post draws a fitness $a_i ~ "Lognormal"$ with $EE(a_i) = 1$ once, and every node of that post's cascade has offspring $~"Poisson"(R_0 a_i)$: the post's quality is a shared latent variable, so a rare post with $a_i > 1 slash R_0$ becomes supercritical and its growth compounds across generations.
+The three models differ only in *where* the randomness sits. In the *homogeneous* model every post has offspring $~"Poisson"(R_0)$: the reproduction number is a single constant shared by every post. In the *homogeneous heavy-offspring* model every node independently draws offspring from the same heavy-tailed law (a Poisson–lognormal with the same mean): the offspring law is heavy, but no post has a property of its own. In the *heterogeneous* model each post draws a fitness $a_i ~ "Lognormal"$ with $EE(a_i) = 1$ once, and every node of that post's cascade has offspring $~"Poisson"(R_0 a_i)$: the post's quality is a shared latent variable, so a rare post with $a_i > 1 slash R_0$ becomes supercritical and its growth compounds across generations. The lognormal scale $sigma$ is set to $0.5$ and $0.6$, so that only $0.3$–$1.4%$ of cascades ever cross the supercritical threshold $R_0 a_i > 1$; the tail is therefore *rare but enormous*, rather than a majority of posts going viral.
 
 #figure(
   table(
@@ -433,14 +433,14 @@ The three models differ only in *where* the randomness sits. In the *homogeneous
     table.hline(stroke: 0.5pt),
     [Simulation (100K)], [2.70], [174], [$1.8 times 10^(-5)$], [0], [—],
     [Homogeneous, Poisson], [2.43], [15], [0], [0], [—],
-    [Homogeneous, heavy offspring ($sigma=2$)], [3.64], [658], [$6.4 times 10^(-4)$], [0], [—],
-    [Heterogeneous, shared fitness ($sigma=1$)], [12,433], [$100,000$#footnote[Censored: supercritical cascades were stopped at $10^5$ nodes.]], [12.6%], [12.4%], [12.4%],
-    [Heterogeneous, shared fitness ($sigma=2$)], [34,691], [$100,000$], [34.9%], [34.7%], [34.7%],
+    [Homogeneous, heavy offspring ($sigma=0.6$)], [2.49], [22], [0], [0], [—],
+    [Heterogeneous, shared fitness ($sigma=0.5$)], [3,048], [$10^6$#footnote[Censored: supercritical cascades were stopped at $10^6$ nodes.]], [0.32%], [0.31%], [0.30%],
+    [Heterogeneous, shared fitness ($sigma=0.6$)], [13,553], [$10^6$], [1.41%], [1.36%], [1.35%],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
     [Branching-process falsification of the missing tail.],
-    [Cascade-size statistics of four branching models sharing the empirical $R_0 approx 0.22$, compared against the simulated 100K cascades. The homogeneous Poisson model reproduces the simulation; only the heterogeneous shared-fitness model produces a heavy tail, and it does so with the same mean $R_0$.],
+    [Cascade-size statistics of four branching models sharing the empirical $R_0 approx 0.22$, compared against the simulated 100K cascades. The fitness scale $sigma$ is set so that only a small minority of posts ($0.3$–$1.4%$) go supercritical, matching the rarity of viral cascades in the real data. The homogeneous Poisson model reproduces the simulation; only the heterogeneous shared-fitness model produces a heavy tail, and it does so with the same mean $R_0$.],
   )
 ) <tbl-res-gw-falsification>
 
@@ -452,7 +452,7 @@ The three models differ only in *where* the randomness sits. In the *homogeneous
   )
 ) <fig-res-gw-falsification>
 
-@tbl-res-gw-falsification and @fig-res-gw-falsification lead to three conclusions. First, the homogeneous Poisson model lands on top of the simulation: the simulation *is* a homogeneous subcritical branching process, and it behaves exactly as such. This is a validation of the CTIC/homogeneous-IC implementation, not an indictment of it. Second, a heavy-tailed offspring law is *not* sufficient: the homogeneous heavy-offspring model only pushes the maximum to $approx 650$, because a lucky node's burst does not compound --- its children are fresh independent draws. Third, it is the *shared* per-post fitness that does the work: when one $a_i$ multiplies the reproduction of every node in the cascade, the rare post with $a_i > 1 slash R_0$ grows at every generation and explodes, lifting the tail to $100,000$ nodes with $12$–$35%$ of cascades above $100$ reposts --- while the mean $R_0$ stays exactly the same.
+@tbl-res-gw-falsification and @fig-res-gw-falsification lead to three conclusions. First, the homogeneous Poisson model lands on top of the simulation: the simulation *is* a homogeneous subcritical branching process, and it behaves exactly as such. This is a validation of the CTIC/homogeneous-IC implementation, not an indictment of it. Second, a heavy-tailed offspring law is *not* sufficient: the homogeneous heavy-offspring model barely moves the maximum (from $15$ to $22$), because a lucky node's burst does not compound --- its children are fresh independent draws. Third, it is the *shared* per-post fitness that does the work: when one $a_i$ multiplies the reproduction of every node in the cascade, the rare post with $a_i > 1 slash R_0$ grows at every generation and explodes, lifting the tail to $10^6$ nodes --- while the mean $R_0$ stays exactly the same. The effect is concentrated in a small minority ($0.3$–$1.4%$ of cascades above $100$ reposts), which is precisely what a viral post is: rare and enormous, not common.
 
 The missing heavy tail is therefore not a bug, and not primarily a matter of the queue, the topology, or the calibrated repost weight. It is the *content-agnostic* and *homogeneous-policy* assumptions of @sec-method-des-assumptions: they collapse the reproduction number to a single subcritical value shared by every post, and a branching process cannot turn that into a heavy tail. The remedy is a per-post latent quality ---an embedding that modulates the policy--- exactly the direction of @sec-future-content and @sec-future-content-homophily. Because the branching-process account predicts both the thin tail of the homogeneous simulation and the heavy tail of the heterogeneous extension, it converts that future work from a speculation into a falsifiable, well-motivated next step.
 
