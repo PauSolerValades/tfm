@@ -349,7 +349,9 @@ The simulation manages to replicate all the medians and averages of almost all t
 
 *Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model a good representation of the nature of the problem. Despite matching the bulk accurately, it consistently underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
 
-== Finding the Missing Tail
+The truncation is in fact two distinct truncations. The first is *depth*: the cascade dies out before it can grow deep. The second is *width*: even the first hop --- a single node's direct reposts --- is capped. @sec-finding-missing-tail addresses the former, and @sec-missing-width the latter.
+
+== Finding the Missing Tail <sec-finding-missing-tail>
 
 This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process. #todo[cite]. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
@@ -415,27 +417,9 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
   )
 ) <fig-res-offspring>
 
-=== Reach Is Throttled by the Feed, Not the Policy
-
-@tbl-res-r0 reduces the entire tail to a single number, $R_0 approx 0.22$. That immediately raises a question: the sampled graph has a heavy-tailed degree distribution (@sec-data-topology), so high-degree nodes ought to push $R_0$ upward --- unless audience size does not translate into reach. @fig-res-attention-cap tests exactly this.
-
-For every node that reposted, the figure compares its cascade out-degree ---the number of its followers that reposted it--- against its total follower count. A pure Independent Cascade on the static graph exposes every follower once, and each reposts with probability $pi_"repost"$, so the expected out-degree grows linearly as $pi_"repost" times ("followers")$: the red line. If the only constraint were that $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), the expectation would be $pi_"repost" times 0.02 times ("followers")$: the orange line. The blue curve is what the simulation actually produces.
-
-That curve is essentially flat across four orders of magnitude of follower count (log-log slope $approx 0$): a node with ten followers and a node with ten thousand both generate $approx 0.2$ cascade children. The realized efficiency (children per follower) therefore decays from $approx 18%$ to $approx 5 dot 10^(-4)%$ as the audience grows.
-
-This decoupling is not an artifact of the LIFO stack specifically: it is the finite-attention nature of feed-based platforms. A user reads only a handful of posts per session, so a post is buried under whatever arrives after it; the stack is one implementation of that ceiling, but the ceiling itself is fundamental to any reverse-chronological feed. The direct consequence for the branching-process account is that $R_0$ cannot be rescued by degree heterogeneity --- the feed throttles the exposure of even the largest accounts, which is the second, independent reason the tail stays truncated.
-
-#figure(
-  image("../images/results/attention_cap_100K.png", width: 100%),
-  caption: flex-caption(
-    [Cascade out-degree versus audience size (100K).],
-    [Left: mean cascade out-degree of a reposting node versus its follower count (log-log). The naive Independent-Cascade prediction (red) and the online-only bound (orange) grow linearly; the realized out-degree is flat. Right: the realized efficiency (children per follower) decays with reach.],
-  )
-) <fig-res-attention-cap>
-
 === Content Is the Missing Ingredient
 
-Neither subcriticality nor the attention bottleneck *requires* homogeneity. The remaining question is whether adding per-post content ---while keeping every other mechanic fixed--- recovers the tail. @fig-res-gw-falsification answers it with a minimal branching-process falsification in which all models share the empirical $R_0$ of @tbl-res-r0.
+Subcriticality explains why the tail is thin, but it does not say *which* assumption to lift to recover it. The remaining question is whether adding per-post content ---while keeping every other mechanic fixed--- recovers the tail. @fig-res-gw-falsification answers it with a minimal branching-process falsification in which all models share the empirical $R_0$ of @tbl-res-r0.
 
 The three models differ only in *where* the randomness sits. In the *homogeneous* model every post has offspring $~"Poisson"(R_0)$: the reproduction number is a single constant shared by every post. In the *homogeneous heavy-offspring* model every node independently draws offspring from the same heavy-tailed law (a Poisson–lognormal with the same mean): the offspring law is heavy, but no post has a property of its own. In the *heterogeneous* model each post draws a fitness $a_i ~ "Lognormal"$ with $EE(a_i) = 1$ once, and every node of that post's cascade has offspring $~"Poisson"(R_0 a_i)$: the post's quality is a shared latent variable, so a rare post with $a_i > 1 slash R_0$ becomes supercritical and its growth compounds across generations.
 
@@ -471,5 +455,31 @@ The three models differ only in *where* the randomness sits. In the *homogeneous
 @tbl-res-gw-falsification and @fig-res-gw-falsification lead to three conclusions. First, the homogeneous Poisson model lands on top of the simulation: the simulation *is* a homogeneous subcritical branching process, and it behaves exactly as such. This is a validation of the CTIC/homogeneous-IC implementation, not an indictment of it. Second, a heavy-tailed offspring law is *not* sufficient: the homogeneous heavy-offspring model only pushes the maximum to $approx 650$, because a lucky node's burst does not compound --- its children are fresh independent draws. Third, it is the *shared* per-post fitness that does the work: when one $a_i$ multiplies the reproduction of every node in the cascade, the rare post with $a_i > 1 slash R_0$ grows at every generation and explodes, lifting the tail to $100,000$ nodes with $12$–$35%$ of cascades above $100$ reposts --- while the mean $R_0$ stays exactly the same.
 
 The missing heavy tail is therefore not a bug, and not primarily a matter of the queue, the topology, or the calibrated repost weight. It is the *content-agnostic* and *homogeneous-policy* assumptions of @sec-method-des-assumptions: they collapse the reproduction number to a single subcritical value shared by every post, and a branching process cannot turn that into a heavy tail. The remedy is a per-post latent quality ---an embedding that modulates the policy--- exactly the direction of @sec-future-content and @sec-future-content-homophily. Because the branching-process account predicts both the thin tail of the homogeneous simulation and the heavy tail of the heterogeneous extension, it converts that future work from a speculation into a falsifiable, well-motivated next step.
+
+== The Missing Width <sec-missing-width>
+
+The previous section accounted for the *depth* of the missing tail: $R_0 < 1$ explains why cascades die young. But @tbl-res-vs-data also flagged a second, independent truncation --- the *width*. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$), and a subcritical branching process says nothing about it: a cascade could still be a single enormous star --- one node with thousands of direct reposts --- before dying out. The simulation never produces such a star.
+
+The reason is that the out-degree factorizes into two terms, and only one of them is the policy:
+
+$ "out-degree" = "impressions" times "repost rate" $
+
+Content --- the per-post fitness $a_i$ of the previous section --- lives in the second term: it multiplies the probability of reposting *given* that a follower sees the post. The truncation studied here lives in the first term: the number of followers that ever *see* the post is capped, so no amount of content can widen the cascade.
+
+@fig-res-attention-cap measures the impression factor directly. For every node that reposted, it compares the node's cascade out-degree against its total follower count. A pure Independent Cascade exposes every follower once, and each reposts with probability $pi_"repost"$, so the expected out-degree grows linearly as $pi_"repost" times ("followers")$ (red). If the only constraint were the $approx 2%$ of users online at any instant (@tbl-cal-stable-equil), the expectation would be $pi_"repost" times 0.02 times ("followers")$ (orange). The blue curve is what the simulation actually produces.
+
+The blue curve is essentially flat across four orders of magnitude of follower count (log-log slope $approx 0$): a node with ten followers and a node with ten thousand both generate $approx 0.2$ cascade children --- about $17$ impressions at the calibrated $pi_"repost"$. The realized efficiency (children per follower) decays from $approx 18%$ to $approx 5 dot 10^(-4)%$ as the audience grows.
+
+#figure(
+  image("../images/results/attention_cap_100K.png", width: 100%),
+  caption: flex-caption(
+    [Cascade out-degree versus audience size (100K).],
+    [Left: mean cascade out-degree of a reposting node versus its follower count (log-log). The naive Independent-Cascade prediction (red) and the online-only bound (orange) grow linearly; the realized out-degree is flat. Right: the realized efficiency (children per follower) decays with reach.],
+  )
+) <fig-res-attention-cap>
+
+This impression ceiling is the finite-attention nature of feed-based platforms: a user reads only a handful of posts per session, so a post is buried under whatever arrives after it. The LIFO stack is one implementation of that ceiling, but the ceiling itself is fundamental to any reverse-chronological feed.
+
+A further homogeneity gap compounds the ceiling. Every user draws its session behaviour from the same across-user distribution, independently of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and --- because high-degree nodes tend to follow high-degree nodes --- their followers are no more attentive either. Correlating activity with in- and out-degree is therefore the most direct lever on the impression factor, in exact parallel to the content lever of the previous section. It does not remove the structural ceiling --- $2%$ online and a finite scroll depth remain --- but it is the first place the model would have to move to widen the cascades toward the real broadcast regime.
 
 
