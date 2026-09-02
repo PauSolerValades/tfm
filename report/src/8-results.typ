@@ -349,7 +349,7 @@ The simluation manages to replicate all the medians and averages of almost all t
 
 *Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model be a good representation of the nature of the problem. Despite matching accurately the bulk, it consistenlty underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
 
-== A Branching-Process Account of the Missing Tail
+== Finding the Missing Tail
 
 This section offers an explanation of why the simulation manages to accurately reproduce accurately the bulk of the distribution but falls short of replicating the tail part while modeling cascades as a Galton-Watson process. #todo[cite]. Summarizing, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
@@ -404,7 +404,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
   )
 ) <tbl-res-r0>
 
-@fig-res-offspring shows the offspring distribution: roughly 83% of reposts generate no further repost, and the mean sits far below one. This is the *mechanism* behind the truncated tail of @tbl-res-vs-data, and it is a property of the homogeneous policy, not of the network.
+@fig-res-offspring shows the offspring distribution $Z$: roughly 83% of reposts generate no further repost, and the mean sits far below one. This is the reason why the tail will always be truncated, and why @tbl-res-vs-data shows this consistenlty in all metrics: it is a property of the model consequence of the homogeneous policy, not of the network.
 
 #figure(
   image("../images/results/offspring_distribution_100K.png", width: 100%),
@@ -416,7 +416,11 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Reach Is Throttled by the Feed, Not the Policy
 
+#comment[this sections does appear out of nowhere: why is it related with the last part? Where did we showcased the simulation had this problem? this is a problem of the attention mechanics, but in depth it is not related to the actual stacks stuff, this is the nature of the platforms. the stack is the chosen algorithm, but this is far more fundamental.]
+
 Subcriticality explains why chains are short; it does not explain why even the *broadcast* reach is capped. @fig-res-attention-cap compares each reposting node's cascade out-degree against its total follower count. A pure Independent Cascade on the static graph predicts out-degree $prop$ followers; instead the realized out-degree is essentially *flat* across four orders of magnitude of follower count (log-log slope $approx 0$), and the efficiency (children per follower) decays from $approx 18%$ to $approx 5 dot 10^(-4)%$. The reverse-chronological timeline, the short sessions and the $approx 2%$ concurrent online fraction bury a post before its audience can see it: audience size does not translate into reach. This attention bottleneck operates independently of $pi$.
+
+#comment[where did figure came from exactly??? why are we multiplying the porbability with x?]
 
 #figure(
   image("../images/results/attention_cap_100K.png", width: 100%),
