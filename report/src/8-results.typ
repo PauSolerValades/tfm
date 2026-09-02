@@ -280,10 +280,10 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
   )
 ) <fig-res-nu-density>
 
+
 == Comparison with Bluesky Data
 
-#comment[Sketch — first-pass comparison of the simulated quantities against the real Bluesky values of @sec-data-reposts and @sec-data-virality. To be refined: significance tests and a figure overlaying @fig-data-nu-density with @fig-res-nu-density.]
-
+With all the metric analyzed in both fronts, the comparison of real vs simulated data can be done.
 @tbl-res-vs-data contrasts the key metrics: the Bluesky values against each of the four simulated datasets (pooled over all runs).
 
 #figure(
@@ -318,8 +318,13 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
     table.hline(stroke: 0.3pt),
     [Broadcast cascades], [—], [71.05%], [80.1%], [79.4%], [80.3%], [81.6%],
     table.hline(stroke: 0.3pt),
-    [Repost exponent $alpha$ (mean)], [—], [2.053], [2.497], [2.692], [2.706], [2.927],
-    [Repost cutoff $x_"min"$ (mean)], [—], [12], [1.0], [1.76], [3.14], [4.78],
+    table.cell(rowspan: 3)[*Repost exponent $alpha$*], [mean], [2.053], [2.497], [2.692], [2.706], [2.927],
+    [min], [—], [2.464], [2.343], [2.255], [2.541],
+    [max], [—], [2.532], [2.978], [2.857], [2.973],
+    table.hline(stroke: 0.3pt),
+    table.cell(rowspan: 3)[*Repost cutoff $x_"min"$*], [mean], [12], [1.0], [1.76], [3.14], [4.78],
+    [min], [—], [1], [1], [1], [1],
+    [max], [—], [1], [18], [63], [5],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -328,26 +333,55 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
   )
 ) <tbl-res-vs-data>
 
-Read together, the verdicts are that the bulk of the distribution matches — both are tiny-and-shallow, broadcast-dominated cascades — but the tail is systematically truncated. Metric by metric:
+#todo[Add an overlay of @fig-data-nu-density with @fig-res-nu-density with just one dataset.]
 
-- *Cascade rate.* The simulation produces roughly half the real share of non-trivial cascades (6.6–7.8% vs. 16.32%), the direct effect of the calibrated 1.2% repost weight.
-- *Size.* The median matches (2 vs. 3), but the tail is ~7× shorter (max 1,697 vs. 12,720).
-- *Depth.* The median matches (1); the tail is ~10× shorter (13 vs. 131) — the sim never builds deep repost chains.
-- *Max out-degree.* Median off by one (1 vs. 2); tail ~5× shorter (1,599 vs. 7,768).
-- *$nu(T)$.* The sim is too shallow: mean 1.16–1.21 vs. 1.454, max 6.25 vs. 50.27.
-- *Viral $nu(T)$.* The biggest gap: simulated viral cascades sit *below* the broadcast floor (mean 1.585–1.716, median 1.5–1.667), while real ones average 2.142 with median 2.000 — half of the real viral cascades sit above $nu = 2$, and $311$ of them (0.04%) exceed $nu = 10$, which the sim never reaches. The "viral" regime is the weakest point of the calibration.
-- *Broadcast share.* The sim is more broadcast-shaped (79.4–81.6% vs. 71.05%).
-- *Reposts.* Lognormal in both, but the simulated exponent ($2.5$–$2.9$) decays faster than the real $2.053$, with a much lower cutoff ($x_"min" approx 1$–$5$ vs. $12$), consistent with the missing deep cascades.
+The following points explitit the main differences between real data and the simulation:
++ *Cascade rate.* The simulation produces roughly half the real share of non-trivial cascades (6.6–7.8% vs. 16.32%), the direct effect of the calibrated 1.2% repost weight.
++ *Size.* The median matches (2 vs. 3), but the tail is ~7× shorter (max 1,697 vs. 12,720).
++ *Depth.* The median matches (1); the tail is ~10× shorter (13 vs. 131) — the sim never builds deep repost chains.
++ *Max out-degree.* Median off by one (1 vs. 2); tail ~5× shorter (1,599 vs. 7,768).
++ *$nu(T)$.* The sim is too shallow: mean 1.16–1.21 vs. 1.454, max 6.25 vs. 50.27.
++ *Viral $nu(T)$.* simulated viral cascades sit below the broadcast floor (mean 1.585–1.716, median 1.5–1.667), while real ones average 2.142 with median 2.000 ---half of the real viral cascades sit above $nu = 2$, and $311$ of them (0.04%) exceed $nu = 10$, which the sim never reaches.
++ *Broadcast share.* The sim is more broadcast-shaped (79.4–81.6% vs. 71.05%).
++ *Reposts.* Lognormal in both, but the simulated exponent ($2.5$–$2.9$) decays faster than the real $2.053$, with a much lower cutoff ($x_"min" approx 1$–$5$ vs. $12$), consistent with the missing deep cascades.
+
+The simluation manages to replicate all the medians and averages of almost all the quantities: cascade size (2), cascade depth (3), max out-degree (4). There are some other quantities such as the broadcast share (7), and $nu(T)$ (5) where the simulation follows short of actual human behaviour (more broadcast than the real data, shallower virality than real data) almost like the model did not allow the content to propagate as far as it's real counterpart. Lastly, the simulation did not manage to reproduce any true depth viral cascade (6), nor generate as many real cascades (1).
+
+*Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model be a good representation of the nature of the problem. Despite matching accurately the bulk, it consistenlty underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
 
 == A Branching-Process Account of the Missing Tail
 
-The comparison of @tbl-res-vs-data can be compressed into one sentence: the simulation reproduces the *bulk* of the cascade-size distribution but not its *tail*. This section shows that the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions, and it identifies exactly which assumption is responsible.
+This section offers an explanation of why the simulation manages to accurately reproduce accurately the bulk of the distribution but falls short of replicating the tail part while modeling cascades as a Galton-Watson process. #todo[cite]. Summarizing, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
-=== The Cascade as a Galton–Watson Process
+=== Cascades are Galton–Watson Processes
 
-Every cascade is a rooted tree: the original post is the root, and each repost is a node whose children are the reposts it directly generates. Under the assumptions of @sec-method-des-assumptions ---homogeneous policy, content-agnostic posts, independent actions--- every node draws its number of children from the *same* distribution, independently of everything else. A cascade is therefore exactly a Galton–Watson branching process. Its behaviour is governed by a single parameter, the reproduction number $R_0$: the mean number of reposts generated by one repost.
+Let us first define what a Galton-Watson process is. Let us consider a simple stochastic model for how a population size grows ${X_n}_(n in NN)$.
 
-@tbl-res-r0 reports $R_0$ estimated directly from the simulated cascade trees (the mean offspring per reposting node). It is $approx 0.22$ in every dataset, while the mean *seed* (direct reposts of the root) is $approx 1.2$–$1.3$. Since $R_0 < 1$, the process is *subcritical*: every repost replaces itself with less than one further repost, the cascade dies out after a few generations, and the size distribution is exponentially bounded. A heavy tail is mathematically impossible at $R_0 approx 0.22$, regardless of the topology.
+Assumptions:
++ The population grows in generations: $forall k in ZZ^+$ let $Z_k$ denote the number of members in the $k+1$ generation.
++ Each member of the $k$-th generation gives birth to a familiy (can be empty) of members of the $k+1$ generation.
++ The number of descendants of a given individual is $X$, where $PP(X = i) = p_i$
++ The familiy form a collection of independent random variables iid to $X$ 
+
+#def(name: "Galton-Watson process")[
+  Concising all the assumptions in one, a Galton-Watson process is the stochastic process defined by the following recursion
+  $
+    X_(k+1) = sum_(j=1)^X_k Z_i^(k)
+  $ 
+]
+
+Let's map now the cascades concepts to the GW assumptions. A cascade is an stochastic process ${X_n}_(n in NN)$ which grows its population in generations $Z_k$. The generation growth can be empty (a user does not repost therefore the cascade will not expand from that node), and the users that have seen this post is exactly the sum of all the users seen so far plus the users expanded in this generation. As the $pi$ policy is non changing and homogenerous per user, as well as posts not having content, both 3 and 4 from the assumptions are prefectly satisfied, which are the homogeneous assumptions of @sec-method-des-assumptions: every node draws the number of children from the same distribution, independently of everything else.
+
+As the cascades are a GW process, now we can know without the need of costly simulations how long is the cascade is going to survive, with the reproduction number $R_0$.
+
+#def(name: "Reproduction Number")[
+  The reproduction number is defined as $R_0 := E(X)$. We can classigfy the GW process as the following according to the value of $R_0$.
+  - $R_0 < 0$: the process is not self-sustaniable and will extinguish.
+  - $R_0 = 0$: the process is self-sustainable and will extinguish.
+  - $R_0 > 0$: the process will not extinguish, and the probability of not extintion is $1 - d > 0$, where $d$ is the probability of ultimate extintion.
+]
+
+We can compute $R_0$ from the simulation traces, which are the contents of @tbl-res-r0.  It is $approx 0.22$ in every dataset, while the mean seed (direct reposts of the root) is $approx 1.2$–$1.3$. Since $R_0 < 1$, the process is subcritical: every repost replaces itself with less than one further repost, the cascade will extinct after a few generations, and the size distribution is exponentially bounded. A heavy tail is mathematically impossible at $R_0 approx 0.22$, regardless of the topology.
 
 #figure(
   table(
