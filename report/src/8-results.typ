@@ -444,28 +444,20 @@ The missing heavy tail is therefore not a bug, and not primarily a matter of the
 
 == The Missing Width <sec-missing-width>
 
-The previous section accounted for the *depth* of the missing tail: $R_0 < 1$ explains why cascades die young. But @tbl-res-vs-data also flagged a second, independent truncation --- the *width*. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$), and a subcritical branching process says nothing about it: a cascade could still be a single enormous star --- one node with thousands of direct reposts --- before dying out. The simulation never produces such a star.
+The previous section accounted for the *depth* of the missing tail: $R_0 < 1$ explains why cascades die young. But @tbl-res-vs-data also flags a second, independent truncation --- the *width*. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$), and a subcritical branching process says nothing about it: a cascade could still be a single enormous star --- one node with thousands of direct reposts --- before dying out. The simulation never produces such a star.
 
-The reason is that the out-degree factorizes into two terms, and only one of them is the policy:
+The width is set entirely at the first hop. Out-degree factorizes conceptually as
 
-$ "out-degree" = "impressions" times "repost rate" $
+$ "out-degree" = "impressions" times "repost rate", $
 
-Content --- the per-post reproduction number $m$ of the previous section --- lives in the second term: it multiplies the probability of reposting *given* that a follower sees the post. The truncation studied here lives in the first term: the number of followers that ever *see* the post is capped, so no amount of content can widen the cascade.
+and the truncation lives in the first term: the number of followers that ever *see* a post is capped, so no amount of content (the second term, of @sec-finding-missing-tail) can widen the cascade. Three ingredients of the model impose that cap.
 
-@fig-res-attention-cap measures the impression factor directly. For every node that reposted, it compares the node's cascade out-degree against its total follower count. A pure Independent Cascade exposes every follower once, and each reposts with probability $pi_"repost"$, so the expected out-degree grows linearly as $pi_"repost" times ("followers")$ (red). If the only constraint were the $approx 2%$ of users online at any instant (@tbl-cal-stable-equil), the expectation would be $pi_"repost" times 0.02 times ("followers")$ (orange). The blue curve is what the simulation actually produces.
+1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
+2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
+3. *Degree-independent activity.* Every user draws its session behaviour from the same distribution, regardless of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and its followers are no more attentive either.
 
-The blue curve is essentially flat across four orders of magnitude of follower count (log-log slope $approx 0$): a node with ten followers and a node with ten thousand both generate $approx 0.2$ cascade children --- about $17$ impressions at the calibrated $pi_"repost"$. The realized efficiency (children per follower) decays from $approx 18%$ to $approx 5 dot 10^(-4)%$ as the audience grows.
+The first two are structural and cannot be removed by any policy change. The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
 
-#figure(
-  image("../images/results/attention_cap_100K.png", width: 100%),
-  caption: flex-caption(
-    [Cascade out-degree versus audience size (100K).],
-    [Left: mean cascade out-degree of a reposting node versus its follower count (log-log). The naive Independent-Cascade prediction (red) and the online-only bound (orange) grow linearly; the realized out-degree is flat. Right: the realized efficiency (children per follower) decays with reach.],
-  )
-) <fig-res-attention-cap>
-
-This impression ceiling is the finite-attention nature of feed-based platforms: a user reads only a handful of posts per session, so a post is buried under whatever arrives after it. The LIFO stack is one implementation of that ceiling, but the ceiling itself is fundamental to any reverse-chronological feed.
-
-A further homogeneity gap compounds the ceiling. Every user draws its session behaviour from the same across-user distribution, independently of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and --- because high-degree nodes tend to follow high-degree nodes --- their followers are no more attentive either. Correlating activity with in- and out-degree is therefore the most direct lever on the impression factor, in exact parallel to the content lever of the previous section. It does not remove the structural ceiling --- $2%$ online and a finite scroll depth remain --- but it is the first place the model would have to move to widen the cascades toward the real broadcast regime.
+One honest limitation: the trace records *which* parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor cannot be cleanly separated from the repost probability in the current data. The hypothesis above is therefore a prediction, not a measurement; it is falsifiable by a single run with degree-correlated activity, which should lift the maximum out-degree and the broadcast share of @tbl-res-vs-data while leaving the depth tail unchanged.
 
 
