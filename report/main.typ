@@ -259,9 +259,9 @@
 
 #include "src/annex/hardware.typ"
 
-#pagebreak()
-= Branching-Process Derivation of the Missing Tail
-<apx-branching>
+// #pagebreak()
+// = Branching-Process Derivation of the Missing Tail
+// <apx-branching>
 
-#include "src/annex/branching-math.typ"
+// #include "src/annex/branching-math.typ"
 

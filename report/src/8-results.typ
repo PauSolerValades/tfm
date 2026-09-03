@@ -351,7 +351,7 @@ The simulation manages to replicate all the medians and averages of almost all t
 
 The truncation is in fact two distinct truncations. The first is *depth*: the cascade dies out before it can grow deep. The second is *width*: even the first hop --- a single node's direct reposts --- is capped. @sec-finding-missing-tail addresses the former, and @sec-missing-width the latter.
 
-== Finding the Missing Tail <sec-finding-missing-tail>
+== The Missing Depth <sec-finding-missing-tail>
 
 This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process. #todo[cite]. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
@@ -419,45 +419,67 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Content as a Fix Hypothesis
 
-Could lifting the homogeneity assumptions lengthen the tail? This is not implemented in the simulation ---it is out of scope and belongs to Future Work--- but, since the reposter process is a Galton–Watson process, the effect of content can be explored by modifying the stochastic process directly. The argument below is the first-moment version; the full derivation, including the exact tail exponent, is in @apx-branching.
+This section presents the intuition behind why adding content would make the simulation recreate the heavy tail more like real data without coding a another full simulation ---as to add content would be an enormous work effort and is delegated to Future Work (see #todo[cite])--- with the known knowledge of the stochastic process a cascade represents.
+
+// The argument below is the first-moment version; the full derivation, including the exact tail exponent, is in @apx-branching.
 
 Consider two regimes that share the same *average* reproduction number $R_0$:
 
-+ *Homogeneous (current model).* Every post shares the same reproduction number $m = R_0 < 1$, so the cascade is a subcritical Galton–Watson process. For a fixed $m < 1$ the expected size is finite and the size distribution has an exponentially bounded tail @athreya1972branching.
-+ *Heterogeneous (content).* Each post draws its own reproduction number $m ~ F$ with $EE(m) = R_0$, but with positive density at $m = 1$ --- posts whose latent quality makes them near-critical. The cascade is then a *mixture* of subcritical branching processes, one per post quality.
++ *Homogeneous (current model).* Every post shares the same reproduction number $m = R_0 < 1$, so the cascade is a subcritical Galton–Watson process. We say that this model has *randomness at a node level*: the cascade growth depends only of the policy $pi$, applied in a per user basis when they perfom an action over a post. For a fixed $m < 1$ the expected size is finite and the size distribution has an exponentially bounded tail @athreya1972branching.
++ *Heterogeneous (content).* This model emulates the post having a latent quality by drawing its own reproduction number $m ~ F$ with $EE(m) = R_0$. Now the overall cascade size distribution is now a mixture model: an aggregation of thousands of subcritical branching processes. This model has shifted the *randomness to the post level*.
 
-For a fixed subcritical $m$,
+Homogeneous model (as seen in the previous section) we know it does not generate a heavy tail as it's a GW process with a $R_0 approx 0.22$, assumed the same per cascade as posts do not have content. The heterogeneous model in contrast can write the expected cascade for any fixed post with a fixed subcritical $m$ as a finite quantity with
 
 $
   EE(S | m) = frac(1, 1 - m),
 $
 
-so mixing over the post quality gives
+With this quantity, using the Law of Total Expectation, we can find the expected cascade size in all the platform, which can be seen as the same of taking into account all the existing post qualities given by $F$.
 
 $
   EE(S) = integral_0^1 frac(1, 1 - m) d F(m).
-$
+$ <eq-exp-s>
 
-If $F$ has positive density at $m = 1$ --- a non-negligible fraction of posts sitting arbitrarily close to criticality --- this integral diverges and $EE(S) = infinity$: the mixture has a heavy tail, while every fixed $m$ produces a thin one. The same average $R_0$, but the tail changes from exponential to heavy purely by moving the randomness from *which node reproduces* to *which post reproduces* --- which is exactly what a per-post latent quality, the content signal that modulates the policy, would achieve.
+By analyzing the convergence of <eq-exp-s> we can see the heterogeneous model will generate a heavy tail.
++ If the support of $F$ is bounded away from $1^-$ (_i.e_ $m <= c <= 1$ where $c$ is far away enough from $1^-$) then the intergal will converge and $E(S) < inf$, implying the tail will remain exponentially bounded.
++ However, if the support of $F$ lets $m -> 1^-$ arbitrarely (_i.e._ a small fraction of posts are near critical, so good they become viral), the integral will diverge, therefore $E(S)= inf$.
 
-The missing heavy tail is therefore not a bug, and not primarily a matter of the queue or the topology. It is the *content-agnostic* and *homogeneous-policy* assumptions of @sec-method-des-assumptions: they collapse the reproduction number to a single subcritical value shared by every post, and a homogeneous branching process cannot turn that into a heavy tail. Homogeneity removes the tail; heterogeneity is sufficient to restore it. The remedy ---a per-post latent quality that modulates the policy--- is precisely the direction of @sec-future-content and @sec-future-content-homophily, and the branching-process account turns it from a speculation into a quantitatively testable next step.
+The divergence of the mean of $S$ proves that the tail will not be exponentially bounded ---like an exponential distribution--- but a heavy-tail behaviour ---such a power-law or lognormal distribution--- where rare but enormous cascades will dominate the expected value.
+
+Therefore, while mantaining the same size average $R_0$, the introduction of post-level randomness, where a node can take a different action according to the post is acting upon, can transform the exponential tail of the homogeneous model (@sec-method-des-assumptions) into a heavy-tail seen in the empirical data. How to achive this efficiently and in scope is explained in #todo[future work cite]  
 
 == The Missing Width <sec-missing-width>
 
-The previous section accounted for the *depth* of the missing tail: $R_0 < 1$ explains why cascades die young. But @tbl-res-vs-data also flags a second, independent truncation --- the *width*. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$), and a subcritical branching process says nothing about it: a cascade could still be a single enormous star --- one node with thousands of direct reposts --- before dying out. The simulation never produces such a star.
+This section explains the missing width of the simulated cascades. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$). A subcritical branching process does not explain why the width of the cascade is never achieved, it just talked about the depth.
 
-The width is set entirely at the first hop. Out-degree factorizes conceptually as
+The width of the cascade is set entirely at the first propagation, _i.e_ by the amount of people the post creation is followed by. Specifically, out-degree can be factorized as
 
 $ "out-degree" = "impressions" times "repost rate", $
 
-and the truncation lives in the first term: the number of followers that ever *see* a post is capped, so no amount of content (the second term, of @sec-finding-missing-tail) can widen the cascade. Three ingredients of the model impose that cap.
+Under the Independent Cascade model, out-degree should be explained by:
+
+$ EE("out-degree") = d_"followers" times pi_"repost" $
+
+predicting that large hubs should genereate very wide cascades. Then, why is the simulation not generating them? The LIFO-based queue attention mechanism.
+
+The realitiy of the simulation is that $d_"followers"$ is far less than it should be due to a post being buried in the user timeline. Normal Independent-Cascade models, every user sees every post, making the propagation far more usable. Three ingredients of the model impose that cap.
 
 1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
 2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
 3. *Degree-independent activity.* Every user draws its session behaviour from the same distribution, regardless of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and its followers are no more attentive either.
+4. *Inter-action time.* The time a user needs to see the post is a delicate quantity that (remeber #todo[inter-action time cal]) has been eyeballed to make a plausible policy $pi$. Making the users more active of changing the distribution could affect the number of posts a user sees per session, potentially mitigating the attention bottleneck.
 
-The first two are structural and cannot be removed by any policy change. The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
+The first one is a consequence of the session measurement, and it's a natural quantity emerging from the simulation dynamics (see #todo[cal-stability]) therefore cannot be changed. Fourth could be explored with more time, specially moving away from an exponential of by designing a more specific study regarding how to measure this quantity (see #todo[appendix how to obtain better data]). 
 
-One honest limitation: the trace records *which* parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor cannot be cleanly separated from the repost probability in the current data. The hypothesis above is therefore a prediction, not a measurement; it is falsifiable by a single run with degree-correlated activity, which should lift the maximum out-degree and the broadcast share of @tbl-res-vs-data while leaving the depth tail unchanged.
+The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
 
+
+But the second limitation is actually very well in reach to modify. This work has assumed a LIFO reverse chronological timeline out of necessity, and modifications to the queue structure could lead to vastly different ---and maybe better--- results.
+
+#todo[Make the random timeline!]
+
+#comment[Once this document is in the draft, i can modify the simulation and make just a small run that, instead of having a lifo timeline, has a "see a random post from the last period", and see if the result keep giving shallow cascades. This is the most conceptually similar thing to a recommender ;)
+]
+
+Implementation limitation of the simulation for this analysis: the trace records which parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor cannot be cleanly separated from the repost probability in the current data. The hypothesis above is therefore a prediction, not a measurement. This is easy fixable in the simulation but does not have a empirical data counterpart, as we just can know which post have been shown to which users.
 
