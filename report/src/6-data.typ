@@ -1,7 +1,6 @@
 #import "utils.typ": todo, comment, flex-caption
 
-#todo[Rewrite this header when the actual section is done]
-This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in #todo[appendix data]. Then, the two quantities described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's est in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in the #todo[mark appendix]
+This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in @apx-data. Then, the two quantities described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's est in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in @apx-topology
 
 
 == Firehose Data Description
@@ -30,7 +29,7 @@ There are a total of 3.08 million distinct users in the dataset, and events are 
   )
 ) <fig-userevent-dist>
 
-This proves that there are an enormous quantity of users with both very few events in general in the dataset. In order to obtain more informative data, the users with less than two $(<=2)$ events per day, representing a 29% of distinct users out of the dataset (2.19 million users). Additionally, we intenionally exclude some outdated events in the dataset (check @anx-data-eventlist) as well as all the `update` and `delete` variants of all the events, as they do not have the `createdAt`, making them useless for the session construction (see #todo[cite session]).
+This proves that there are an enormous quantity of users with both very few events in general in the dataset. In order to obtain more informative data, the users with less than two $(<=2)$ events per day, representing a 29% of distinct users out of the dataset (2.19 million users). Additionally, we intenionally exclude some outdated events in the dataset (check @anx-data-eventlist) as well as all the `update` and `delete` variants of all the events, as they do not have the `createdAt`, making them useless for the session construction (see @sec-method-session).
 
 #figure(
   image("../images/data/613_filtered_event_distribution.png", width: 100%),
@@ -53,7 +52,7 @@ To characterize the virality of posts in the dataset, we fit a power law to the 
   )
 ) <fig-data-reposts-hist>
 
-The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite lots of literature descibing them as power-law, it is perfectly normal for this to behave as a power-law. #todo[maybe a small citation here?]
+The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite lots of literature descibing them as power-law, it is perfectly normal for this to behave as a power-law @clauset2009powerlaw.
 
 == Structural Virality
 <sec-data-virality>
@@ -102,11 +101,11 @@ For the viral cascades alone, $nu(T)$ has mean $2.142$ (95% CI $[2.140, 2.144]$)
 
 The simulation requires a social graph to run on: that is, users and follows upon the information diffuses. This section covers the obtention of a subset of the Bluesky topology.
 
-As already explained in the event dataset description of the Firehose (see @sec-data-firehose), there are `graph_following_create`, `graph_following_delete`, `graph_following_block` and `graph_following_unblock`, and despite being just a #todo[compute the percent] of the total events, this allows us to reconstruct somewhat the topology of Bluesky ---or at least a subset--- organically.
+As already explained in the event dataset description of the Firehose (see @sec-data-firehose), there are `graph_following_create`, `graph_following_delete`, `graph_following_block` and `graph_following_unblock`, and despite being just a very few part of the total events, this allows us to reconstruct somewhat the topology of Bluesky ---or at least a subset--- organically.
 
 The dataset is 14 months of Firehose data also collected by the IDea_Lab, spanning from February 2025 to May 2026 with 88.4% calendar-day coverage (outages are 1) a 46-day window from July to August 2025 and an 8-day window from March to April 2026).
 
-This data was ingested and processed (more details on the ingest process in @apx-topology) and exported as a format called SCD Type 2 #todo[cite/explain on appendix] which allows the topology to be queries time-wise, making the reconstruction and query which edged have been added in a given time frame.
+This data was ingested and processed (more details on the ingest process in @apx-topology) and exported as a format called SCD Type 2 (see @apx-topology) which allows the topology to be queries time-wise, making the reconstruction and query which edged have been added in a given time frame.
 
 The resulting graph has $28.9 times 10^6$ users with $1.47 times 10^9$ follow edges, which is a massive network that, for the construction methodology, has all the properties of a social network topology.
 
@@ -114,10 +113,10 @@ The resulting graph has $28.9 times 10^6$ users with $1.47 times 10^9$ follow ed
 
 #comment[i think there is no need to actually have a Sampling subsection. We could just keep the normal one.]
 
-The complete 29-million-node follow graph exceeds the scope of the simulation execution aims, so  smaller subgraphs must be sampled while preserving the power-law degree distribution characteristic of social networks @kwak2010twitter #todo[check this citation].
+The complete 29-million-node follow graph exceeds the scope of the simulation execution aims, so  smaller subgraphs must be sampled while preserving the power-law degree distribution characteristic of social networks @kwak2010twitter.
 
 #comment[maybe there is no need to explain the used algorithm here, and if not we can delete the subsection Graph Sampling and merge it with the upper and lower one]
-The sampling strategy uses the Forest Fire sampling algorithm @leskovec2006sampling, which simulates a spreading process: starting from a random seed node, the sampler "burns" a fraction $p_f$ of the node's outgoing neighbours (forward burning) and $p_b$ of its incoming neighbours (backward burning), recursively visiting the newly discovered nodes. This method produces subgraphs that preserve the heavy-tailed degree distribution, community structure, and clustering coefficient of the original network — properties that simpler methods like random node or random edge sampling fail to replicate. #todo[look for a specific citation on why this is great for this]
+The sampling strategy uses the Forest Fire sampling algorithm @leskovec2006sampling, which simulates a spreading process: starting from a random seed node, the sampler "burns" a fraction $p_f$ of the node's outgoing neighbours (forward burning) and $p_b$ of its incoming neighbours (backward burning), recursively visiting the newly discovered nodes. This method produces subgraphs that preserve the heavy-tailed degree distribution, community structure, and clustering coefficient of the original network — properties that simpler methods like random node or random edge sampling fail to replicate.
 
 === Datasets Description
 

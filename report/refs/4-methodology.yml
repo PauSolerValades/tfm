@@ -116,3 +116,16 @@ wiener1947structural:
     title: Journal of the American Chemical Society
     volume: 69
     issue: 1
+
+
+miller2007complex:
+  type: Book
+  title: "Complex Adaptive Systems: An Introduction to Computational Models of Social Life"
+  author:
+    - Miller, John H.
+    - Page, Scott E.
+  date: 2007
+  publisher: Princeton University Press
+  location: Princeton, NJ
+  serial-number:
+    isbn: "978-0-691-12702-6"

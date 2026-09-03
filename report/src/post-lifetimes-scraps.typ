@@ -23,7 +23,7 @@ The parameter $delta$ is the maximum silence tolerated before declaring death --
 
 Each cascade contributes a pair $(x_i, e_i)$, where $x_i = u_i - c_i$ for a dead cascade ($e_i = 1$) and $x_i = C_i$ for a censored one ($e_i = 0$). This censoring is administrative and non-informative: the cutoff $t_h$ is fixed by the study design and independent of the cascade's own lifetime, so the censoring mechanism does not bias the estimator.
 
-The survival function is then estimated with the Kaplan--Meier product-limit estimator with the package #todo[name of the R package]
+The survival function is then estimated with the Kaplan--Meier product-limit estimator with the `survival` R package
 
 #comment[
   As the simulation is a simulation, i could make a run ran longer than duration and see which posts empirically survive (eg, duration + 10000 = horizon), as well as manually examine the future event set and the timelines of the users to see whcih posts from the original simulation are still waiting to be propagated. This takes advantage of what the simulation is, and makes sense to do, but implies changes!

@@ -10,3 +10,14 @@ lares-tukey:
     type: Web
     title: "lares: Analytics & Machine Learning Sidekick (R package)"
     url: https://cran.r-project.org/package=lares
+
+
+ross2014probability:
+  type: Book
+  title: "Introduction to Probability Models"
+  author: Ross, Sheldon M.
+  date: 2014
+  edition: 11th Edition
+  publisher: Academic Press
+  serial-number:
+    isbn: "978-0-12-407948-9"

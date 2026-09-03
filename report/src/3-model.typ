@@ -158,8 +158,6 @@ $ sum_(a in cal(R)'_(cal(U)cal(I))) pi (a) = 1 $
 
 This section details the model chosen to evaluate the information diffusion. To accurately capture the real-world dynamics of the phenomena, we integrate the mathematically rigorous Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a Queue-Based (see @sec-model-ctic), Activity-Driven simulation architecture.
 
-#todo[revise everything in here throrugly to shorten if possible]
-
 === Continuous-Time Diffusion in Microblogging
 <sec-method-ctic>
 

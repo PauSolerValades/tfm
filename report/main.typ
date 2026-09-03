@@ -200,6 +200,12 @@
 #include "src/annex/example.typ"
 
 #pagebreak()
+= Discarded Features
+<apx-mechanics>
+
+#include "src/annex/mechanics.typ"
+
+#pagebreak()
 = Implementation
 <apx-impl>
 
@@ -242,10 +248,10 @@
 #include "src/annex/pipeline.typ"
 
 #pagebreak()
-= Discarded Features
-<apx-mechanics>
+= Content Aware Posts
+<apx-content>
 
-#include "src/annex/mechanics.typ"
+#include "src/annex/future-content.typ"
 
 #pagebreak()
 = Software Stack

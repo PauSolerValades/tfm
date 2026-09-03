@@ -173,7 +173,7 @@ First metric to evaluate in the simulation is the reposts power-law, a character
   )
 ) <tbl-res-reposts>
 
-No run is a power law: the lognormal is preferred in every case, matching the real Bluesky data (@fig-data-reposts-hist), where $alpha = 2.053$ and the lognormal also wins decisively #todo[do we have the p-value?]. The simulated exponents are higher ($approx 2.5$–$2.9$ vs. $2.05$), and the large gap between mean and median at 100K and 500K reflects a bimodal fit ---the `x_min` selection oscillates between two regimes--- rather than a clean single exponent. @fig-res-powerlaw-comp showcases them graphically: the two tails share the Bluesky $x_"min" = 12$ so that the only difference is the exponent, and the simulated tail decays markedly faster. The picture shows that the long tail is pretty much well simulated, but the higher reposts posts have less reposts in the simulation.
+No run is a power law: the lognormal is preferred in every case, matching the real Bluesky data (@fig-data-reposts-hist), where $alpha = 2.053$ and the lognormal also wins decisively ($p = 1.18 dot 10^(-63)$, see @sec-data-reposts). The simulated exponents are higher ($approx 2.5$–$2.9$ vs. $2.05$), and the large gap between mean and median at 100K and 500K reflects a bimodal fit ---the `x_min` selection oscillates between two regimes--- rather than a clean single exponent. @fig-res-powerlaw-comp showcases them graphically: the two tails share the Bluesky $x_"min" = 12$ so that the only difference is the exponent, and the simulated tail decays markedly faster. The picture shows that the long tail is pretty much well simulated, but the higher reposts posts have less reposts in the simulation.
 
 #figure(
   image("../images/results/powerlaw_alpha_comparison.png", width: 100%),
@@ -353,7 +353,7 @@ The truncation is in fact two distinct truncations. The first is *depth*: the ca
 
 == The Missing Depth <sec-finding-missing-tail>
 
-This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process. #todo[cite]. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
+This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process @athreya1972branching. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
 === Cascades are Galton–Watson Processes
 
@@ -419,7 +419,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Content as a Fix Hypothesis
 
-This section presents the intuition behind why adding content would make the simulation recreate the heavy tail more like real data without coding a another full simulation ---as to add content would be an enormous work effort and is delegated to Future Work (see #todo[cite])--- with the known knowledge of the stochastic process a cascade represents.
+This section presents the intuition behind why adding content would make the simulation recreate the heavy tail more like real data without coding a another full simulation ---as to add content would be an enormous work effort and is delegated to Future Work (see @sec-future)--- with the known knowledge of the stochastic process a cascade represents.
 
 // The argument below is the first-moment version; the full derivation, including the exact tail exponent, is in @apx-branching.
 
@@ -446,7 +446,7 @@ By analyzing the convergence of <eq-exp-s> we can see the heterogeneous model wi
 
 The divergence of the mean of $S$ proves that the tail will not be exponentially bounded ---like an exponential distribution--- but a heavy-tail behaviour ---such a power-law or lognormal distribution--- where rare but enormous cascades will dominate the expected value.
 
-Therefore, while mantaining the same size average $R_0$, the introduction of post-level randomness, where a node can take a different action according to the post is acting upon, can transform the exponential tail of the homogeneous model (@sec-method-des-assumptions) into a heavy-tail seen in the empirical data. How to achive this efficiently and in scope is explained in #todo[future work cite]  
+Therefore, while mantaining the same size average $R_0$, the introduction of post-level randomness, where a node can take a different action according to the post is acting upon, can transform the exponential tail of the homogeneous model (@sec-method-des-assumptions) into a heavy-tail seen in the empirical data. How to achive this efficiently and in scope is explained in @sec-future-content  
 
 == The Missing Width <sec-missing-width>
 
@@ -467,9 +467,9 @@ The realitiy of the simulation is that $d_"followers"$ is far less than it shoul
 1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
 2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
 3. *Degree-independent activity.* Every user draws its session behaviour from the same distribution, regardless of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and its followers are no more attentive either.
-4. *Inter-action time.* The time a user needs to see the post is a delicate quantity that (remeber #todo[inter-action time cal]) has been eyeballed to make a plausible policy $pi$. Making the users more active of changing the distribution could affect the number of posts a user sees per session, potentially mitigating the attention bottleneck.
+4. *Inter-action time.* The time a user needs to see the post is a delicate quantity that (see @sec-cal-interaction) has been eyeballed to make a plausible policy $pi$. Making the users more active of changing the distribution could affect the number of posts a user sees per session, potentially mitigating the attention bottleneck.
 
-The first one is a consequence of the session measurement, and it's a natural quantity emerging from the simulation dynamics (see #todo[cal-stability]) therefore cannot be changed. Fourth could be explored with more time, specially moving away from an exponential of by designing a more specific study regarding how to measure this quantity (see #todo[appendix how to obtain better data]). 
+The first one is a consequence of the session measurement, and it's a natural quantity emerging from the simulation dynamics (see @sec-exec-stationary) therefore cannot be changed. Fourth could be explored with more time, specially moving away from an exponential of by designing a more specific study regarding how to measure this quantity (see @apx-sessions-dataset). 
 
 The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
 

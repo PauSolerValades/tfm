@@ -240,12 +240,12 @@ All the post creation timestamp have been clustered into sessions. Therefore, we
   )
 ) <fig-cal-create-post-per-session>
 
-As it can clearly be seen, there are not many post creation in the created sessions, with a 90.34% of users without any computable gap (users without post creation and just one). This is not a byproduct of the session definition: it is known the post creation is the most sparse of the engaging events, #todo[cite an article that says that] in any microblogging social network.
+As it can clearly be seen, there are not many post creation in the created sessions, with a 90.34% of users without any computable gap (users without post creation and just one). This is not a byproduct of the session definition: it is known the post creation is the most sparse of the engaging events @kooti2016twitter in any microblogging social network.
 
-This sparsity of posts creation when sessionized indicates that a parametric goodness-of-fit is impossible, as verified in @anx-create-gof
+This sparsity of posts creation when sessionized indicates that a parametric goodness-of-fit is impossible, as verified in @anx-create-gof .
 
 #todo[recompute this paragraph]
- The measurement yields $11.1 times 10^6$ within gaps, from which $65,311$ users pass the $n_"obs" >= 30$ filter.
+The measurement yields $11.1 times 10^6$ within gaps, from which $65,311$ users pass the $n_"obs" >= 30$ filter.
 
 === Sampling Creation Gaps
 <sec-cal-create-dist>
@@ -350,22 +350,14 @@ an exponential distribution.
 
 The second is structural: if the sequence of posts appearing on a user's
 timeline forms a Poisson process, the inter-arrival times are exponentially
-distributed and memoryless #todo[reference a Poisson process]. Memorylessness
+distributed and memoryless @ross2014probability. Memorylessness
 is reasonable here: the time a user has already spent on the current post
 carries no information about how long they will spend on the next one. Each
 post is an independent decision point.
 
-What is a plausible value for the mean $1/lambda$, the average dwell time per
-post? Viewport-dwell and eye-tracking studies of feed browsing place the
-typical dwell per item at roughly 1.5--3 seconds
-#todo[cite dwell-time reference]. We therefore adopt $1/lambda = 3$ seconds
-per post, i.e. the user scrolls past about 20 posts per minute. The data let
-us sanity-check this choice (see @sec-cal-policy), and @fig-pi-sensitivity
-shows that our conclusions are robust to the exact value.
+What is a plausible value for the mean $1/lambda$? #todo[say nicely i just made this up] We therefore adopt $1/lambda = 3$ seconds per post, i.e. the user scrolls past about 20 posts per minute. The data let us sanity-check this choice (see @sec-cal-policy), and @fig-pi-sensitivity shows that our conclusions are robust to the exact value.
 
-In conclusion, the estimation `user_inter_action` $~ "Exp"(1/3)$ is
-reasonable both experientially and structurally, as we will see in the next
-section.
+In conclusion, the estimation `user_inter_action` $~ "Exp"(1/3)$ is reasonable both experientially and structurally, as will be seen in the next section.
 
 == User Policy $pi$
 <sec-cal-policy>

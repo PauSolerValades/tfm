@@ -1,0 +1,148 @@
+#import "../utils.typ": *
+
+== Content-Aware Information Diffusion
+<apx-future-content>
+
+This section aims to highlight the limitations of the model proposed in this work, and where could be improved to be more faithful to a microblogging social network.
+
+Traditional information diffusion models (see @sec-sota-diffusionmodels) treat diffusion as a purely structural mechanic, stemming just from the network topology: if the network has the appropriate properties, the system will behave as an social network. The Independent Cascade model assigns a fixed transmission probability to each edge. This abstraction keeps the mathematics tractable, but it erases the primary driver of real social network behavior: people engage with content mainly because of what it says, not just because who said it.
+
+The current simulation inherits these limitations through its two simplifying assumptions: post homogeneity, and action independence (see @sec-method-des-assumptions). All posts are interchangeable and actions are memoryless. The following sections outline how could these two assumptions be lifted, building toward a content-aware simulation where user behavior emerges from the interaction between personal preferences and post semantics, not only the topology characterization.
+
+=== Why Content Matters
+
+Most classical diffusion models ---including the one presented in this work (@sec-model-ctic)--- deliberately focus on the "container" rather than the "content." The justification for this approach lies in the unique topological properties of social networks (see @sec-sota-topologies), where the observed flow of information often mimics real-world data patterns regardless of the message being sent. For instance, basic structural models can effectively replicate the heavy-tailed distribution of cascades found in empirical datasets without modeling a single word of the posts themselves.
+
+We see a tangential acknowledgment of content in the application of specific models: the Independent Cascade (IC) model is frequently utilized to simulate the viral spread of misinformation, with the underlying assumptions that is not difficult for a user to spread it, it does not need to be convinced. In contrast, there are other models that model believe change, as a user needs multiple exposures to similar content to actually transmit it to its followers. These choices imply an underlying assumption about the type of content being transmitted, even if the model itself remains mathematically agnostic to the semantics.
+
+By introducing content-aware mechanisms, one could model the most critical driver of social interaction: homophily. In @sec-sota-topo-homophily, the explanation has focused on explaining homophily to the network level (users will tend to follow similar users topology wise), but this holds true for user and content, as similar users will engage and create similar type of content. This is absolutely consistent with the clusters of users social networks are usually characterized, as they not only aggregate by real life contact, but also by hobbies and interests.
+
+In content-agnostic models, the probability $p$ that a user $u$ reposts item $i$ is often treated as a constant $p in [0,1]$, but in a content-aware approach, the dynamic could be related of the similarity of the content to a user function proportional to the similarity between the item $i$ and the user's historical preferences or "history" $cal(H)_u$ at time $t$.
+
+$ p(u, i) prop "sim"(i, cal(H)_u (t)) $
+
+But content similarity is only half the picture. Even the most perfectly aligned post may be ignored if the user has not been exposed to it enough times. The type of contagion ---whether an idea spreads after a single exposure or requires sustained reinforcement--- also depends on the nature of the content, and traditional models handle these regimes very differently.
+
+=== Simple and Complex Contagion
+<sec-future-content-contagion> 
+
+Information diffusion models fall into two broad families based on how a node transitions from inactive to active.
+
+*Simple contagions*, such as the spread of a viral meme or a breaking news headline, require only a single exposure to "infect" a user. The Independent Cascade (IC) model captures this elegantly: each newly activated node gets a single, independent chance to activate each of its outgoing neighbors, after which it becomes refractory and can never activate again @gomezrodriguez2011uncovering. This single-chance mechanic is well-suited for content that spreads impulsively --- a user sees a funny post, reposts it, and moves on.
+
+*Complex contagions* ---such as the adoption of a new political belief, a lifestyle change, or trust in a controversial claim--- require reinforcement from multiple sources to overcome social inertia @centola2007complex. A user might ignore a claim the first time they see it, but after hearing it from three different friends in separate communities, the cumulative social proof becomes persuasive.
+
+The Linear Threshold (LT) model formalizes the complex contagion dynamic: every node $i$ has a threshold $theta_i in [0, 1]$ representing their resistance to change, and every directed edge from neighbor $j$ to node $i$ carries an influence weight $w_{j i}$ @zhang2014chapter1. A node becomes active only when the cumulative influence from its currently active neighbors meets or exceeds its personal threshold:
+
+$ sum_(j in cal(N)(i)) w_(j i) >= theta_i $
+
+Because it strictly requires accumulated exposures, the LT model tends to accurately captures meso-scale properties of social networks: information easily saturates dense communities (clusters, echo chambers) but struggles to propagate through weak ties between communities @centola2007complex.
+
+The LT model, like the IC model, is content-blind. The threshold $theta_i$ measures how many neighbors are active, not what they are saying. A node in the LT model will adopt a belief after enough neighbors adopt it, regardless of whether that belief aligns with or contradicts everything the node has previously expressed. Complex contagion ---and the LT model--- translate this fact, but is still content blind. 
+
+=== Large Language Models and Generative Agents
+
+The most ambitious approach to content-aware simulation leverages Large Language Models (LLMs) within a Generative Agent-Based Modeling (GABM) framework. In this paradigm, each agent is powered by an LLM that generates posts, evaluates incoming content, and decides whether to engage ---all based on a rich internal representation of the agent's personality, beliefs, and history. Frameworks such as OASIS @oasis2024 demonstrate that LLM-driven agents can produce remarkably human-like diffusion patterns, including complex contagion effects that emerge naturally from semantic reasoning rather than from parameterized thresholds. 
+
+This approach solves both complex contagions and content awareness simultaneously. Content awareness is native: an agent reading a post understands its meaning and can assess alignment with the base prompt provided configuration. Complex contagion is emergent: repeated exposure to an idea from diverse will influence the decisions of the agents as they will remain in its history, which will be used to prompt a response.
+
+The cost, however, is computational. Every agent action requires at least one LLM inference, requiring GPU acceleration. In a simulation with millions of users generating tens of millions of events, this tends to be infeasible. One of the core strengths of the simulation approach is throughput: processing events in microseconds, not seconds. Introducing LLM inference inside the hot loop would increase execution time by orders of magnitude, sacrificing the scalability that makes the current engine valuable.
+
+This section proposes another solution not involving LLMs. Rather than giving every agent a full language model, we can represent both users and content as points in a shared embedding space ---a continuous vector space where semantic similarity corresponds to geometric proximity. This preserves the key property of content awareness (a user's response depends on how similar a post is to their interests) while keeping per-event computation to a single dot product. The next section theoretically develops what this embedding-based architecture could work and be implemented.
+
+=== Representing Users and Content as Embeddings
+
+The main strong point of this approach is to avoid heavyweight operations per-event in the middle of the hot loop, as they compromise simulation scalability, such as LLMs inference. An embedding is a fixed-dimensional vector that captures the semantic essence of a post or user in a form that supports fast arithmetic.
+
+Given a user $u in cal(U)$, their observable identity ---what they have contributed to the network--- is captured by their activity set $cal(A)_t (u)$, which includes both original creations and reposts (see @sec-model-ctic, @def-activity). This is distinct from the narrower set of original posts $cal(P)_t (u)$: a repost is an act of endorsement that shapes the user's public identity just as much as an original post.
+
+#def(name: "Post/User Embedding")[
+  A vector in a relatively small space $RR^n$ that if you apply the cosine similarity with a post embedding they will be similar if the information they encode is similar. 
+]
+
+Let $f$ be a embedding that satisfies the upper definition function that maps a post to a vector in $bb(R)^d$. The user's identity embedding $S_"id"(u, t)$ is an aggregation of everything they have output:
+
+$ S_"id" (u, t) = Gamma_"id" ({ f(i) | i in cal(A)_t (u) }) $
+
+where $Gamma_"id"$ is an aggregation function (e.g., a recency-weighted mean with exponential decay). Since $f(i)$ are vectors, $S_"id" (u, t)$ is itself a vector in the same space ---a compact numerical summary of the user's expressed interests and opinions, visible to the rest of the network.
+
+Separate from their output we can characterize every user by the content they interact with. We define an influenced state $S_"inf" (u, t)$ that captures how cumulative exposure has altered the user's creative landscape:
+
+$ S_"inf" (u, t) = Gamma_"inf" ({ w(i) dot f(i) | i in cal(T)_t (u) }) $
+
+where $cal(T)_t (u)$ is the user's timeline ---all posts they have been exposed to--- and $w(i)$ is a weight reflecting the depth of engagement with post $i$:
+
+$ w(i) = cases(
+  w_"like" &"if" i in cal(H)_t(u) "and" i in.not cal(A)_t(u),
+  w_"repost" &"if" i in cal(A)_t(u)
+) $
+
+with $w_"repost" > w_"like" > w_"seen" > 0$. The weight hierarchy acknowledges that posts the user actively engaged with leave a deeper imprint than those merely scrolled past. Critically, however, even content the user never liked or reposted contributes to $S_"inf"$: exposure alone, without endorsement, shapes what a user is likely to create next. This weights should be tuned accordingly to the data, as this is more of a thought experiment rather than a specific proposal.
+
+Taken together, $S_"id"$ and $S_"inf"$ attempt to represent the user's in two different ways: what they are (output identity) and what they are becoming (exposure-driven drift). This user-as-embedding representation allows us to circumvent the content-agnostic assumptions of the current model while adding a complex contagion dynamic.
+
+=== Content-Aware Post Generation
+<sec-future-content-generation>
+
+With users decomposed into identity and influenced states, content generation becomes a function of both who the user is and what they have been exposed to. Rather than synthesizing posts solely from the user's own historical output---the implicit assumption of a purely spontaneous creation model---we propose that creation draws from both the user's identity posts $cal(A)_t(u)$ and their exposure posts $cal(T)_t(u)$, with the balance governed by $alpha in [0, 1]$.
+
+More abstractly, to create a new post $i_"new"$ at time $t$, user $u$ samples a set of candidate posts $C(u, t)$ drawn from both identity and exposure:
+
+$ C(u, t) = "sample"( cal(A)_t (u), cal(T)_t (u); alpha ) $
+
+where $alpha$ controls the proportion drawn from identity versus exposure, and within $cal(T)_t (u)$ the sampling is biased by the engagement weight $w(i)$ defined in the previous section. At $alpha = 1$, the user creates purely from their own history---the content-agnostic limit equivalent to the spontaneous creation policy $lambda_0$ in the current simulation (see @sec-method-des-assumptions). As $alpha$ decreases, weighted sampling from $cal(T)_t (u)$ pulls the candidate pool toward content the user engaged with most.
+
+The new post embedding is then a convex combination of the candidate pool's embeddings:
+
+$ f(i_"new") = sum_(j=1)^K w_j dot f(i_j) quad "where" i_j in C(u, t) $
+
+with weights drawn from a Dirichlet distribution $bold(w) ~ "Dir"(bold(1))$, ensuring $sum w_j = 1$ and $w_j >= 0$. This would likely keep the generated embedding within the convex hull of semantically valid posts —-unlike additive Gaussian noise, which can drift into meaningless regions of the embedding space. The exact sampling strategy for constructing $C(u, t)$ and the optimal Dirichlet concentration remain open questions, as this is a design sketch rather than a finalized algorithm.
+
+This formulation captures a fundamental feedback loop absent from the current simulation. As a user scrolls through their timeline, the engagement-weighted sampling from $cal(T)_t(u)$ ensures that the candidate pool gradually drifts toward the semantic center of their information diet. A user embedded in a polarized community will see their creations shift toward that community's positions---not because they necessarily agree with everything they read, but simply because that is what surrounds them. Over time, $S_"id"$ follows: the user's own output (now part of $cal(A)_t(u)$) feeds back into their identity, closing the loop. This models the slow, feedback-driven nature of opinion change that purely spontaneous creation cannot produce.
+
+=== Homophily-Driven Action Policy
+<sec-future-content-homophily>
+
+This is arguably the most prominent change introduced in the content-aware simulation, the dynamically adaptation of the $pi_u$ policy to the post contents.
+
+The current simulation uses a static categorical policy $pi_u$ where every action (ignore, like, repost) has a fixed probability independent of what the user is looking at. A content-aware simulation replaces this with a dynamic policy that responds to the alignment between the user's state and the post's content.
+
+We define this alignment by calculating the cosine similarity $c$ between the user's identity embedding $S_"id"(u, t)$ and the post's embedding $f(i)$:
+
+$ c = S_C (S_"id"(u, t), f(i)) = frac(bold(S)_"id"(u, t) dot bold(f)(i) ||bold(S)_"id"(u, t)||, ||bold(f)(i)||) $
+
+To map this similarity score into a concrete decision, we compute a raw score (a "logit," $z_a$) for every possible action $a in cal(A)$ (ignore, like, repost) using two intuitive parameters, that would have to be tuned appropriately:
+
+- *Base Bias ($beta_a$)*: the default tendency of the user to take this action, regardless of content. Because users naturally scroll past most posts, "ignore" is assigned a high base bias, while "repost" is assigned a low one.
+- *Sensitivity ($theta_a$)*: how strongly the action reacts to content similarity $c$. "Like" and "repost" have high positive sensitivities (high $c$ rapidly increases their score), whereas "ignore" has a negative sensitivity (high $c$ actively reduces its likelihood). This is serves the same function as the Linear Threshold parameter.
+
+$ z_a = theta_a dot c + beta_a $
+
+The raw scores are converted into a valid probability distribution via softmax:
+
+$ pi_u (a | c) = frac(exp(z_a), sum_(k in cal(A)) exp(z_k)) $
+
+This formulation avoids deterministic predefined thresholds: high similarity exponentially boosts engagement likelihood. But homophily alone models each exposure independently — as if every time a user sees a post, they evaluate it in isolation. Real social influence is cumulative: the same post seen from multiple friends carries more weight.
+
+=== Integrating Complex Contagion
+
+The work of Meng et al. @meng2025spreading introduces a paradigm shift in understanding information spreading dynamics, moving beyond simple linear reinforcement. Their empirical analysis demonstrates that the probability of retweeting follows a pattern of "first rising and then falling," typically peaking at around two to three exposures ($x^* in [2, 3]$). This is driven by two competing mechanisms: social reinforcement (multiple exposures increase perceived importance) and social weakening (diminishing returns as overlapping audiences saturate).
+
+Meng et al. formalized this as:
+
+$ beta_i(x) = alpha_i + x (1 - gamma)^(x^(omega_i)) $
+
+where $alpha_i$ is the intrinsic spreading power of the information, $x$ is the exposure count, $gamma$ is the average proportion of common neighbors between users, and $omega_i$ calibrates the effective exposure rate.
+
+The original formulation assumes a static, universal spreading power $alpha_i$ for each message. We propose replacing it with a dynamic softmax per user probability $pi_u("repost" | c)$, transitioning from how viral is this post globally to how resonant is this post for this specific user.
+
+$ beta_(u,i)(x) = pi_u ("repost" | c) dot x  (1 - gamma)^(x^(omega_i)) $
+
+Expanding the softmax policy with the cosine similarity $c$ between user identity embedding $S_"id" (u, t)$ and post embedding $f(i)$:
+
+$ beta_(u,i)(x) = frac(exp(theta_"repost" dot c + beta_"repost"), sum_(k in cal(A)) exp(theta_k dot c + beta_k) dot x) (1 - gamma)^(x^(omega_i) $
+
+This synthesis resolves the reinforcement paradox: even highly exposed posts (large $x$) will not trigger unrealistic, network-wide outbreaks unless they maintain high semantic alignment ($c$) with the viewing users. Cascades naturally fracture into topically relevant sub-communities, preserving both structural decay and semantic homophily.
+
+Taken together, the proposals given in this section sketch a research path from a purely structural, content-agnostic simulation toward one where diffusion emerges from the interplay between semantics and topology. The result is a framework where who users are, what content says, and how communities reshape it are no longer orthogonal assumptions but continuous, entangled dynamics, making ---allegedly--- a worth exploring research topic.
+

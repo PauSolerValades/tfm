@@ -24,9 +24,9 @@ The order in which the users will see the posts is in reverse-chronological: new
 
 The simulation ensembles $N$ distinct users with the described behaviour checking their timelines simultaneously. Despite the experience being the same per every user, the amount of content they will see depends on how are the posts flowing: if user $u$ has a lot of followees and they repost a lot, and they connect with at the same times as he, $u$ will have a lot of content to see and not finish the sessions out of boredom, but due to fatigue.
 
-The best way to interiorize the system workings is to think about it as every user running the microsimluation, but all acting at the same time changes how the content flow, which changes what they see, creating the characteristic feedback loop of complex systems #todo[cite complex system definition]
+The best way to interiorize the system workings is to think about it as every user running the microsimluation, but all acting at the same time changes how the content flow, which changes what they see, creating the characteristic feedback loop of complex systems @miller2007complex
 
-Lastly, a reminder that the policy $pi$ (probability of ingoring, liking, or reposting a post) is the same per every user and does not depend on the post the user is seeing, as stated in #todo[metodology-assumptions]
+Lastly, a reminder that the policy $pi$ (probability of ingoring, liking, or reposting a post) is the same per every user and does not depend on the post the user is seeing, as stated in @sec-method-des-assumptions
 
 === Simulation Rules
 <sec-design-rules>
@@ -556,7 +556,7 @@ To maximize performance by reducing the cache misses and avoid pointer chasing, 
 
 === User Timeline
 
-Each user's timeline $cal(T)(u)$ must maintain posts in reverse-chronological order, and allow to pop the most recent (biggest time $t$) element, on the contrary with $Q$ which has to return the oldest (smallest time $t$) element. This might seem solvable by a MaxHeap, but due to the simulation propagateEvent #todo[cite the pseudocode] workings and how do we store the time, the elements will always be inserted in order, making a LIFO list, a classic Stack #todo[cite the stack] data structure.
+Each user's timeline $cal(T)(u)$ must maintain posts in reverse-chronological order, and allow to pop the most recent (biggest time $t$) element, on the contrary with $Q$ which has to return the oldest (smallest time $t$) element. This might seem solvable by a MaxHeap, but due to the simulation propagateEvent @proc-propagate workings and how do we store the time, the elements will always be inserted in order, making a LIFO list, a classic Stack @cormen2022algorithms data structure.
 
 However, when the user scrolls into past posts, new ones arrive that must get stored, and they cannot be in the same timeline. Implementation-wise, therefore, a timeline is not one stack but two ---and that duplication is what cleanly delimits the information diffusion context. The active stack holds what the user can see; the passive stack accumulates everything propagating toward them. See @apx-impl-queue for more details.
 
