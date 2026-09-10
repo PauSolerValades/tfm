@@ -717,3 +717,10 @@ soler2025tabular:
     date: 2026-05-27
   parent:
     title: GitHub
+
+bsky-firehose:
+  type: Web
+  title: "Consuming the Firehose"
+  url:
+    value: https://bsky.network/docs/consuming-the-firehose/
+    date: 2026-09-05

@@ -1,38 +1,51 @@
 #import "../utils.typ": *
 
-This annex #todo[finish]
+This annex describes the raw Bluesky firehose dataset that feeds the whole analysis: where it comes from, how it is stored, and the `via_uri` field that makes the reconstruction of repost cascades possible.
 
-== Raw Data Processing
+== Firehose Data Repositories
 
-#todo[això esta en brut, reescriure]
+The firehose is the raw event stream of the AT Protocol @atproto-overview: every repository commit across the network ---every post, like, follow, block, or profile edit--- arrives as a signed record. By design it can be consumed by anyone connecting to the `com.atproto.sync.subscribeRepos` endpoint @bsky-firehose, which delivers the data as a binary stream.
 
-Firehose server receives all the data, and this can be listened by anyone. as it follows an atproto json defined structure, with a program that listens to the connection and splits them, it can be distributed per hour in .jsonl (@lazzaroni2025blueskyfirehose). We can distinct in two types of structures: records and posts.
+To avoid decoding a changing binary schema, IDea_lab at UniGraz listens to Bluesky and deserializes the stream into JSONL files, one per hour @lazzaroni2025blueskyfirehose. From those files the dataset used in @sec-data-firehose is built. It consists of two StarRocks tables:
 
-This files have been processed into two tables structure, where all the data described in the data section have been obtained.
+- `bsky.records` ($approx 212.5$M rows): all AT Protocol record events ---`create`, `update` and `delete` operations--- for every collection, one row per record.
+- `bsky.posts` ($approx 28.1$M rows): the post content normalized out of `bsky.records` (`post_text`, `lang`, `reply_root_uri`), so a top-level post can be told apart from a reply without parsing the record JSON.
 
-#todo[two tables with the description]
+Both tables store the `created_at` timestamp and, for engagement records, the `subject` and `via` strong references; the latter is extracted into the `via_uri` field discussed next.
 
 == `via_uri` field
-#todo[THIS SECTION IS AI REGURGITATED, FIX and fact check]
 
-To be able to reconstruct the cascade, we use the `via_uri` field. This is _the_ conrerstone of this work, and the only reason that the output of the simulation is comparable to real data. Therefore, this section will expand on what it is ---and what it is not--- as well as its role in the ATProto.
+To reconstruct the cascade, we use the `via_uri` field. This is _the_ cornerstone of this work, and the only reason the output of the simulation is comparable to real data. This section expands on what it is ---and what it is not--- as well as its role in the AT Protocol.
 
 === Origin
 
-#todo[cites: ATProto lexicon definition of `via`; @goel2016structural for the virality concept]
+`via_uri` is the `via` field of the raw AT Protocol record @atproto-overview, extracted verbatim by the ingestion code that built `bsky.records`. Nothing is computed:
 
-It is the `via` field of the raw AT Protocol record, extracted verbatim by the ingestion code that built `bsky.records`. Nothing is computed:
+- Raw firehose JSONL: `commit.record.via` is a strong reference `{uri, cid}`.
+- Ingestion to `bsky.records`: `record.via.uri` becomes `via_uri`, `record.via.cid` becomes `via_cid` ---the same pattern as `record.subject` to `subject_uri` / `subject_cid`.
 
-- Raw firehose JSONL: `commit.record.via` is a strongRef `{uri, cid}`
-- Ingestion → `bsky.records`: `record.via.uri` → `via_uri`, `record.via.cid` → `via_cid` (same pattern as `record.subject` → `subject_uri` / `subject_cid`)
+While `subject` points to the content the user acts on, `via` records how the user discovered it: the intermediate record through which the content reached them, typically a repost. The following record, a like, shows how `subject` and `via` coexist:
 
-Verified against `/data/nfs/datasets/bluesky/firehose/non-posts/2026-04/11/records_20260411_00.jsonl`, e.g. a like carrying `"via": {"uri": "at://did:plc:.../app.bsky.feed.repost/3mj6jll3pla2s", ...}`.
-
-#todo[evidence path is machine-local; move to the dataset reference]
+#code(caption: [A like record carrying both `subject` and `via` strong references.])[
+```json
+{
+  "$type": "app.bsky.feed.like",
+  "subject": {
+    "uri": "at://did:plc:author123/app.bsky.feed.post/3k43tv4rft22g",
+    "cid": "bafyreigp5qh2fo7qqer2ywry4jbufajwcj63hkrws4thq5knfaoxu6gfwi"
+  },
+  "via": {
+    "uri": "at://did:plc:curator456/app.bsky.feed.repost/3mnagwpobya2m",
+    "cid": "bafyreibddujfzdhen6sqau7c6awx24xgrczrcyu565tlojyz6jbno6rtgu"
+  },
+  "createdAt": "2026-06-01T15:55:31.016Z"
+}
+```
+]
 
 === What it means
 
-`via` records how the user discovered the thing they acted on ---pointer attribution set by the client---. From a full-hour scan of the 2026-04-11 firehose:
+`via` records how the user discovered the thing they acted on: a pointer attribution set by the client. From a full-hour scan of the 2026-04-11 firehose:
 
 #figure(
   table(
@@ -47,41 +60,25 @@ Verified against `/data/nfs/datasets/bluesky/firehose/non-posts/2026-04/11/recor
   caption: [Meaning of `via_uri` per collection, from one full hour of the 2026-04-11 firehose.],
 ) <tbl-anx-via-uri-meaning>
 
-It is *optional* in the lexicon (set by the official app when the view can be attributed), so most records lack it: ~20% of likes, ~32% of reposts, ~14% of follows carry one (matches NULL rates in the `records.parquet` sample).
+Filtering by reposts only, this construct builds cascades of truly linked content that reached the timeline through a repost mechanism, allowing a direct comparison with what the simulation does.
 
-==== Caveats
+=== Caveats
 
-+ #todo[cite lexicon history] The `via` field does not exist in the 2025-04 firehose files (zero occurrences) ---it was added to the lexicon later. Any time-series using it must start from when clients began emitting it.
-+ Only in `bsky.records`, not `bsky.posts`. Posts carry `reply_root_uri` instead ---a different concept (thread structure vs. discovery attribution).
-+ Missingness is not random. Non-official clients never set `via`, so absence mixes "genuinely direct view" with "attribution lost" (client-correlated).
+`via` is *optional* in the lexicon (set by the official app when the view can be attributed), so most records lack it: roughly 20% of likes, 32% of reposts, and 14% of follows carry one. Three caveats follow:
 
-=== Is it used appropriately in the structural-virality pipeline?
+- The `via` field does not exist in the 2025-04 firehose files (zero occurrences) ---it was added to the lexicon later @atproto-overview. Any time-series using it must start from when clients began emitting it.
+- It is only present in `bsky.records`, not `bsky.posts`; posts carry `reply_root_uri` instead, a different concept (thread structure rather than discovery attribution).
+- Its absence is not random: non-official clients never set `via`, so a missing value mixes "genuinely direct view" with "attribution lost".
 
-Chain reviewed: `cascade-creation/01_dump_reposts.sql` → `build_cascades` (parent resolution, `go/cascade.go:90-97`) → `StructuralVirality()` (`cascade-metrics/go/cascade.go:133`). #todo[cite the analysis repo]
+As a consequence, the structural virality of the real data is a lower bound: reposts without `via` flatten onto the root, so long chains are systematically underestimated. Because we restrict ourselves to a reverse-chronological timeline, the comparison with the simulation remains fair, but it is not extrapolable to the recommender-driven feeds that dominate real use.
 
-==== Correct
+Despite other ways of reconstructing cascades, a more sophisticated approach ---predicting the recommender, or linking users by content similarity--- has been discarded from the beginning due to time constraints.
 
-+ Formula: $nu = 2 dot W / (n(n-1))$ with $W$ the Wiener index via the subtree-crossing edge sum ---exactly Goel et al. structural virality (mean pairwise distance) @goel2016structural. The O(N) CSR implementation is right. #todo[check 2015 vs 2016 reference year]
-+ Tree semantics: root = original post author, children = reposts, parent from `via_uri` when present, fallback to root. Attaching to root is the only defensible fallback, since "no via" legitimately includes genuinely direct reposts.
-+ Reposts only: tree built from `feed.repost` creates, not likes ---$nu$ is defined on reshare cascades. Like-level `via` is correctly unused.
-+ Ordering: `ORDER BY subject_uri, time_us, is_repost` with creation-first tie-break guarantees the root exists before children attach.
+=== Structural virality usage
 
-==== Caveats to handle
+The pipeline lives in the analysis repository @soler2025bskydata: `cascade-creation/01_dump_reposts.sql` dumps the reposts, `build_cascades` resolves each repost's parent from `via_uri` (falling back to the root), and `cascade-metrics` computes the structural virality $nu = 2 dot W / (n (n-1))$ with $W$ the Wiener index ---exactly the measure of @goel2016structural. The formula and the tree semantics are correct; the one caveat worth stating is that no size threshold is applied yet, so the $nu$ distribution is dominated by tiny cascades for which $nu$ is a deterministic artifact.
 
-+ $nu$ is a floor, not an estimate: ~68% of reposts have no `via` → flatten onto the root → structural virality is systematically underestimated, more so for genuinely viral cascades (long chains are what gets hidden). Fine if the thesis states it as a lower bound.
-+ Window edge effects: reposts whose `via` points before the dump window miss their parent → root fallback. Posts born near the window end have right-censored cascades (missing later reposts → size and $nu$ underestimated). Fix: only analyze posts created in the first N days of the window.
-+ #todo[important one] *No size threshold exists yet.* Goel et al. restrict to cascades with >= 100 adopters: $nu$ is a deterministic artifact for tiny trees ($n=2$ → $nu=2$ always). The 29M-row `cascades.parquet` is dominated by tiny cascades and nothing filters them ---the analysis must filter `size >= 100` (or >= 50) or the $nu$ distribution is meaningless.
-+ Minor: dump is `operation='create'` only, so reposts later deleted still count as adoptions. Matches Goel et al.'s convention ---just don't call them "currently visible reposts" in the text.
-
-=== Bottom line
-
-Pipeline design and formula are correct, and `via_uri` is used for exactly what the field exists for (parent edges distinguishing broadcast from viral spread). State the lower-bound caveat in the thesis; add the `size >= 100` filter and early-window restriction at analysis time ---neither exists yet.
-
-
-
-
-
-== Firehose Event Description
+== Event Dataset Description
 <anx-data-eventlist>
 
 The firehose dataset captures all AT Protocol record events from April 11--18, 2026.
@@ -144,7 +141,7 @@ The types `graph.repost` (186), `graph.verification` (119), `lexicon.collection`
 
 == Fitting the events per user
 <anx-data-eventperuserfitting>
-The 3.09 million users are not uniformly active. The following three figures show
+The 3.09 million users are not uniformly active, as the following three figures show.
 
 #figure(
   image("../../images/annex/data/user_hist_events_per_user.svg", width: 100%),
