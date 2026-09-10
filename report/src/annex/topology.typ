@@ -40,7 +40,7 @@ The gaps affect the SCD2 tables as follows: edges created and deleted entirely w
 
 === Ingestion: StarRocks
 
-The JSONL files were initially ingested into a StarRocks `bsky_topology.graph_events` table using a Go-based parallel ingestion tool with 64 concurrent workers —-a design dictated by necessity rather than ideology. A single-threaded Python prototype would have needed an estimated 13 days to process the full dataset; Go's lightweight goroutines and producer–consumer pipeline brought this down to approximately 13 hours. The choice of Go over alternatives was pragmatic: the author had enough prior experience with the language to ship a working ingester without learning a new concurrency model from scratch. The denormalised event log stores every create and delete operation:
+The JSONL files were initially ingested into a StarRocks `bsky_topology.graph_events` table using a Go-based parallel ingestion tool with 64 producers and 40 consumers —-a design dictated by necessity rather than ideology. A single-threaded Python prototype would have needed an estimated 13 days to process the full dataset; Go's lightweight goroutines and producer–consumer pipeline brought this down to approximately 12 hours. The choice of Go over alternatives was pragmatic: the author had enough prior experience with the language to ship a working ingester without learning a new concurrency model from scratch. The denormalised event log stores every create and delete operation:
 
 #figure(
   table(
@@ -63,7 +63,7 @@ The JSONL files were initially ingested into a StarRocks `bsky_topology.graph_ev
   )
 ) <tbl-topo-starrocks>
 
-== Graph Extraction (Three-Phase DuckDB Pipeline)
+== Graph Extraction
 
 The StarRocks event log is too large for direct analysis. A three-phase DuckDB pipeline transforms it into SCD2 Parquet files matching the `bluesky_db_specification.md` schema:
 
@@ -135,9 +135,9 @@ The target schema matches `bluesky_db_specification.md`:
   )
 ) <tbl-topo-scd2>
 
-=== Final Graph Snapshot (May 12, 2026)
+=== Final Graph Snapshot
 
-The active follow graph at the end of the observation window:
+The active follow graph at the end of the observation window (May 12, 2026):
 
 #figure(
   table(
@@ -168,16 +168,14 @@ FROM read_parquet('follow_edges.parquet')
 WHERE valid_to IS NULL;
 ```
 
-=== Query Performance: Parquet vs .db
-
+The main advantage of one versus the other is the following:
 - *Parquet* (full scans): DuckDB reads column chunks in parallel, pushes down filters. Best for `COUNT(DISTINCT)`, time-series, bulk aggregations.
 - *`.db` file* (indexed lookups): sub-millisecond latency for point queries like "who does Alice follow?"
 
 == Forest Fire Sampling
+<apx-topology-forestfire>
 
 The full 29-million-node graph ($1.47 times 10^9$ edges) is far too large for agent-based simulation. Subgraphs of $10^4$–$10^6$ nodes are sampled using Forest Fire @leskovec2006sampling.
-
-=== Algorithm
 
 Forest Fire simulates a spreading process over a directed graph. Starting from a random seed node $v$:
 
@@ -191,12 +189,12 @@ Forest Fire was chosen over simpler alternatives (random node, random edge, snow
 
 === Go Implementation
 
-The Go implementation (`topology/sampling-go/main.go`) replaces an earlier Python/DuckDB prototype that proved unable to complete a single sample at the required scale: Python's overhead made building the in-memory CSR adjacency for $1.47 times 10^9$ edges impractical, and the recursive burning process hit recursion-depth limits and memory fragmentation issues that no amount of `sys.setrecursionlimit` tuning could resolve. The Go rewrite loads active follow edges from Parquet as a binary-encoded edge list (16 bytes per edge: two `int32` fields), builds an in-memory CSR adjacency with precise pre-allocation, and runs the Forest Fire algorithm natively —-no recursion, no garbage-collector pauses, and no late-night Stack Overflow searches for `RecursionError`.
+The Go implementation (`sampling-forest-fire/main.go`) replaces an earlier Python/DuckDB prototype that proved unable to complete a single sample at the required scale: Python's overhead made building the in-memory CSR adjacency for $1.47 times 10^9$ edges impractical, and the recursive burning process hit recursion-depth limits and memory fragmentation issues that no amount of `sys.setrecursionlimit` tuning could resolve. The Go rewrite loads the active follow edges from a binary-encoded edge list produced by `sampling-forest-fire/export.sh` from the SCD2 Parquet (16 bytes per edge: two `int64` fields, cast to `int32` on load), builds an in-memory CSR adjacency with precise pre-allocation, and runs the Forest Fire algorithm natively —-no recursion, no garbage-collector pauses, and no late-night Stack Overflow searches for `RecursionError`.
 
 Key design decisions:
 
-- *Binary edge loading*: Edges are serialised as `(int32 actor, int32 subject)` pairs to a flat binary file, read via buffered I/O in 16 MB chunks. This is $approx 10 times$ faster than parsing CSV/Parquet at runtime.
-- *CSR adjacency*: Both outgoing and incoming adjacency are stored as slices of `[]int32`, pre-allocated to exact degree using a degree-count pass. Memory for 1.47B edges: $approx 11.8$ GB (8 bytes per edge $times$ 2 directions).
+- *Binary edge loading*: Edges are serialised as `(int64 actor, int64 subject)` pairs to a flat binary file (cast to `int32` on load), read via buffered I/O in 16 MB chunks. This is $approx 10 times$ faster than parsing CSV/Parquet at runtime.
+- *CSR adjacency*: Both outgoing and incoming adjacency are stored as slices of `[]int32`, pre-allocated to exact degree using a degree-count pass. Memory for 1.47B edges: $approx 11.8$ GB (8 bytes per edge: one `int32` slot in each direction).
 - *Geometric sampling*: Uses `math.Ceil(math.Log(1-u) / math.Log(1-p))` for efficient geometric variate generation with a cap at the available neighbour count.
 - *Seven target sizes*: $10^4$, $5 times 10^4$, $10^5$, $2.5 times 10^5$, $5 times 10^5$, $7.5 times 10^5$, $10^6$ nodes — a finer gradation for convergence studies.
 
@@ -209,8 +207,6 @@ Two edge sets are output per snapshot as Parquet files:
 
 Nodes are stored in `nodes.parquet` with both integer IDs and original DIDs. A `meta.json` file records the algorithm parameters, target/actual sizes, and timestamps.
 
-=== Validation
 
-The `topology/sampling/validate.py` script verifies that each sample preserves key structural properties: power-law degree distribution (Kolmogorov–Smirnov test against the full graph), average clustering coefficient, and largest connected component size ratio. Samples that deviate significantly are discarded.
 
 

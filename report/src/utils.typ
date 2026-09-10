@@ -10,11 +10,28 @@
 }
 
 #let def(body, name: "") = {
-  if name == "" {
-    block(above: 1.3em, below: 1.3em)[_*Definition*_ : #body ]
-  } else {
-    block(above: 1.3em, below: 1.3em)[_ *Definition* - #name _: #body ]
-  }
+  figure(
+   kind: "def",
+   supplement: [Definition],
+   align(left,
+     if name == "" {
+      block(above: 1.3em, below: 1.3em)[
+        #context {
+          let n = counter(figure.where(kind: "def")).get().first()
+          [_*Definition*_ (#n) : #body]
+        }
+      ]
+    } else {
+      block(above: 1.3em, below: 1.3em)[
+        #context {
+          let n = counter(figure.where(kind: "def")).get().first()
+          [_ *Definition* (#n) - #name _: #body]
+        }
+      ]
+    }
+   )
+  )
+  
 }
 
 // Shorthand for code listings. Caption is optional.

@@ -254,16 +254,17 @@
 #include "src/annex/future-content.typ"
 
 #pagebreak()
-= Software Stack
-<apx-software-stack>
-
-#include "src/annex/software-stack.typ"
-
-#pagebreak()
 = Hardware Specifications
 <apx-hardware>
 
 #include "src/annex/hardware.typ"
+
+// = Software Stack
+// <apx-software-stack>
+
+// #include "src/annex/software-stack.typ"
+
+// #pagebreak()
 
 // #pagebreak()
 // = Branching-Process Derivation of the Missing Tail

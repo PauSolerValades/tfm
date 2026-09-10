@@ -6,10 +6,10 @@ This appendix collects the initial-condition convergence plots of the steady-sta
 
 #figure(
   grid(
-    columns: 2,
+    columns: 1,
     column-gutter: 0.8em,
-    image("../../images/calibration/initial_conditions_10K_log.png", width: 100%),
-    image("../../images/calibration/initial_conditions_100K_log.png", width: 100%),
+    image("../../images/calibration/initial_conditions_10K_log.png", width: 95%),
+    image("../../images/calibration/initial_conditions_100K_log.png", width: 95%),
   ),
   caption: flex-caption(
     [Stability plots (log): 10K and 100K.],
@@ -21,7 +21,7 @@ This appendix collects the initial-condition convergence plots of the steady-sta
 
 #figure(
   grid(
-    columns: 2,
+    columns: 1,
     column-gutter: 0.8em,
     image("../../images/calibration/initial_conditions_500K_log.png", width: 100%),
     image("../../images/calibration/initial_conditions_1M_log.png", width: 100%),
@@ -38,7 +38,7 @@ This appendix collects the initial-condition convergence plots of the steady-sta
 
 #figure(
   grid(
-    columns: 2,
+    columns: 1,
     column-gutter: 0.8em,
     image("../../images/calibration/initial_conditions_10K.png", width: 100%),
     image("../../images/calibration/initial_conditions_100K.png", width: 100%),
@@ -53,7 +53,7 @@ This appendix collects the initial-condition convergence plots of the steady-sta
 
 #figure(
   grid(
-    columns: 2,
+    columns: 1,
     column-gutter: 0.8em,
     image("../../images/calibration/initial_conditions_500K.png", width: 100%),
     image("../../images/calibration/initial_conditions_1M.png", width: 100%),

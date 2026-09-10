@@ -15,6 +15,12 @@ The Future Event Set optimization is a known performance bottleneck in Discrete-
 
 This has not been implemented in this work due to both time constranints, and that the every algorithm replacing the heap requires a well calibrated heuristic. It was the author concern that, with several changed to the simulation, the heuristic tuning would have consumed plenty of time to get right while at the same time degrading performance, and therefore was avoided by commodity.
 
+== Evaluation Metrics
+
+The traces of the simulation allow far more quantites to be extracted from the trace data, and if compared with the empirical Bluesky data, it would provide far more information about the social network and the hits or misses of the model. This project originally included both the Gini coefficient and a Post Lifetime analysis as additional characteristic and desired quantities respectively.
+
+Not only the addition of other metrics, but the current simulation extracts a lot more data than the one reported in Results (@sec-results), as can be seen in @apx-pipeline-datasets, which describes the different datasets that the simulation outputs, including more metrics on the cascade, post lifetime basic information an virality in subcascades, making able to identify in theory where exactly the virality exploded.
+
 
 == Model Limitations
 

@@ -355,7 +355,7 @@ The truncation is in fact two distinct truncations. The first is *depth*: the ca
 
 This section offers an explanation of why the simulation accurately reproduces the bulk of the distribution but falls short of replicating the tail, by modeling cascades as a Galton–Watson process @athreya1972branching. In summary, the missing tail is not a calibration failure but a mathematical consequence of the homogeneity assumptions of @sec-method-des-assumptions.
 
-=== Cascades are Galton–Watson Processes
+=== Cascades as Galton–Watson Processes
 
 Let us first define what a Galton–Watson process is. Consider a simple stochastic model for how a population grows in size, ${Z_n}_(n in NN)$.
 

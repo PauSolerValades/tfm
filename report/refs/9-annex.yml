@@ -518,6 +518,26 @@ zig-std-priority-queue:
     title: Zig Standard Library (v0.16.0)
     url: https://ziglang.org/documentation/0.16.0/std/
 
+zig-std-sort:
+  type: Web
+  title: "std.sort — Sorting Algorithms"
+  url:
+    value: https://github.com/ziglang/zig/blob/master/lib/std/sort.zig
+    date: 2026-08-26
+  organization: Zig Software Foundation
+  parent:
+    type: Web
+    title: Zig Standard Library (v0.16.0)
+    url: https://ziglang.org/documentation/0.16.0/std/
+
+zig-build-system:
+  type: Web
+  title: "Zig Build System"
+  url:
+    value: https://ziglang.org/learn/build-system/
+    date: 2026-08-26
+  organization: Zig Software Foundation
+
 lazzaroni2025blueskyfirehose:
   type: Repository
   title: bluesky-firehose-py
@@ -635,3 +655,65 @@ kersting2017discrete:
   date: 2017
   publisher: Wiley
   location: London
+
+gemini-3-5-flash:
+  type: Web
+  title: "Gemini 3.5 Flash Model Card"
+  url:
+    value: https://deepmind.google/models/model-cards/gemini-3-5-flash/
+    date: 2026-05-27
+  organization: Google DeepMind
+
+gemini-3-6-flash:
+  type: Web
+  title: "Gemini 3.6 Flash Model Card"
+  url:
+    value: https://deepmind.google/models/model-cards/gemini-3-6-flash/
+    date: 2026-05-27
+  organization: Google DeepMind
+
+deepseek-v4-flash:
+  type: Web
+  title: "DeepSeek-V4 Flash Model Card"
+  url:
+    value: https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf
+    date: 2026-05-27
+  organization: DeepSeek
+
+kimi-k3:
+  type: Web
+  title: "Kimi K3 Model Card"
+  url:
+    value: https://platform.moonshot.ai/docs/models/kimi-k3
+    date: 2026-05-27
+  organization: Moonshot AI
+
+hunt1999pragmatic:
+  type: Book
+  title: "The Pragmatic Programmer: From Journeyman to Master"
+  author:
+    - Hunt, Andrew
+    - Thomas, David
+  date: 1999
+  publisher: Addison-Wesley
+  location: Boston, MA
+  serial-number:
+    isbn: "0-201-61622-X"
+
+google-scholar:
+  type: Web
+  title: Google Scholar
+  url:
+    value: https://scholar.google.com/
+    date: 2026-09-05
+  organization: Google
+
+soler2025tabular:
+  type: Repository
+  title: tabular
+  author: Soler Valadés, Pau
+  url:
+    value: https://github.com/PauSolerValades/tabular
+    date: 2026-05-27
+  parent:
+    title: GitHub
