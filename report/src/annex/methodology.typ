@@ -6,13 +6,12 @@ This sections addresses methodological issues and concerns that, while extremely
 == Random Number Generation
 <apx-method-rng>
 
-#comment[This takes too long, i think we can safly add a methodology appendix with this explained and treat the RNG as an external library, despite being written from scratch]
-
-This section covers the implementations of the Random Number Generators needed in the main simulation, as Zig did not have a library of distributions. The distributions library has been published under the MIT license and its source available @soler2025distributions
+This section covers the implementations of the Random Number Generators needed in the main simulation, as Zig did not have a library of distributions. The distributions library has been published under the MIT license and its source available @soler2025distributions.
 
 
 === Ziggurat Algorithm
 <sec-method-rng-ziggurat>
+
 The generation of random variates for continuous distributions, specifically the Normal, Exponential and Pareto distributions, relies on the highly optimized Ziggurat algorithm @marsaglia2000ziggurat. This method is a form of rejection sampling that overlays the target probability density function (PDF) with a set of $n=256$ horizontal rectangles (named after the Mesopotamian ziggurat temples for their tiered resemblance) of equal area, constructed such that they tightly bound the distribution curve.
 
 Our implementation in Zig heavily leverages compile-time evaluation (`comptime`) to specialize the algorithm identically for both `f32` and `f64` precision without runtime overhead. The core optimization focuses on minimizing calls to the pseudo-random number generator (PRNG). Instead of requiring two distinct random values—one to select a rectangle and another to sample a point within it—a single 64-bit random integer is generated (or 32-bit for `f32`).
@@ -45,48 +44,118 @@ While theoretically faster alternatives like the Alias Method @walker1977alias e
 However, to optimize the performance of the linear search, the following convention has been maintained when constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
 
 
-=== Pareto Distribution
+=== Weibull Distribution
 
-The Pareto Distribution is fundamental when talking about social networks, as its the distribution associated with the power-law. It's defined by two parameters, shape $alpha$ and scale $x_m$, and has the following density and cumulative density functions:
+The Weibull Distribution is a two parameter distribution, with a shape and scale parameter with the following cumulative density:
 
-$ f(x | alpha, x_m ) = cases(frac(alpha x_m^alpha, x^(alpha + 1)) & "if" x >= x_m, 0 & "if" x < x_m )  $
+$ F(x) = cases( 1 - exp{- (frac(x, lambda))^k} &"if" x >= 0, 0 &"else" x < 0), $
 
-$ F(x | alpha, x_m) = cases(
-  1 - (frac(x_m, x))^alpha & "if" x >= x_m,
-  0 &"if" x < x_m
-)
-$ 
+To sample from it, we use the standard Inverse Sampling Method #todo[cite, a simulació tens la font :)], in which we invert $F$ to obtain:
 
-To sample from it we've used the following relationship @casella2002statistical: a random variable $X$ follows a $"Pareto"(alpha, x_m)$ distribution when $Y ~ "Exp"(1)$ and
+$ X = lambda · ( -ln(1-U))^(1/k) $
 
-$ X ~ x_m · exp{Y/alpha} $
+And to save some CPU cycles and avoid the expensive logarithm, we can rewrite it while using that $Y ~ "Exp"(1)$ with aknowleding that $1-U ~ "Unif"((0,1]) => U ~ "Unif"((0,1))$, therefore:
 
-therefore being as efficient as generating an exponential with the ziggurat algorithm.
+$ X = lambda · -ln( U ) ^(1/k) = lambda  Y^(-k) $
 
-=== Empirical Cumulative Distirbution Function
-<sec-method-rng-ecdf>
+and as we generate exponentials with the efficent ziggurat algorithm, generating a $"Exp"(1)$ is almost $O(1)$, making this algorithm almost $O(1)$.
 
-Explaination of the dual categorical or binned categorical
+=== Lognormal Distribution
 
-=== Lognormal
+The Lognormal is defined as $X = exp(Y) quad Y ~ N(mu, sigma^2)$, which is the result of applying an exponential to a Normal distribution. The method to generate it is to generate a number following $Y$ with the Ziggurat algorithm and apply the exponential over it.
 
-It's just $X = exp(Y) quad Y ~ N(mu, sigma^2)$
 
-=== Weibull
+=== Generalized Pareto Distribution
 
-We use the inverse sampling method (make a small menction) but instead of using expensive log we reuse ziggurat
+The Generalized Pareto Distribution ---GPD from now on--- is a three-parameter family, specified by location $mu$, scale $theta$ and shape $alpha$ (the same `location`, `scale` and `shape` fields of the Zig implementation). Its cumulative density functions is:
 
-$ X = lambda · -ln( U ) ^(1/k) = lambda · E^(1/k) $
+$ F(x | mu, theta, alpha) = cases(
+  1 - (1 + alpha frac(x - mu, theta))^(-1/alpha) & "if" alpha != 0,
+  1 - exp(-frac(x - mu, theta)) & "if" alpha = 0,
+) $
+
+with $mu, alpha in RR$ and $theta in RR^+$. The support changes with the sign of the shape: $x >= mu$ when $alpha >= 0$, and $mu <= x <= mu - theta/alpha$ otherwise.
+
+To sample from it we use the Inverse Sampling Method @devroye1986nonuniform: inverting $F$ gives the quantile
+
+$ X = mu + theta frac((1 - U)^(-alpha) - 1, alpha), quad U ~ "Unif"([0, 1)), $
+
+for $alpha != 0$, and $X = mu - theta ln(1 - U)$ for $alpha = 0$, the exponential special case.
+
+Again, to avoid a logarithm (and a power) per sample, we use the exponential trick: since $1 - U = exp(-Y)$ for $Y ~ "Exp"(1)$, we have $(1 - U)^(-alpha) = exp(alpha Y)$, and the sampler becomes
+
+$ X = cases(
+  mu + theta Y & "if" alpha = 0,
+  mu + theta frac(exp(alpha Y) - 1, alpha) & "if" alpha != 0,
+) $
+
+where $Y$ is drawn with the Ziggurat algorithm.
+
 
 === Gamma
 
-This is the only complicated algorithm to describe. It uses that a normal is almost a gamma most of the time, and it's a ziggurat style algorithm.
- 
+The Gamma Distribution is a two-parameter family with shape $k$ and rate $beta$ (following the R convention), and has the following density and cumulative distribution functions:
+
+$ f(x | k, beta) = frac(beta^k x^(k-1) e^(-beta x), Gamma(k)), quad x > 0 $
+
+$ F(x | k, beta) = frac(gamma(k, beta x), Gamma(k)) $
+
+where $Gamma(k)$ is the gamma function and $gamma(k, beta x)$ the lower incomplete gamma function. The rate is the reciprocal of the scale, $beta = 1 slash theta$.
+
+Gamma is the only distribution in the library that is not sampled directly with a Ziggurat. It uses the Marsaglia & Tsang method @marsaglia2000gamma ---from the same authors of the Ziggurat---, which recycles the Normal distribution (itself generated with the Ziggurat, see @sec-method-rng-ziggurat): a Gamma variate is a Normal variate that survives a rejection test. For $k >= 1$, with
+
+$ d = k - 1/3, quad c = 1 / sqrt(9 d), $
+
+the algorithm repeatedly draws $X ~ cal(N)(0, 1)$ and $U ~ "Unif"(0, 1)$ and builds the candidate $V = (1 + c X)^3$:
+
+- If $V <= 0$ the candidate has no meaning and is discarded.
+- A cheap squeeze test accepts whenever $U < 1 - 0.0331 X^4$, which covers almost all samples without evaluating any transcendental function.
+- Otherwise an exact test $ln U < X^2 / 2 + d (1 - V + ln V)$ decides.
+
+On acceptance the sample is $frac(d V, beta)$. For $k < 1$ the algorithm samples shape $k + 1$ and thins the result with an independent $U^(1 slash k)$, which recovers the correct Gamma.
+
+Only the exact test pays for a logarithm, so the sampler stays close to the cost of a single Normal draw from the Ziggurat.
+
+
+
+=== Empirical Cumulative Distribution Function
+<sec-method-rng-ecdf>
+
+The Empirical Cumulative Distribution Function is the very intuitive definition of what is a cumulative distribution function, and it has the following definition, where $X_i$ is a sample from the data.
+
+$ hat(F)_n (x) =  frac(1, n) sum_(i=1)^n bb(1)_(X_i <= x) $
+
+The ECDF is a step function that jumps at every observation, so it can be used directly as a sampler for distributions that are not known in closed form ---such as the offsets and inter-post creation times of this project (see @sec-cal-dist)--- without fitting any parametric law.
+
+In our Zig implementation, `init` receives the data slice, sorts it, and collapses it into `Bin` entries `(value, cump)` ---the distinct values together with their cumulative probability--- stored in a `MultiArrayList(Bin)`, so the sorted values and their cumulative probabilities live in separate, cache-friendly arrays.
+
+Sampling follows the Inverse Sampling Method over the empirical CDF: draw $U ~ "Unif"([0, 1))$ and return the first value whose cumulative probability is at least $U$. Since the bins are sorted, that value is found with a binary search in $O(log n)$:
+
+#code(caption: [Binary search over the cumulative probabilities used to sample an ECDF.])[
+```zig
+while (lower < upper) {
+    const i = lower + @divFloor(upper - lower, 2);
+    const p = self.bins.items(.cump)[i];
+
+    if (u <= p) {
+        upper = i;
+    } else if (u > p) {
+        lower = i + 1;
+    }
+}
+```
+]
+
+The `cdf` method mirrors this: a binary search finds how many bins have a value $<= x$ and returns the cumulative probability of the last one, so $P(X <= x)$ is answered in $O(log n)$ as well.
+
+The implementation is deliberately simple rather than optimal. A more sophisticated non-parametric representation could shave the constant, but the ECDF is only queried during simulation setup and its bins are small, so a binary search over a contiguous array was judged good enough.#footnote[The ECDF files needed for `offset_post_creation` and `inter_post_creation` are already sorted when loaded.]
+
+
 === Goodness-of-fit Test
 
-To test the implementations of the above distributions
+To test the implementations of the above distributions, a Kolmogorov-Smirnoff test has been implemented in the library, and can be ran with `zig build gof`, which will ran it against all implementations.
 
-#todo[to make this appropiately, i implemented the Kolmogorov-Smirnoff test for the upper distributions in zig.]
+Knowing that the author is fallible, this has also been ran aganist well estabilshed R funcitons with a big enough sample, to check the implementations matched.
 
 
 == Distribution Fitting

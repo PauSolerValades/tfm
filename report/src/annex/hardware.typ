@@ -1,11 +1,9 @@
-#import "../utils.typ": flex-caption
+#import "../utils.typ": flex-caption, todo
 
-This annex contains hardware information where the executions were performed and provides additional detail on the simulation's memory footprint. 
+This annex contains hardware information where the executions were performed.
 
-== Hardware Specifications
-<apx-performance-hardware>
+The server where the simulation has been executed is Artemis, one of the severs owned by the `IDea_lab` #todo[cite their page] in order for their researchers to conduct research. The server does not run a queue management system like SLURM, therefore isolation in running the simulation processes has not been guaranteed. @tbl-hardware shows the exact specifics of the hardware all simulations have been ran..
 
-All simulation runs were executed on the same dedicated server with the listed specifications on @tbl-hardware.
 
 #figure(
   table(

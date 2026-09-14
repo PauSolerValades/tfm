@@ -18,10 +18,13 @@
 
   #v(2.8cm)
 
-  #text(fill: blue, size: 25pt, weight: "bold")[
-  A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
-  ]
+  // #text(fill: blue, size: 25pt, weight: "bold")[
+  // A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
+  // ]
   
+  #text(fill: blue, size: 25pt, weight: "bold")[  
+    Replicating Post Structural Virality using a Discrete-Event Simulation with Empirical Bluesky Data
+  ]
   #v(0.3em)
   
   #text(size: 17pt, weight: "bold")[
@@ -33,7 +36,7 @@
   #text(size: 14pt)[
     Supervised by Esteve Codina, Jana Lasser and Pau Fontseca\
     #v(0.5em)
-    29th of March, 2026 
+    22nd of September, 2026 
   ]
 ]
 

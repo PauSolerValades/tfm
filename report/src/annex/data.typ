@@ -13,7 +13,7 @@ To avoid decoding a changing binary schema, IDea_lab at UniGraz listens to Blues
 
 Both tables store the `created_at` timestamp and, for engagement records, the `subject` and `via` strong references; the latter is extracted into the `via_uri` field discussed next.
 
-== `via_uri` field
+== `via_uri` field <anx-data-via>
 
 To reconstruct the cascade, we use the `via_uri` field. This is _the_ cornerstone of this work, and the only reason the output of the simulation is comparable to real data. This section expands on what it is ---and what it is not--- as well as its role in the AT Protocol.
 

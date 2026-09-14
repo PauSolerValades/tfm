@@ -59,7 +59,7 @@ This section described the parameters and configuration of the execution of the 
 ) <tbl-res-finalbatch>
 
 
-== Scalability
+== Scalability <sec-res-scalability>
 
 Regarding performance, this section describes the growth of the simulation according to input value both in time and in memory. Check @apx-hardware for a detailed specification of the hardware this was ran on and @apx-method-exec for how the showcased data has been obtained.
  

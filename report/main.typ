@@ -157,7 +157,6 @@
 #pagebreak()
 = Conclusions
 
-#todo[warning: this is not the final version. Do not review]
 #include "src/9-conclusions.typ"
 
 #pagebreak()

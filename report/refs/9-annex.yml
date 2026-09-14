@@ -346,6 +346,22 @@ marsaglia2000ziggurat:
     volume: 5
     issue: 8
 
+marsaglia2000gamma:
+  type: Article
+  title: "A Simple Method for Generating Gamma Variables"
+  author:
+    - Marsaglia, George
+    - Tsang, Wai Wan
+  date: 2000
+  page-range: 363-372
+  serial-number:
+    doi: "10.1145/358407.358414"
+  parent:
+    type: Periodical
+    title: ACM Transactions on Mathematical Software
+    volume: 26
+    issue: 3
+
 satopaa2011kneedle:
   type: Article
   title: "Finding a \"kneedle\" in a Haystack: Detecting Knee Points in System Behavior"
