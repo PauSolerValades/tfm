@@ -67,7 +67,7 @@ Regarding performance, this section describes the growth of the simulation accor
 
 
 #figure(
-  image("../images/results/time_scalability.png", width: 100%),
+  image("../images/results/time_scalability.svg", width: 100%),
   caption: flex-caption(
     [Simulation wall-clock time versus dataset size.],
     [Simluation wall-clock per run versus topology size in logarithmic scale. The slope is the grow rate.],
@@ -176,7 +176,7 @@ First metric to evaluate in the simulation is the reposts power-law, a character
 No run is a power law: the lognormal is preferred in every case, matching the real Bluesky data (@fig-data-reposts-hist), where $alpha = 2.053$ and the lognormal also wins decisively ($p = 1.18 dot 10^(-63)$, see @sec-data-reposts). The simulated exponents are higher ($approx 2.5$–$2.9$ vs. $2.05$), and the large gap between mean and median at 100K and 500K reflects a bimodal fit ---the `x_min` selection oscillates between two regimes--- rather than a clean single exponent. @fig-res-powerlaw-comp showcases them graphically: the two tails share the Bluesky $x_"min" = 12$ so that the only difference is the exponent, and the simulated tail decays markedly faster. The picture shows that the long tail is pretty much well simulated, but the higher reposts posts have less reposts in the simulation.
 
 #figure(
-  image("../images/results/powerlaw_alpha_comparison.png", width: 100%),
+  image("../images/results/powerlaw_alpha_comparison.svg", width: 100%),
   caption: flex-caption(
     [Power-law tails sharing $x_"min" = 12$.],
     [Synthetic power-law tails with the Bluesky exponent ($alpha = 2.05$) and the representative simulated exponent ($alpha = 2.9$), both sharing the Bluesky lower cutoff $x_"min" = 12$. Left: CCDF on log-log axes. Right: density on linear axes.],
@@ -410,7 +410,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 @fig-res-offspring shows the offspring distribution $Z$: roughly 83% of reposts generate no further repost, and the mean sits far below one. This is the reason why the tail will always be truncated, and why @tbl-res-vs-data shows this consistently across all metrics: it is a property of the model, a consequence of the homogeneous policy, not of the network.
 
 #figure(
-  image("../images/results/offspring_distribution_100K.png", width: 100%),
+  image("../images/results/offspring_distribution_100K.svg", width: 100%),
   caption: flex-caption(
     [Offspring distribution of reposts (100K).],
     [Number of children per reposting node in the 100K dataset. The dashed line marks the critical boundary $R_0 = 1$; the red line is the empirical mean $R_0 approx 0.22$. The overwhelming mass is at zero, and the mean is far below criticality.],
@@ -460,12 +460,12 @@ Under the Independent Cascade model, out-degree should be explained by:
 
 $ EE("out-degree") = d_"followers" times pi_"repost" $
 
-predicting that large hubs should genereate very wide cascades. Then, why is the simulation not generating them? The LIFO-based queue attention mechanism.
+predicting that large hubs should generate very wide cascades. The simulation does not, so some factor truncates the impression term. The LIFO-based queue is the first suspect, and @sec-queue-attention tests it directly; it turns out to be second-order, leaving the attention *budget* itself as the binding constraint.
 
 The realitiy of the simulation is that $d_"followers"$ is far less than it should be due to a post being buried in the user timeline. Normal Independent-Cascade models, every user sees every post, making the propagation far more usable. Three ingredients of the model impose that cap.
 
 1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
-2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
+2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist. The queue experiment (@sec-queue-attention) isolates this ordering and shows it is second-order: randomising the drain reallocates *which* posts are read but does not widen the typical cascade. The binding quantity is the number of posts a session reads, not the order in which it reads them.
 3. *Degree-independent activity.* Every user draws its session behaviour from the same distribution, regardless of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and its followers are no more attentive either.
 4. *Inter-action time.* The time a user needs to see the post is a delicate quantity that (see @sec-cal-interaction) has been eyeballed to make a plausible policy $pi$. Making the users more active of changing the distribution could affect the number of posts a user sees per session, potentially mitigating the attention bottleneck.
 
@@ -474,12 +474,9 @@ The first one is a consequence of the session measurement, and it's a natural qu
 The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
 
 
-But the second limitation is actually very well in reach to modify. This work has assumed a LIFO reverse chronological timeline out of necessity, and modifications to the queue structure could lead to vastly different ---and maybe better--- results.
-
-#todo[Make the random timeline!]
-
-#comment[Once this document is in the draft, i can modify the simulation and make just a small run that, instead of having a lifo timeline, has a "see a random post from the last period", and see if the result keep giving shallow cascades. This is the most conceptually similar thing to a recommender ;)
-]
+The second limitation is directly modifiable, and @sec-queue-attention does exactly that: it replaces the LIFO drain with a uniform random draw ---the cheapest proxy for a recommender, since it gives an old post the same chance of being read as a fresh one--- and measures what changes. It confirms that the queue is an allocation mechanism rather than the capacity bottleneck, and localises the missing width in the impression budget and the homogeneous repost probability.
 
 Implementation limitation of the simulation for this analysis: the trace records which parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor cannot be cleanly separated from the repost probability in the current data. The hypothesis above is therefore a prediction, not a measurement. This is easy fixable in the simulation but does not have a empirical data counterpart, as we just can know which post have been shown to which users.
+
+#include "8b-queue-attention.typ"
 

@@ -8,8 +8,8 @@ This appendix collects the initial-condition convergence plots of the steady-sta
   grid(
     columns: 1,
     column-gutter: 0.8em,
-    image("../../images/calibration/initial_conditions_10K_log.png", width: 95%),
-    image("../../images/calibration/initial_conditions_100K_log.png", width: 95%),
+    image("../../images/calibration/initial_conditions_10K_log.svg", width: 95%),
+    image("../../images/calibration/initial_conditions_100K_log.svg", width: 95%),
   ),
   caption: flex-caption(
     [Stability plots (log): 10K and 100K.],
@@ -23,8 +23,8 @@ This appendix collects the initial-condition convergence plots of the steady-sta
   grid(
     columns: 1,
     column-gutter: 0.8em,
-    image("../../images/calibration/initial_conditions_500K_log.png", width: 100%),
-    image("../../images/calibration/initial_conditions_1M_log.png", width: 100%),
+    image("../../images/calibration/initial_conditions_500K_log.svg", width: 100%),
+    image("../../images/calibration/initial_conditions_1M_log.svg", width: 100%),
   ),
   caption: flex-caption(
     [Stability plots (log): 500K and 1M.],
@@ -40,8 +40,8 @@ This appendix collects the initial-condition convergence plots of the steady-sta
   grid(
     columns: 1,
     column-gutter: 0.8em,
-    image("../../images/calibration/initial_conditions_10K.png", width: 100%),
-    image("../../images/calibration/initial_conditions_100K.png", width: 100%),
+    image("../../images/calibration/initial_conditions_10K.svg", width: 100%),
+    image("../../images/calibration/initial_conditions_100K.svg", width: 100%),
   ),
   caption: flex-caption(
     [Stability plots: 10K and 100K.],
@@ -55,8 +55,8 @@ This appendix collects the initial-condition convergence plots of the steady-sta
   grid(
     columns: 1,
     column-gutter: 0.8em,
-    image("../../images/calibration/initial_conditions_500K.png", width: 100%),
-    image("../../images/calibration/initial_conditions_1M.png", width: 100%),
+    image("../../images/calibration/initial_conditions_500K.svg", width: 100%),
+    image("../../images/calibration/initial_conditions_1M.svg", width: 100%),
   ),
   caption: flex-caption(
     [Stability plots: 500K and 1M.],

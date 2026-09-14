@@ -10,7 +10,7 @@ The Bluesky Firehose is a continuous stream of all public AT Protocol events emi
 
 
 #figure(
-  image("../images/data/611_event_distribution.png", width: 100%),
+  image("../images/data/611_event_distribution.svg", width: 100%),
   caption: flex-caption(
     [Distribution of the top 14 firehose event types.],
     [Distribution of the events in the dataset ($N=240,565,133$) See @tbl-full-event-types for the full breakdown.],
@@ -22,7 +22,7 @@ As it can be seen, the majority of events on Bluesky are liking a post (`feed_li
 There are a total of 3.09 million distinct users in the dataset, and events are not uniformly distributed among them. Specifically, the distributions of events per user, events per user in a day and events per user in an hour, follow a lognormal distribution as it can be seen in @fig-userevent-dist (see @anx-data-eventperuserfitting for the reasons and methodology of the fitting).
 
 #figure(
-  image("../images/data/612_fitting_userevents.png", width: 100%),
+  image("../images/data/612_fitting_userevents.svg", width: 100%),
   caption: flex-caption(
     [[ECDF with fitted lognormals for events per user, per active day, and per active hour.]],
     [Distribution of events per user (blue), events per user per hour (green) and events per user per day (yellow). Parameters: events per user $mu = 2.40$, $sigma = 1.85$, events per active day $mu = 1.43$, $sigma = 1.28$, events per active hour $mu = 0.94$, $sigma = 0.89$.],
@@ -32,7 +32,7 @@ There are a total of 3.09 million distinct users in the dataset, and events are 
 This proves that there is an enormous quantity of users with very few events in the dataset. In order to obtain more informative data, the users with fewer than two events per active day are excluded, representing 29% of distinct users and leaving 2.19 million users. Additionally, we intentionally exclude some outdated events in the dataset (check @anx-data-eventlist) as well as all the `update` and `delete` variants of all the events, as they do not have the `createdAt`, making them useless for the session construction (see @sec-method-session).
 
 #figure(
-  image("../images/data/613_filtered_event_distribution.png", width: 100%),
+  image("../images/data/613_filtered_event_distribution.svg", width: 100%),
   caption: flex-caption(
     [Filtered event type distribution.],
     [Event type distribution after filtering by users with $<=2$ events and no `updates` nor `delete` events ($N=231,643,526$)],
@@ -45,7 +45,7 @@ This proves that there is an enormous quantity of users with very few events in 
 To characterize the virality of posts in the dataset, we fit a power law to the number of reposts received per post. @fig-data-reposts-hist shows the distribution of reposts per post (log-binned, log-log scale): the bulk of posts receive very few reposts, while a small fraction accumulates thousands.
 
 #figure(
-  image("../images/data/reposts_histogram.png", width: 100%),
+  image("../images/data/reposts_histogram.svg", width: 100%),
   caption: flex-caption(
     [Histogram of reposts per post.],
     [Log-binned histogram of reposts per post ($N = 2,493,540$ posts with at least one repost), log-log scale.],
@@ -86,7 +86,7 @@ Following @goel2016structural, the cascades split into *broadcast* (depth 1: a s
 For the viral cascades alone, $nu(T)$ has mean $2.142$ (95% CI $[2.140, 2.144]$), median $2.000$, minimum $1.333$ and maximum $50.269$. @fig-data-nu-density shows the distribution: it is concentrated right at the broadcast floor $nu = 2$ and decays as a heavy tail, with only $311$ cascades (0.04% of viral) above $nu = 10$ and none reaching $nu >= 100$ — a genuinely viral chain would need a repost chain roughly 300 hops deep, which never occurs inside the six-day window.
 
 #figure(
-  image("../images/data/viral_nu_density.png", width: 100%),
+  image("../images/data/viral_nu_density.svg", width: 100%),
   caption: flex-caption(
     [Structural virality of viral cascades.],
     [Log-$x$ density of $nu(T)$ for the $721,909$ viral cascades (depth ≥ 2), with the broadcast floor $nu = 2$ (dashed) and the median (dotted) marked.],

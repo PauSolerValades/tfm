@@ -80,8 +80,8 @@ The produced sessions verify the definition postulates of @sec-cal-sessions, as 
   grid(
     columns: 2,
     column-gutter: 0.8em,
-    figure(image("../images/calibration/session_hist_duration.png"), caption: [Session duration]),
-    figure(image("../images/calibration/session_hist_gap.png"), caption: [Inter-session gap]),
+    figure(image("../images/calibration/session_hist_duration.svg"), caption: [Session duration]),
+    figure(image("../images/calibration/session_hist_gap.svg"), caption: [Inter-session gap]),
   ),
   caption: flex-caption(
     [Session duration and inter-session gap distributions.],
@@ -93,9 +93,9 @@ The produced sessions verify the definition postulates of @sec-cal-sessions, as 
   grid(
     columns: 3,
     column-gutter: 0.8em,
-    figure(image("../images/calibration/circadian_de.png"), caption: [German]),
-    figure(image("../images/calibration/circadian_ko.png"), caption: [Korean]),
-    figure(image("../images/calibration/circadian_ja.png"), caption: [Japanese]),
+    figure(image("../images/calibration/circadian_de.svg"), caption: [German]),
+    figure(image("../images/calibration/circadian_ko.svg"), caption: [Korean]),
+    figure(image("../images/calibration/circadian_ja.svg"), caption: [Japanese]),
   ),
   caption: flex-caption(
     [Circadian patterns of session starts by language.],
@@ -201,7 +201,7 @@ As it can be seen both in @tbl-cal-pair-dist and in @fig-pair-family-bars, the p
 #comment[i feel we could say something else here but idk what to say that is not a list of the parameters and percentages]
 
 #figure(
-  image("../images/calibration/pair_family_bars.png", width: 100%),
+  image("../images/calibration/pair_family_bars.svg", width: 100%),
   caption: flex-caption(
     [Most common duration--gap family pairs.],
     [Share of users (in %) for all 22 observed (duration, gap) family combinations in descending order. The seven smallest combinations together account for 49 users ($< 0.02$%).],
@@ -233,7 +233,7 @@ The next quantity to calibrate needs of the session construct to exist. `inter_p
 All the post creation timestamp have been clustered into sessions. Therefore, we are measuring the gap between the any two posts creations within a session. @fig-cal-create-post-per-session shows all sessions for all users times that a post has been created inside a session. 
 
 #figure(
-  image("../images/calibration/interpost_posts_per_session.png", width: 100%),
+  image("../images/calibration/interpost_posts_per_session.svg", width: 100%),
   caption: flex-caption(
     [Post creations per session.],
     [Share of sessions (%) by number of post creations inside them for all sessions, regardless of parametric fitting.],
@@ -260,8 +260,8 @@ In @sec-cal-dist we defined 16 familiy pairs of distributions that `session_dura
   grid(
     columns: 2,
     column-gutter: 0.8em,
-    figure(image("../images/annex/interpost_pairs/posts_per_session__gamma__lognorm.png")),
-    figure(image("../images/annex/interpost_pairs/posts_per_session__weibull_min__lognorm.png")),
+    figure(image("../images/annex/interpost_pairs/posts_per_session__gamma__lognorm.svg")),
+    figure(image("../images/annex/interpost_pairs/posts_per_session__weibull_min__lognorm.svg")),
   ),
   caption: flex-caption(
     [Posts per session of pair (Gamma, Lognorm) and (Weibull, Lognorm)],
@@ -273,8 +273,8 @@ In @sec-cal-dist we defined 16 familiy pairs of distributions that `session_dura
   grid(
     columns: 2,
     column-gutter: 0.8em,
-    figure(image("../images/annex/interpost_pairs/interpost_ecdf__gamma__lognorm.png")),
-    figure(image("../images/annex/interpost_pairs/interpost_ecdf__weibull_min__lognorm.png")),
+    figure(image("../images/annex/interpost_pairs/interpost_ecdf__gamma__lognorm.svg")),
+    figure(image("../images/annex/interpost_pairs/interpost_ecdf__weibull_min__lognorm.svg")),
   ),
   caption: flex-caption(
     [Within-gap ECDFs of pair (Gamma, Lognorm) and (Weibull, Lognorm)],
@@ -291,7 +291,7 @@ The simulation draws `inter_post_creation` from `results/within_interpost_ecdf.t
 Taking a deeper look at the data, there is an important pattern in how posts land inside a session: the offset between the session start and each post creation. @fig-cal-offset-hist shows its distribution over the first 60 seconds in 1-second bins, and @tbl-cal-offset-stats reports its statistics.
 
 #figure(
-  image("../images/calibration/post_offsets_hist.png", width: 100%),
+  image("../images/calibration/post_offsets_hist.svg", width: 100%),
   caption: flex-caption(
     [Post offsets within sessions.],
     [Share of all session posts (%) by offset from session start, 1-second bins over the first 15 s (331,132 posts from a 20k-user sample).],
@@ -321,7 +321,7 @@ The offset is heavily concentrated at the session start: $30.9%$ of all session 
   grid(
     columns: 1,
     column-gutter: 0.8em,
-    image("../images/annex/interpost_pairs/offset_ecdf__expon__weibull_min.png"), 
+    image("../images/annex/interpost_pairs/offset_ecdf__expon__weibull_min.svg"), 
   ),
   caption: flex-caption(
     [Offset ECDF of Exp $times$ Weibull (40K users)],
@@ -407,7 +407,7 @@ qualitative behaviour of the simulation does not hinge on the exact value of
 $1 slash lambda$.
 
 #figure(
-  image("../images/calibration/pi_sensitivity.png", width: 80%),
+  image("../images/calibration/pi_sensitivity.svg", width: 80%),
   caption: [Sensitivity of the user policy $pi$ to the assumed dwell time
     $s$ (seconds per post). Zero-duration sessions excluded. The dashed line
     marks the chosen value $s = 3$ s per post.],
@@ -448,7 +448,7 @@ This section describes the experiment to find the smaller $t_w$ such that a user
 ) <tbl-cal-warmup-sweep>
 
 #figure(
-  image("../images/calibration/warmup_100K_boredom_timeline.png", width: 100%),
+  image("../images/calibration/warmup_100K_boredom_timeline.svg", width: 100%),
   caption: flex-caption(
     [Boredom over time on the 100K network.],
     [Cumulative percentage of users ending a session in boredom over ticks after warm-up, one line per warm-up length.],
@@ -456,7 +456,7 @@ This section describes the experiment to find the smaller $t_w$ such that a user
 ) <fig-cal-warmup-100k-boredom>
 
 #figure(
-  image("../images/calibration/warmup_100K_attention_decay.png", width: 100%),
+  image("../images/calibration/warmup_100K_attention_decay.svg", width: 100%),
   caption: flex-caption(
     [Warm-up post attention decay on the 100K network.],
     [Share of actions on warm-up posts over time, one line per warm-up length.],
@@ -486,7 +486,7 @@ Window configuration wise, the online fraction of users is binned over 60s bins 
 @fig-cal-stable-convergence shows the three initial-condition curves on the 1M network, @tbl-cal-stable-equil reports the equilibrium online fraction and @tbl-cal-stable-time the stabilization time, and the plots for all the other datasets can be found in @apx-stability-plots.
 
 #figure(
-  image("../images/calibration/initial_conditions_1M_log.png", width: 80%),
+  image("../images/calibration/initial_conditions_1M_log.svg", width: 80%),
   caption: flex-caption(
     [Convergence of the online fraction on the 1M network.],
     [Online-user fraction over time for the three initial conditions ($r_0$, $r_50$, $r_100$) after a 2,000-tick warm-up, on the 1M monotonic network (logarithmic scale). The three curves collapse onto the same equilibrium.],

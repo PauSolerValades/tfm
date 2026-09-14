@@ -155,11 +155,11 @@ Another very strong point in DBSCAN against HDBSCAN is that the first embraces t
     columns: (1fr, 1fr),
     column-gutter: 1em,
     figure(
-      image("../../images/annex/hist_gap_dbscan_e300_ms2.png", width: 100%),
+      image("../../images/annex/hist_gap_dbscan_e300_ms2.svg", width: 100%),
       caption: [Inter-session gap histogram for DBSCAN ($epsilon = 300$ s, $m_"pts" = 2$).],
     ),
     figure(
-      image("../../images/annex/hist_gap_hdbscan_mcs2_ms1_e300.png", width: 100%),
+      image("../../images/annex/hist_gap_hdbscan_mcs2_ms1_e300.svg", width: 100%),
       caption: [Inter-session gap histogram for HDBSCAN ($"mc"_s = 2$, $m_s = 1$, $epsilon = 300$).],
     ),
   ),
@@ -314,8 +314,8 @@ Gaps are overwhelmingly heavy-tail (94.1%), which is what it intuitevly makes se
   grid(
     columns: 2,
     column-gutter: 0.8em,
-    figure(image("../../images/annex/xi_tails/xi_hist_duration.png")),
-    figure(image("../../images/annex/xi_tails/xi_hist_gap.png")),
+    figure(image("../../images/annex/xi_tails/xi_hist_duration.svg")),
+    figure(image("../../images/annex/xi_tails/xi_hist_gap.svg")),
   ),
   caption: flex-caption(
     [GPD shape parameter $alpha$ histograms.],
@@ -333,112 +333,112 @@ On the contrary, it seems that gaps could exhibit this behaviour also, but far l
 For reference, this section collects the per-pair parameter histograms of all 22 observed (duration, gap) family pairs, sorted by the share of users they represent. No analysis is intended here; the interpretation is given in @sec-cal-acrossuser.
 
 #figure(
-  image("../../images/annex/pair_params/expon__weibull_min.png", width: 100%),
+  image("../../images/annex/pair_params/expon__weibull_min.svg", width: 100%),
   caption: [Session: Exp, gaps: Weibull (16.3%)],
 ) <fig-hist-expon-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__weibull_min.png", width: 100%),
+  image("../../images/annex/pair_params/weibull_min__weibull_min.svg", width: 100%),
   caption: [Session: Weibull, gaps: Weibull (10.0%)],
 ) <fig-hist-weibull-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__lognorm.png", width: 100%),
+  image("../../images/annex/pair_params/weibull_min__lognorm.svg", width: 100%),
   caption: [Session: Weibull, gaps: Lognorm (8.7%)],
 ) <fig-hist-weibull-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__weibull_min.png", width: 100%),
+  image("../../images/annex/pair_params/gamma__weibull_min.svg", width: 100%),
   caption: [Session: Gamma, gaps: Weibull (8.3%)],
 ) <fig-hist-gamma-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/expon__lognorm.png", width: 100%),
+  image("../../images/annex/pair_params/expon__lognorm.svg", width: 100%),
   caption: [Session: Exp, gaps: Lognorm (8.1%)],
 ) <fig-hist-expon-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/power_tail__weibull_min.png", width: 100%),
+  image("../../images/annex/pair_params/power_tail__weibull_min.svg", width: 100%),
   caption: [Session: Pareto, gaps: Weibull (7.5%)],
 ) <fig-hist-power-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__weibull_min.png", width: 100%),
+  image("../../images/annex/pair_params/lognorm__weibull_min.svg", width: 100%),
   caption: [Session: Lognorm, gaps: Weibull (7.1%)],
 ) <fig-hist-lognorm-weibull>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__lognorm.png", width: 100%),
+  image("../../images/annex/pair_params/gamma__lognorm.svg", width: 100%),
   caption: [Session: Gamma, gaps: Lognorm (6.1%)],
 ) <fig-hist-gamma-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__power_tail.png", width: 100%),
+  image("../../images/annex/pair_params/weibull_min__power_tail.svg", width: 100%),
   caption: [Session: Weibull, gaps: Pareto (5.6%)],
 ) <fig-hist-weibull-power>
 
 #figure(
-  image("../../images/annex/pair_params/power_tail__lognorm.png", width: 100%),
+  image("../../images/annex/pair_params/power_tail__lognorm.svg", width: 100%),
   caption: [Session: Pareto, gaps: Lognorm (4.5%)],
 ) <fig-hist-power-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__lognorm.png", width: 100%),
+  image("../../images/annex/pair_params/lognorm__lognorm.svg", width: 100%),
   caption: [Session: Lognorm, gaps: Lognorm (4.4%)],
 ) <fig-hist-lognorm-lognorm>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__power_tail.png", width: 100%),
+  image("../../images/annex/pair_params/gamma__power_tail.svg", width: 100%),
   caption: [Session: Gamma, gaps: Pareto (3.7%)],
 ) <fig-hist-gamma-power>
 
 #figure(
-  image("../../images/annex/pair_params/expon__power_tail.png", width: 100%),
+  image("../../images/annex/pair_params/expon__power_tail.svg", width: 100%),
   caption: [Session: Exp, gaps: Pareto (3.6%)],
 ) <fig-hist-expon-power>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__power_tail.png", width: 100%),
+  image("../../images/annex/pair_params/lognorm__power_tail.svg", width: 100%),
   caption: [Session: Lognorm, gaps: Pareto (3.4%)],
 ) <fig-hist-lognorm-power>
 
 #figure(
-  image("../../images/annex/pair_params/power_tail__power_tail.png", width: 100%),
+  image("../../images/annex/pair_params/power_tail__power_tail.svg", width: 100%),
   caption: [Session: Pareto, gaps: Pareto (2.8%)],
 ) <fig-hist-power-power>
 
 #figure(
-  image("../../images/annex/pair_params/power_tail__gamma.png", width: 100%),
+  image("../../images/annex/pair_params/power_tail__gamma.svg", width: 100%),
   caption: [Session: Pareto, gaps: Gamma (0.01%)],
 ) <fig-hist-power-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__gamma.png", width: 100%),
+  image("../../images/annex/pair_params/lognorm__gamma.svg", width: 100%),
   caption: [Session: Lognorm, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-lognorm-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__gamma.png", width: 100%),
+  image("../../images/annex/pair_params/weibull_min__gamma.svg", width: 100%),
   caption: [Session: Weibull, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-weibull-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/gamma__gamma.png", width: 100%),
+  image("../../images/annex/pair_params/gamma__gamma.svg", width: 100%),
   caption: [Session: Gamma, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-gamma-gamma>
 
 #figure(
-  image("../../images/annex/pair_params/weibull_min__expon.png", width: 100%),
+  image("../../images/annex/pair_params/weibull_min__expon.svg", width: 100%),
   caption: [Session: Weibull, gaps: Exp ($<$0.01%)],
 ) <fig-hist-weibull-expon>
 
 #figure(
-  image("../../images/annex/pair_params/lognorm__expon.png", width: 100%),
+  image("../../images/annex/pair_params/lognorm__expon.svg", width: 100%),
   caption: [Session: Lognorm, gaps: Exp ($<$0.01%)],
 ) <fig-hist-lognorm-expon>
 
 #figure(
-  image("../../images/annex/pair_params/expon__gamma.png", width: 100%),
+  image("../../images/annex/pair_params/expon__gamma.svg", width: 100%),
   caption: [Session: Exp, gaps: Gamma ($<$0.01%)],
 ) <fig-hist-expon-gamma>
 

@@ -147,17 +147,17 @@ The types `graph.repost` (186), `graph.verification` (119), `lexicon.collection`
 The 3.09 million users are not uniformly active. The following three figures show
 
 #figure(
-  image("../../images/annex/data/user_hist_events_per_user.png", width: 100%),
+  image("../../images/annex/data/user_hist_events_per_user.svg", width: 100%),
   caption: [Raw histogram of total events per user over the full observation window.],
 ) <fig-anx-events-per-user-hists>
 
 #figure(
-  image("../../images/annex/data/user_hist_events_per_day.png", width: 100%),
+  image("../../images/annex/data/user_hist_events_per_day.svg", width: 100%),
   caption: [Raw histogram of events per active day.],
 ) <fig-anx-events-per-day-hist>
 
 #figure(
-  image("../../images/annex/data/user_hist_events_per_hour.png", width: 100%),
+  image("../../images/annex/data/user_hist_events_per_hour.svg", width: 100%),
   caption: [Raw histogram of events per active hour.],
 ) <fig-anx-events-per-hour-hist>
 
