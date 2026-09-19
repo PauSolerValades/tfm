@@ -50,7 +50,7 @@ This section described the parameters and configuration of the execution of the 
     [50K#footnote[Added for scalability analysis puroposes, but not analized in depth]], [100], [16], 
     [100K], [100], [12], 
     [500K], [100], [2], 
-    [1M], [98#footnote[Server ran out of disk space when the simulation was running, last two runs excluded. ]], [1], 
+    [1M], [98#footnote[One run aborted and was excluded from the analysis.]], [1], 
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -87,7 +87,7 @@ Regarding performance, this section describes the growth of the simulation accor
     [50K], [100], [34,230], [969], [32,927], [27,580], [46,842],
     [100K], [100], [119,776], [4,210], [112,288], [100,673], [180,241],
     [500K], [100], [731,821], [4,376], [732,814], [684,260], [815,866],
-    [1M], [90], [1,058,691], [9,407], [1,050,362], [1,002,021], [1,340,140],
+    [1M], [98], [1,058,691], [9,407], [1,050,362], [1,002,021], [1,340,140],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -155,7 +155,7 @@ First metric to evaluate in the simulation is the reposts power-law, a character
     table.hline(stroke: 0.8pt),
     [*Metric*], [*10K*], [*100K*], [*500K*], [*1M*],
     table.hline(stroke: 0.5pt),
-    [*Runs*], [100], [100], [100], [91],
+    [*Runs*], [100], [100], [100], [98],
     [*$alpha$ mean*], [2.497], [2.692], [2.706], [2.927],
     [*$alpha$ median*], [2.496], [2.909], [2.839], [2.949],
     [*$alpha$ CI95 ($±$)*], [0.003], [0.055], [0.048], [0.013],
@@ -166,7 +166,7 @@ First metric to evaluate in the simulation is the reposts power-law, a character
     [*$x_"min"$ CI95 ($±$)*], [0.000], [0.336], [1.197], [0.114],
     [*$x_"min"$ min*], [1], [1], [1], [1],
     [*$x_"min"$ max*], [1], [18], [63], [5],
-    [*Power-law runs*], [0/100], [0/100], [0/100], [0/91],
+    [*Power-law runs*], [0/100], [0/100], [0/100], [0/98],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -284,7 +284,7 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
 ) <fig-res-nu-density>
 
 
-== Comparison with Bluesky Data
+== Comparison with Bluesky Data <sec-results-comparison>
 
 With all the metrics analyzed in both fronts, the comparison of real vs simulated data can be done.
 @tbl-res-vs-data contrasts the key metrics: the Bluesky values against each of the four simulated datasets (pooled over all runs).
@@ -475,7 +475,7 @@ Could the reverse-chronological feed itself be the cap? @sec-queue-attention tes
 
 === Out-degree versus author followers <sec-width-reach>
 
-To see where the width is lost, we measure the first-hop size against the author's true follower count. For broadcast cascades (depth $1$) the maximum out-degree *is* the number of direct reposts of the root, so this isolates the impression term cleanly. @fig-queue-width and @tbl-queue-width report it for the 500K dataset, bucketed by the author's in-degree (taken from the topology binary the simulator consumed, see @apx-impl-topology). The random column belongs to the timeline-order experiment of @sec-queue-attention; here we read the reverse-chronological (LIFO) baseline.
+To see where the width is lost, we measure the first-hop size against the author's true follower count. For broadcast cascades (depth $1$) the maximum out-degree *is* the number of direct reposts of the root, so this isolates the impression term cleanly. @fig-queue-width and @tbl-queue-width report it for the 500K and 1M datasets, bucketed by the author's in-degree (taken from the topology binary the simulator consumed, see @apx-impl-topology). The random column belongs to the timeline-order experiment of @sec-queue-attention; here we read the reverse-chronological (LIFO) baseline.
 
 #figure(
   image("../images/results/width_vs_followers.svg", width: 100%),
@@ -576,7 +576,7 @@ The extreme tail is the exception. It moves toward the data at every size: at 50
   )
 ) <tbl-queue-extreme>
 
-The timeline order is therefore *exonerated*: it is not why the cascades are narrow. Removing it buys the extreme tail roughly $10%$ ---and buys it by luck, through the one post that happens to be drawn often enough--- while the gap to the data is a factor of $approx 5$. What the order does control is *which* post is lucky. In that narrow sense a random, or re-ranked, feed is an improvement: the extremes it produces sit slightly closer to the empirical tail. But it cannot manufacture the impressions that the missing width requires, because it is an allocative lever on an impression budget whose size is set elsewhere.
+The timeline order is therefore *exonerated*: it is not why the cascades are narrow. Removing it buys the extreme tail roughly $10$--$20%$ ---and buys it by luck, through the one post that happens to be drawn often enough--- while the gap to the data is a factor of $approx 5$. What the order does control is *which* post is lucky. In that narrow sense a random, or re-ranked, feed is an improvement: the extremes it produces sit slightly closer to the empirical tail. But it cannot manufacture the impressions that the missing width requires, because it is an allocative lever on an impression budget whose size is set elsewhere.
 
 === Width Truncation Hypothesis <sec-width-cause>
 

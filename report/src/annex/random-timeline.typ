@@ -15,7 +15,7 @@ As in @sec-results-powerlaw, the first metric is the repost power-law. @tbl-apx-
     table.hline(stroke: 0.8pt),
     [*Metric*], [*10K*], [*100K*], [*500K*], [*1M*],
     table.hline(stroke: 0.5pt),
-    [*Runs*], [100], [100], [100], [100],
+    [*Runs*], [100], [100], [100], [98],
     [*$alpha$ mean*], [2.606], [2.468], [2.863], [2.923],
     [*$alpha$ median*], [2.606], [2.468], [2.957], [2.926],
     [*$alpha$ CI95 ($±$)*], [0.002], [0.001], [0.043], [0.004],
@@ -26,7 +26,7 @@ As in @sec-results-powerlaw, the first metric is the repost power-law. @tbl-apx-
     [*$x_"min"$ CI95 ($±$)*], [0.000], [0.000], [0.144], [0.034],
     [*$x_"min"$ min*], [1], [1], [1], [3],
     [*$x_"min"$ max*], [1], [1], [3], [4],
-    [*Power-law runs*], [0/100], [0/100], [0/100], [0/100],
+    [*Power-law runs*], [0/100], [0/100], [0/100], [0/98],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
@@ -48,7 +48,7 @@ The picture is the same as the LIFO baseline: no run is a power law, the lognorm
 == Structural Virality
 <apx-rtl-sv>
  
-As in @sec-results-sv, structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree. Across the four datasets between 91.7% and 92.8% of all posts receive no repost at all (`CascadeSize` = 1), leaving 7.2%--8.3% that form a non-trivial cascade ---about half the rate of the real Bluesky data (16.32%), and slightly above the LIFO baseline's 6.6%--7.8%: randomising the drain raises the number of posts that get at least one repost, @tbl-queue-aggregate. @tbl-apx-random-cascade-stats summarises the tree-level metrics: the typical cascade is tiny and shallow in every dataset, and the heavy tail grows with the network from a maximum of $35$ nodes at 10K up to $2040$ at 1M, with a maximum out-degree of $1795$.
+As in @sec-results-sv, structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree. Across the four datasets between 91.7% and 92.8% of all posts receive no repost at all (`CascadeSize` = 1), leaving 7.2%--8.3% that form a non-trivial cascade ---about half the rate of the real Bluesky data (16.32%), and slightly above the LIFO baseline's 6.6%--7.8%: randomising the drain raises the number of posts that get at least one repost, @tbl-queue-aggregate. @tbl-apx-random-cascade-stats summarises the tree-level metrics: the typical cascade is tiny and shallow in every dataset, and the heavy tail grows with the network from a maximum of $35$ nodes at 10K up to $2{,}040$ at 1M, with a maximum out-degree of $1{,}795$.
 
 #figure(
   table(
@@ -81,7 +81,7 @@ As in @sec-results-sv, structural virality $nu(T)$ @goel2016structural captures 
   )
 ) <tbl-apx-random-cascade-stats>
 
-Broadcast diffusion dominates everywhere: 82.0%--83.5% of cascades are broadcasts and only 16.5%--18.3% are viral (@tbl-apx-random-broadcast) ---a stronger broadcast bias than both the real data (71.05%) and the LIFO baseline (79.4%--81.6%). This is the same direction as the aggregate comparison of @tbl-queue-aggregate: randomising the drain pushes the cascade shape slightly *more* star-like.
+Broadcast diffusion dominates everywhere: 81.7%--83.5% of cascades are broadcasts and only 16.5%--18.3% are viral (@tbl-apx-random-broadcast) ---a stronger broadcast bias than both the real data (71.05%) and the LIFO baseline (79.4%--81.6%). This is the same direction as the aggregate comparison of @tbl-queue-aggregate: randomising the drain pushes the cascade shape slightly *more* star-like.
 
 #figure(
   table(
@@ -193,4 +193,4 @@ With all the metrics computed on the random-timeline build, @tbl-apx-random-vs-d
   )
 ) <tbl-apx-random-vs-data>
 
-The comparison reads almost identically to @tbl-res-vs-data, so the conclusions of @sec-results section 8.5 carry over unchanged. The random drain produces roughly half the real share of non-trivial cascades, matching medians but truncated tails (size $2,040$ vs. $12,720$, depth $13$ vs. $131$, max out-degree $1,795$ vs. $7,768$), a shallower $nu(T)$ ($1.14$--$1.18$ vs. $1.454$), and a more broadcast-shaped profile ($82$--$84%$ vs. $71.05%$). The repost exponent stays lognormal with a faster decay ($2.5$--$2.9$ vs. $2.053$) and a lower cutoff. Relative to the LIFO baseline, the only notable shifts are a slightly higher cascade rate (7.2%--8.3% vs. 6.6%--7.8%) and a slightly more broadcast-heavy shape, both consistent with @tbl-queue-aggregate: reordering the drain decides which cascades grow, not how large the largest can be.
+The comparison reads almost identically to @tbl-res-vs-data, so the conclusions of the comparison in @sec-results-comparison carry over unchanged. The random drain produces roughly half the real share of non-trivial cascades, matching medians but truncated tails (size $2,040$ vs. $12,720$, depth $13$ vs. $131$, max out-degree $1,795$ vs. $7,768$), a shallower $nu(T)$ ($1.14$--$1.18$ vs. $1.454$), and a more broadcast-shaped profile ($82$--$84%$ vs. $71.05%$). The repost exponent stays lognormal with a faster decay ($2.5$--$2.9$ vs. $2.053$) and a lower cutoff. Relative to the LIFO baseline, the only notable shifts are a slightly higher cascade rate (7.2%--8.3% vs. 6.6%--7.8%) and a slightly more broadcast-heavy shape, both consistent with @tbl-queue-aggregate: reordering the drain changes which cascades grow and lifts the extreme tail, but leaves the bulk of the distribution flat.
