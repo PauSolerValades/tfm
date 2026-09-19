@@ -1,6 +1,6 @@
 brown1988calendar:
   type: Article
-  title: "Calendar Queues: A Fast {O(1)} Priority Queue Implementation for the Simulation Event Set Problem"
+  title: "Calendar queues: A fast {O(1)} priority queue implementation for the simulation event set problem"
   author: Brown, Randy
   date: 1988-10
   page-range: 1220-1227
@@ -15,7 +15,7 @@ brown1988calendar:
 
 kim2009mlist:
   type: Article
-  title: "An Improved {MList} for Efficient Event List Management in Discrete Event Simulation"
+  title: "An improved {MList} for efficient event list management in discrete event simulation"
   author: ["Kim, Seong-Gon", "Yim, Dong-Soon"]
   date: 2009-12
   page-range: 29-37

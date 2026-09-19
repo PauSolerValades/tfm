@@ -1,6 +1,8 @@
 zig-std:
   type: Web
   title: Zig Standard Library (v0.16.0)
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://ziglang.org/documentation/0.16.0/std/
     date: 2026-05-26
@@ -10,7 +12,7 @@ zig-std:
 
 duckdb:
   type: Article
-  title: "DuckDB: an Embeddable Analytical Database"
+  title: "DuckDB: An embeddable analytical database"
   author:
     - Raasveldt, Mark
     - Mühleisen, Hannes
@@ -30,7 +32,7 @@ duckdb:
 
 barabasi1999emergence:
   type: Article
-  title: "Emergence of Scaling in Random Networks"
+  title: "Emergence of scaling in random networks"
   author:
     - Barabási, Albert-László
     - Albert, Réka

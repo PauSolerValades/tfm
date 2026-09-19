@@ -1,6 +1,6 @@
 arrington2006twttr:
   type: Article
-  title: "Odeo Releases Twttr"
+  title: "Odeo releases Twttr"
   author: Arrington, Michael
   date: 2006-07-15
   url:
@@ -23,7 +23,7 @@ fishman2002simulation:
 
 maidstone2012discrete:
   type: Article
-  title: "Discrete Event Simulation, System Dynamics and Agent Based Simulation: Discussion and Comparison"
+  title: "Discrete event simulation, system dynamics and agent based simulation: Discussion and comparison"
   author: Maidstone, Robert
   date: 2012-03-07
   url:
@@ -40,6 +40,7 @@ siebers2010discrete:
     - Buxton, David
     - Pidd, Michael
   date: 2010-09
+  page-range: 204-210
   serial-number:
     doi: "10.1057/jos.2010.14"
   parent:
@@ -47,13 +48,13 @@ siebers2010discrete:
     title: Journal of Simulation
     volume: 4
     issue: 3
-    page-range: 204-210
 
 bonabeau2002agent:
   type: Article
   title: "Agent-based modeling: Methods and techniques for simulating human systems"
   author: Bonabeau, Eric
   date: 2002-05-14
+  page-range: 7280-7287
   serial-number:
     doi: "10.1073/pnas.082080899"
   parent:
@@ -61,4 +62,16 @@ bonabeau2002agent:
     title: "Proceedings of the National Academy of Sciences (PNAS)"
     volume: 99
     issue: 3
-    page-range: 7280-7287
+
+palmer2019twitter:
+  type: Article
+  title: "Twitter CEO Jack Dorsey has an idealistic vision for the future of social media and is funding a small team to chase it"
+  author:
+    - Palmer, Annie
+  date: 2019-12-11
+  url:
+    value: https://www.cnbc.com/2019/12/11/twitter-ceo-jack-dorsey-announces-bluesky-social-media-standards-push.html
+    date: 2024-11-13
+  parent:
+    type: Newspaper
+    title: CNBC

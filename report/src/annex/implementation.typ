@@ -349,7 +349,7 @@ If the user is offline, it will also have four events at most:
 - A stale `propagate` event.
 - The `session.start` event.
 
-The $4N$ upper bound on queue occupancy derived in @sec-design-datastructrues-queue (four events per user at any instant) is used to preallocate the heap's backing array: `ensureTotalCapacity(gpa, 4 * N)` is called once at startup, eliminating reallocation entirely during the simulation run. This is the same preallocation strategy discussed in @apx-impl-memory, applied to the single hottest data structure in the engine.
+The $4N$ upper bound on queue occupancy derived in @sec-design-datastructures-queue (four events per user at any instant) is used to preallocate the heap's backing array: `ensureTotalCapacity(gpa, 4 * N)` is called once at startup, eliminating reallocation entirely during the simulation run. This is the same preallocation strategy discussed in @apx-impl-memory, applied to the single hottest data structure in the engine.
 
 A discussion of alternative queue data structures — which would achieve $O(1)$ amortized access through bucketed time-slicing — is deferred to @sec-future.
 

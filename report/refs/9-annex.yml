@@ -1,6 +1,8 @@
 upc-ia-guia:
   type: Web
   title: "IA generativa: IA per als teus estudis"
+  author:
+    name: "Universitat Politècnica de Catalunya — Bibliotècnica"
   url:
     value: https://guies.bibliotecnica.upc.edu/intelligencia-artificial/estudis
     date: 2026-05-27
@@ -9,6 +11,8 @@ upc-ia-guia:
 gemini-3-1-pro:
   type: Web
   title: "Gemini 3.1 Pro Model Card"
+  author:
+    name: "Google DeepMind"
   url:
     value: https://deepmind.google/models/model-cards/gemini-3-1-pro/
     date: 2026-05-27
@@ -17,6 +21,8 @@ gemini-3-1-pro:
 deepseek-v4:
   type: Web
   title: "DeepSeek-V4 Model Card"
+  author:
+    name: "DeepSeek"
   url:
     value: https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf
     date: 2026-05-27
@@ -25,6 +31,8 @@ deepseek-v4:
 gemini-app:
   type: Web
   title: Gemini
+  author:
+    name: "Google"
   url:
     value: https://gemini.google.com/app
     date: 2026-05-27
@@ -33,13 +41,15 @@ gemini-app:
 pi-dev:
   type: Web
   title: pi — Coding Agent
+  author:
+    name: "Earendil Works"
   url:
     value: https://pi.dev/
     date: 2026-05-27
 
 vuong1989likelihood:
   type: Article
-  title: "Likelihood Ratio Tests for Model Selection and Non-Nested Hypotheses"
+  title: "Likelihood ratio tests for model selection and non-nested hypotheses"
   author: Vuong, Quang H.
   date: 1989-03
   serial-number:
@@ -55,6 +65,8 @@ vuong1989likelihood:
 r-vuong-test:
   type: Web
   title: "vuong.test: Vuong's likelihood ratio test for non-nested models"
+  author:
+    name: "R Package Documentation — unitquantreg"
   url:
     value: https://search.r-project.org/CRAN/refmans/unitquantreg/html/vuong.test.html
     date: 2026-06-01
@@ -109,6 +121,38 @@ evd-cran:
     value: https://cran.r-project.org/package=evd
     date: 2026-08-11
   organization: CRAN
+
+akaike1974:
+  type: Article
+  title: "A new look at the statistical model identification"
+  author: Akaike, Hirotugu
+  date: 1974-12
+  page-range: 716-723
+  serial-number:
+    doi: "10.1109/TAC.1974.1100705"
+  parent:
+    type: Periodical
+    title: "IEEE Transactions on Automatic Control"
+    publisher:
+      name: IEEE
+    volume: 19
+    issue: 6
+
+stephens1974:
+  type: Article
+  title: "EDF statistics for goodness of fit and some comparisons"
+  author: Stephens, M. A.
+  date: 1974-09
+  page-range: 730-737
+  serial-number:
+    doi: "10.1080/01621459.1974.10480196"
+  parent:
+    type: Periodical
+    title: "Journal of the American Statistical Association"
+    publisher:
+      name: Taylor & Francis
+    volume: 69
+    issue: 347
 
 soler2025dsbskysim:
   type: Repository
@@ -169,7 +213,7 @@ mcinnes2017hdbscan:
 
 campello2013hdbscan:
   type: Article
-  title: "Density-Based Clustering Based on Hierarchical Density Estimates"
+  title: "Density-based clustering based on hierarchical density estimates"
   author:
     - Campello, Ricardo J. G. B.
     - Moulavi, Davoud
@@ -196,12 +240,13 @@ agner2024instruction:
 
 alstott2014powerlaw:
   type: Article
-  title: "powerlaw: A Python Package for Analysis of Heavy-Tailed Distributions"
+  title: "powerlaw: A Python package for analysis of heavy-tailed distributions"
   author:
     - Alstott, Jeff
     - Bullmore, Ed
     - Plenz, Dietmar
   date: 2014
+  page-range: e85777
   serial-number:
     doi: "10.1371/journal.pone.0085777"
   parent:
@@ -209,11 +254,10 @@ alstott2014powerlaw:
     title: "PLOS ONE"
     volume: 9
     number: 1
-    page-range: e85777
 
 amin2022scalefree:
   type: Article
-  title: "Model for Generating Scale-Free Artificial Social Networks Using Small-World Networks"
+  title: "Model for generating scale-free artificial social networks using small-world networks"
   author:
     - Amin, Farhan
     - Choi, Gyu Sang
@@ -250,9 +294,25 @@ devroye1986nonuniform:
     isbn: "978-1-4613-8645-2"
     doi: "10.1007/978-1-4613-8643-8"
 
+pickands1975statistical:
+  type: Article
+  title: "Statistical inference using extreme order statistics"
+  author: Pickands, James
+  date: 1975-01
+  page-range: 119-131
+  serial-number:
+    doi: "10.1214/aos/1176343003"
+  parent:
+    type: Periodical
+    title: "The Annals of Statistics"
+    publisher:
+      name: Institute of Mathematical Statistics
+    volume: 3
+    issue: 1
+
 drepper2007memory:
   type: Article
-  title: "What Every Programmer Should Know About Memory"
+  title: "What every programmer should know about memory"
   author: Drepper, Ulrich
   date: 2007-11-21
   url:
@@ -262,9 +322,10 @@ drepper2007memory:
 
 goldberg1991floating:
   type: Article
-  title: "What Every Computer Scientist Should Know About Floating-Point Arithmetic"
+  title: "What every computer scientist should know about floating-point arithmetic"
   author: Goldberg, David
   date: 1991-03
+  page-range: 5-48
   serial-number:
     doi: "10.1145/103162.103163"
   parent:
@@ -272,7 +333,6 @@ goldberg1991floating:
     title: ACM Computing Surveys
     volume: 23
     issue: 1
-    page-range: 5-48
 
 ieee2019floating:
   type: Misc
@@ -284,7 +344,7 @@ ieee2019floating:
 
 kooti2016twitter:
   type: Article
-  title: "Twitter Session Analytics: Profiling Users' Short-Term Behavioral Changes"
+  title: "Twitter session analytics: Profiling users' short-term behavioral changes"
   author:
     - Kooti, Farshad
     - Moro, Esteban
@@ -313,7 +373,7 @@ kooti2016twitter:
 
 kwak2017centrality:
   type: Article
-  title: "Centrality Fairness: Measuring and Analyzing Structural Inequality of Online Social Networks"
+  title: "Centrality fairness: Measuring and analyzing structural inequality of online social networks"
   author:
     - Kwak, Heeyoung
     - Kim, Joonyoung
@@ -333,7 +393,7 @@ kwak2017centrality:
 
 marsaglia2000ziggurat:
   type: Article
-  title: "The Ziggurat Method for Generating Random Variables"
+  title: "The Ziggurat method for generating random variables"
   author:
     - Marsaglia, George
     - Tsang, Wai Wan
@@ -348,7 +408,7 @@ marsaglia2000ziggurat:
 
 marsaglia2000gamma:
   type: Article
-  title: "A Simple Method for Generating Gamma Variables"
+  title: "A simple method for generating gamma variables"
   author:
     - Marsaglia, George
     - Tsang, Wai Wan
@@ -364,7 +424,7 @@ marsaglia2000gamma:
 
 satopaa2011kneedle:
   type: Article
-  title: "Finding a \"kneedle\" in a Haystack: Detecting Knee Points in System Behavior"
+  title: "Finding a \"kneedle\" in a haystack: Detecting knee points in system behavior"
   author:
     - Satopaa, Ville
     - Albrecht, Jeannie
@@ -394,9 +454,10 @@ soler2025eazyargs:
 
 walker1977alias:
   type: Article
-  title: "An Efficient Method for Generating Discrete Random Variables with General Distributions"
+  title: "An efficient method for generating discrete random variables with general distributions"
   author: Walker, Alastair J.
   date: 1977-09
+  page-range: 253-256
   serial-number:
     doi: "10.1145/355744.355749"
   parent:
@@ -404,11 +465,12 @@ walker1977alias:
     title: ACM Transactions on Mathematical Software
     volume: 3
     issue: 3
-    page-range: 253-256
 
 wiki-cache:
   type: Web
   title: CPU cache
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Cache_(computing)
     date: 2026-05-27
@@ -417,6 +479,8 @@ wiki-cache:
 wiki-context-switch:
   type: Web
   title: Context switch
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Context_switch
     date: 2026-05-27
@@ -425,6 +489,8 @@ wiki-context-switch:
 wiki-serialization:
   type: Web
   title: Serialization
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Serialization
     date: 2026-05-27
@@ -433,6 +499,8 @@ wiki-serialization:
 wiki-syscall:
   type: Web
   title: System call
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/System_call
     date: 2026-05-27
@@ -441,6 +509,8 @@ wiki-syscall:
 zig-std-c-allocator:
   type: Web
   title: "std.heap.c_allocator — C Allocator Interface"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/heap.zig
     date: 2026-08-26
@@ -453,6 +523,8 @@ zig-std-c-allocator:
 zig-std-hash-map:
   type: Web
   title: "std.AutoHashMapUnmanaged — Hash Map"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/hash_map.zig
     date: 2026-08-26
@@ -465,6 +537,8 @@ zig-std-hash-map:
 zig-std-dynamic-bit-set:
   type: Web
   title: "std.DynamicBitSetUnmanaged — Dynamically-Sized Bitset"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/bit_set.zig
     date: 2026-08-26
@@ -477,6 +551,8 @@ zig-std-dynamic-bit-set:
 zig-std-heap:
   type: Web
   title: "std.heap — ArenaAllocator and built-in allocators"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/heap.zig
     date: 2026-08-26
@@ -489,6 +565,8 @@ zig-std-heap:
 zig-std-io:
   type: Web
   title: "std.Io — Buffered and Streaming I/O"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/Io.zig
     date: 2026-08-26
@@ -501,6 +579,8 @@ zig-std-io:
 zig-std-json:
   type: Web
   title: "std.json — JSON Serialization and Deserialization"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/json.zig
     date: 2026-08-26
@@ -513,6 +593,8 @@ zig-std-json:
 zig-std-multi-array-list:
   type: Web
   title: "std.MultiArrayList — Structure of Arrays Container"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/multi_array_list.zig
     date: 2026-08-26
@@ -525,6 +607,8 @@ zig-std-multi-array-list:
 zig-std-priority-queue:
   type: Web
   title: "std.PriorityQueue — Binary Heap Implementation"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/priority_queue.zig
     date: 2026-08-26
@@ -537,6 +621,8 @@ zig-std-priority-queue:
 zig-std-sort:
   type: Web
   title: "std.sort — Sorting Algorithms"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://github.com/ziglang/zig/blob/master/lib/std/sort.zig
     date: 2026-08-26
@@ -549,6 +635,8 @@ zig-std-sort:
 zig-build-system:
   type: Web
   title: "Zig Build System"
+  author:
+    name: "Zig Software Foundation"
   url:
     value: https://ziglang.org/learn/build-system/
     date: 2026-08-26
@@ -566,13 +654,14 @@ lazzaroni2025blueskyfirehose:
 
 julia:
   type: Article
-  title: "Julia: A Fresh Approach to Numerical Computing"
+  title: "Julia: A fresh approach to numerical computing"
   author:
     - Bezanson, Jeff
     - Edelman, Alan
     - Karpinski, Stefan
     - Shah, Viral B.
   date: 2017
+  page-range: 65-98
   serial-number:
     doi: "10.1137/141000671"
   parent:
@@ -580,7 +669,6 @@ julia:
     title: SIAM Review
     volume: 59
     issue: 1
-    page-range: 65-98
 
 vanderplas2014python:
   type: Web
@@ -604,6 +692,8 @@ jemalloc:
 freebsd:
   type: Web
   title: "The FreeBSD Project"
+  author:
+    name: "The FreeBSD Project"
   url:
     value: https://www.freebsd.org/
     date: 2026-08-26
@@ -630,27 +720,27 @@ cro2023asynchrony:
 
 otter1949:
   type: Article
-  title: "The Multiplicative Process"
+  title: "The multiplicative process"
   author: Otter, Richard
   date: 1949
+  page-range: 206-224
   parent:
     type: Periodical
     title: Annals of Mathematical Statistics
     volume: 20
     issue: 2
-    page-range: 206-224
 
 dwass1969:
   type: Article
   title: "The total progeny in a branching process and a related random walk"
   author: Dwass, Meyer
   date: 1969
+  page-range: 682-686
   parent:
     type: Periodical
     title: Journal of Applied Probability
     volume: 6
     issue: 3
-    page-range: 682-686
 
 athreya1972branching:
   type: Book
@@ -675,6 +765,8 @@ kersting2017discrete:
 gemini-3-5-flash:
   type: Web
   title: "Gemini 3.5 Flash Model Card"
+  author:
+    name: "Google DeepMind"
   url:
     value: https://deepmind.google/models/model-cards/gemini-3-5-flash/
     date: 2026-05-27
@@ -683,6 +775,8 @@ gemini-3-5-flash:
 gemini-3-6-flash:
   type: Web
   title: "Gemini 3.6 Flash Model Card"
+  author:
+    name: "Google DeepMind"
   url:
     value: https://deepmind.google/models/model-cards/gemini-3-6-flash/
     date: 2026-05-27
@@ -691,6 +785,8 @@ gemini-3-6-flash:
 deepseek-v4-flash:
   type: Web
   title: "DeepSeek-V4 Flash Model Card"
+  author:
+    name: "DeepSeek"
   url:
     value: https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf
     date: 2026-05-27
@@ -699,6 +795,8 @@ deepseek-v4-flash:
 kimi-k3:
   type: Web
   title: "Kimi K3 Model Card"
+  author:
+    name: "Moonshot AI"
   url:
     value: https://platform.moonshot.ai/docs/models/kimi-k3
     date: 2026-05-27
@@ -719,6 +817,8 @@ hunt1999pragmatic:
 google-scholar:
   type: Web
   title: Google Scholar
+  author:
+    name: "Google"
   url:
     value: https://scholar.google.com/
     date: 2026-09-05
@@ -737,6 +837,18 @@ soler2025tabular:
 bsky-firehose:
   type: Web
   title: "Consuming the Firehose"
+  author:
+    name: "Bluesky"
   url:
     value: https://bsky.network/docs/consuming-the-firehose/
     date: 2026-09-05
+
+idea-lab:
+  type: Web
+  title: "IDea_lab"
+  author:
+    name: "University of Graz"
+  url:
+    value: https://idea-lab.uni-graz.at/en/
+    date: 2026-09-14
+  organization: University of Graz

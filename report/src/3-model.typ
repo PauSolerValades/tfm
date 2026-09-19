@@ -7,7 +7,7 @@ This section justifies which features of Bluesky are going to be modeled from th
 
 To pick the most rellevant subset of features is needed to not drown in unnecessary complexity and to keep adhered to the time and scope constraints. It is believed that the selected subset of features will behave as a microblogging social network.
 
-*1. Just the Following Feed*: The following feed is a timeline with a reverse-chronological post showing criteria, and from now on this will be referred to as the _timeline_ of every user. As simulating a recommender is a difficult challenge in itself, it is believed that the flow of information can be meaningfully studied with a more traditional content strategy, even if the use of these feeds is not the norm on social networks. 
+*1. Just the Following Feed*: The "Following" feed is a timeline with a reverse-chronological post showing criteria, and from now on this will be referred to as the _timeline_ of every user. As simulating a recommender is a difficult challenge in itself, it is believed that the flow of information can be meaningfully studied with a more traditional content strategy. Even if the use of more traditional timelines is not how the majority of users engage with content, are still rellevant to study as they are the most simplest recomendations feeds, which will produce information diffusion patterns and is usually used in the literature as a baseline. #footnote[In fact, new European legislation is making the existence of a non-algorithmic recommender feed (as well as Australia), and most of the companies opt to implement a traditional reverse-chronological timeline. @diemel2022digital @budde2026digital]
 
 *2. Static Users and Followers*: During the course of the simulation, no new users will be added, nor new relationships between them. The inter-user relationships are considered static during the whole duration of the simulation, as the flow of content can be studied without this behavior.
 
@@ -24,7 +24,7 @@ Let's define which features of Bluesky are going to be modeled in the simulation
 
 To model these dynamics, this section introduces a unified mathematical notation that models the microblogging platform as a Time-Varying Heterogeneous Graph @casteigts2012timevarying. This formulation rests on the acknowledgment that there are two distinct entities ---users and posts--- as well as different types of edges to characterize the relationships between entities of the same type and different types. The relationships between the entities are, by their very nature, changing over time.
 
-#def(name: "Time-Varying Heterogeneous Graph")[Having established the temporal properties of our entities and their relationships, we formally define our system as a Time-Varying Graph $cal(G) = (V, E, T, rho, psi, eta)$. Here, $V$ and $E$ form the universal topological space, $psi$ and $rho$ govern the temporal existence of nodes and edges respectively, and $eta$ bounds the chronological flow of information across the network.]
+#def(name: "Time-Varying Heterogeneous Graph")[Having established the temporal properties of our entities and their relationships, we formally define our system as a Time-Varying Graph $cal(G) = (V, E, T, rho, psi, eta)$. Here, $V$ and $E$ form the universal topological space, $T$ is the time domain, $psi$ and $rho$ govern the temporal existence of nodes and edges respectively, and $eta$ bounds the chronological flow of information across the network.]
 
 The following text defines and maps all the functions and sets according to this given definition.
 
@@ -45,7 +45,7 @@ We can now cleanly define the set of available items at any time $t$ simply as $
 
 === Relational Dynamics and Edge Properties
 
-Similar to the node set, we define a universal edge set $E$ containing every potential interaction between entities. There are two types of relationships: $cal(R)_(cal(U) cal(U)) = {"follow"}$ and $cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "ignore" }$. As orthodox it may seem, the "ignore" (user $i$ does not interact with post $i$) is modeled as an action a user takes at a specific time. It makes the concept more intuitive despite having a no concrete equivalent in a social media platform.
+Similar to the node set, we define a universal edge set $E$ containing every potential interaction between entities. There are two types of relationships: $cal(R)_(cal(U) cal(U)) = {"follow"}$ and $cal(R)_(cal(U) cal(I)) = { "create", "like", "repost", "view" }$. As unorthodox it may seem, the "view" (user $i$ does not interact with post $i$ but gets exposed to it) is modeled as an action a user takes at a specific time. It makes the concept more intuitive despite having a no concrete equivalent in a social media platform.
 
 #def(name: "Universal Edges")[We denote the set of all possible edges $E = E_(cal(U)cal(U)) union E_(cal(U)cal(I))$, where 
 $ E_(cal(U)cal(I)) = { (u, i, r) | u in cal(U), i in cal(I), r in cal(R)_(cal(U) cal(I)) } $
@@ -74,7 +74,7 @@ Individual user engagement occurs in discrete, contiguous sessions. Rather than 
 #def(name: "User Sessions")[We define the periods a user $u$ is online as a subset of time $cal(O)(u) subset T$. The edge presence function for any reactive or generative event is strictly constrained by this subset. If a user is offline, no action edges can be generated:
 $ t in.not cal(O)(u) arrow.r.double forall i in cal(I), forall r in cal(R)_(cal(U)cal(I)), rho((u, i, r), t) = 0 $
 
-Consequently, the existence of any event edge inherently requires the user to be in an active session:
+Consequently, the creation of any event edge inherently requires the user to be in an active session:
 $ rho((u, i, r), t) = 1 arrow.r.double t in cal(O)(u) $]
 
 
@@ -132,9 +132,9 @@ $ cal(A)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) =
 #def(name: "Timeline")[The timeline $cal(T)_t (u)$ is the aggregated activity of the user's out-neighborhood $cal(N)_"out" (u)$, strictly excluding items the user organically authored themselves, $cal(P)_t(u)$. The time at which an item from followee $v$ appears in $u$'s timeline is offset by the propagation delay $eta((u, v, "follow"), t)$:
 $ cal(T)_t (u) = ( union.big_(v in cal(N)_"out" (u)) cal(A)_(t - eta((u, v, "follow"), t))(v) ) - cal(P)_t (u) $]
 
-The subindex $t$ in the timeline makes posts available tot pop (or to push) according to t. The resulting event $e_1 = cal(T)_(t_1) (u) != e_2 cal(T)_(t_2)$ where $t_1 <= t_2$.
+The subindex $t$ in the timeline makes posts available to be inserted (or extracted) according to the value of time $t$. The resulting event $e_1 = cal(T)_(t_1) (u) != cal(T)_(t_2) (u) = e_2$ where $t_1 <= t_2$.
 
-Lastly, we have to define an set that contains all the interacted posts by a given user $u$. This is needed to comply with the CTIC model, as a user cannot propagate if it has already been infected. We will call the set interaction history.
+Lastly, we have to define a set that contains all the interacted posts by a given user $u$. This is needed to comply with the CTIC model, as a user cannot propagate if it has already been infected. We will call the set interaction history.
 
 #def(name: "User Interaction History")[The Interaction History set of a user $cal(H)_t (u)$ includes all the items the user has either propagated or liked prior to time $t$
 
@@ -165,22 +165,22 @@ To accurately represent the dynamics of information diffusion on a microblogging
 
 The CTIC model is a good fit for microblogging networks due to its reliance on survival analysis and time-dependent transmission likelihoods: posts are injected into a fast-moving, chronologically ordered feed. A post's "survival" (its probability of being seen and reposted before being buried by newer content) is heavily dependent on the exact continuous time elapsed since its creation @gomezrodriguez2011uncovering. By allowing transmission at different rates using continuous temporal processes (such as exponential or power-law distributions), the CTIC model naturally captures the temporally heterogeneous interactions and long-tailed viral fads characteristic of modern social media.
 
-While the CTIC model provides the ideal theoretical framework for continuous-time diffusion, evaluating these continuous hazard and survival functions analytically across a massive, highly connected graph is computationally prohibitive. Therefore, to operationalize this model, we chose to translate the continuous-time dynamics into a Discrete Event Simulation (DES) (see @sec-method-des).  
+The CTIC model provides of a fitting theoretical framework for a continuous-time diffusion, and as a discrete event system ---the cascade creation is discrete, as the propagation is user-by-user despite being in a timely continuous manner--- makes a Discrete-Event Simulation the perfect tool for the job, specifically the Event Scheduling techinque, as availability of the density and cumulative funcitons for the wanted quantites can be easily obtained (see @sec-method-des  for more).
 
 By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a different quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @apx-impl
 
 === The Homogeneous Rate Simplification
 
 
-In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate is uniform across all network edges, such that:
+In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate wil be uniform across all network edges, such that:
 
-$ alpha_(i,j) = alpha quad forall i, j in V $
+$ alpha_(j,i) = alpha quad forall i, j in V $
 
-where $V$ is the set of all users in the network. This universal rate, $alpha$, represents the global `propagation_delay` of the network and platform: the continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline.
+where $V$ is the set of all users in the network. Since $alpha$ is a rate (with units of inverse time) and not a duration, the model's global propagation delay is its reciprocal, $Delta_p = 1 slash alpha$: the mean continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline. The simulation samples $Delta_p$ directly from `propagation_delay`, which is a degenerate transmission-time distribution (a constant in the reported run, see @tbl-res-config); its mean is what plays the role of $1 slash alpha$.
 
 This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see @sec-design-traces). Also, this conveys a implicit and very noticeable computational advantage.
 
-A more structural justification for uniform $alpha$ comes from the timeline itself. The reverse-chronological feed operates as a LIFO (Last-In, First-Out) queue @hodas2014simple: the most recently propagated post sits at the top, and the user scrolls downward through progressively older content. When $alpha$ varies per edge, a post created earlier but delayed by a slow transmission could arrive after a post created later via a fast edge, scrambling the expected temporal ordering. Uniform $alpha$ guarantees that propagation preserves the global creation order: if post $p_1$ is created before post $p_2$, then $p_1$ will appear in every follower's timeline before $p_2$. This makes the timeline a faithful temporal projection of the platform's activity, which is both analytically cleaner and closer to how a real microblogging feed behaves in the absence of algorithmic reordering. 
+A more structural justification for uniform $Delta_p$ comes from the timeline itself. The reverse-chronological feed operates as a LIFO (Last-In, First-Out) queue @hodas2014simple: the most recently propagated post sits at the top, and the user scrolls downward through progressively older content. When $alpha$ varies per edge, a post created earlier but delayed by a slow transmission could arrive after a post created later via a fast edge, scrambling the expected temporal ordering. Uniform $Delta_p$ guarantees that propagation preserves the global creation order: if post $p_1$ is created before post $p_2$, then $p_1$ will appear in every follower's timeline before $p_2$. This makes the timeline a faithful temporal projection of the platform's activity, which is both analytically cleaner and closer to how a real microblogging feed behaves in the absence of algorithmic reordering. 
 
 
 

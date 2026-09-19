@@ -1,11 +1,12 @@
 clauset2009powerlaw:
   type: Article
-  title: "Power-Law Distributions in Empirical Data"
+  title: "Power-law distributions in empirical data"
   author:
     - Clauset, Aaron
     - Shalizi, Cosma Rohilla
     - Newman, M. E. J.
   date: 2009
+  page-range: 661-703
   serial-number:
     doi: "10.1137/070710111"
   parent:
@@ -15,12 +16,11 @@ clauset2009powerlaw:
       name: "Society for Industrial & Applied Mathematics (SIAM)"
     volume: 51
     number: 4
-    page-range: 661-703
 
 
 kwak2010twitter:
   type: Article
-  title: "What is Twitter, a Social Network or a News Media?"
+  title: "What is Twitter, a social network or a news media?"
   author:
     - Kwak, Haewoon
     - Lee, Changhyun
@@ -42,7 +42,7 @@ kwak2010twitter:
 
 leskovec2006sampling:
   type: Article
-  title: "Sampling from Large Graphs"
+  title: "Sampling from large graphs"
   author:
     - Leskovec, Jure
     - Faloutsos, Christos
@@ -58,3 +58,17 @@ leskovec2006sampling:
       location: New York, NY, USA
     serial-number:
       isbn: "978-1-59593-339-3"
+
+kimball2013datawarehouse:
+  type: Book
+  title: "The Data Warehouse Toolkit: The Definitive Guide to Dimensional Modeling"
+  author:
+    - Kimball, Ralph
+    - Ross, Margy
+  date: 2013
+  edition: 3rd Edition
+  publisher: Wiley
+  location: Indianapolis, IN
+  serial-number:
+    isbn: "978-1-118-53080-1"
+

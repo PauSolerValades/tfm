@@ -1,4 +1,4 @@
-This annex talks about which mechanics have been implemented and discarded though a non explanation of the model. 
+This annex talks about which mechanics have been either implemented or considered but discarded in the end due to scope or ratio effort-results or to keep tight to the minimal subset of features required.. 
 
 == Quoting
 

@@ -1,6 +1,6 @@
 #import "utils.typ": todo, comment, flex-caption
 
-This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in @apx-data. Then, the two quantities described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's est in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in @apx-topology
+This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in @apx-data. Then, the evaluation metric and the characteristic magnitude described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's test in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in @apx-topology
 
 
 == Firehose Data Description
@@ -17,14 +17,14 @@ The Bluesky Firehose is a continuous stream of all public AT Protocol events emi
   )
 ) <fig-eventtype-dist>
 
-As it can be seen, the majority of events on Bluesky are liking a post (`feed_like_create` 66.4%), reposting a post (`feed_repost_create` with 10.6%) and creating a post (`post_top` and  `post_reply` with 11.7%). Specifically, the top 5 events represent a 95.5% of total events.
+As it can be seen, the majority of events on Bluesky are liking a post (`feed_like_create` 67.2%), reposting a post (`feed_repost` with 11.0%), creating a post (`post_top` and  `post_reply` with 11.7%) and following another user (`graph_follow` with a 7.8%). Specifically, the top 5 events represent a 95.5% of total events.
 
 There are a total of 3.09 million distinct users in the dataset, and events are not uniformly distributed among them. Specifically, the distributions of events per user, events per user in a day and events per user in an hour, follow a lognormal distribution as it can be seen in @fig-userevent-dist (see @anx-data-eventperuserfitting for the reasons and methodology of the fitting).
 
 #figure(
   image("../images/data/612_fitting_userevents.svg", width: 100%),
   caption: flex-caption(
-    [[ECDF with fitted lognormals for events per user, per active day, and per active hour.]],
+    [ECDF with fitted lognormals for events per user, per active day, and per active hour.],
     [Distribution of events per user (blue), events per user per hour (green) and events per user per day (yellow). Parameters: events per user $mu = 2.40$, $sigma = 1.85$, events per active day $mu = 1.43$, $sigma = 1.28$, events per active hour $mu = 0.94$, $sigma = 0.89$.],
   )
 ) <fig-userevent-dist>
@@ -39,6 +39,8 @@ This proves that there is an enormous quantity of users with very few events in 
   )
 ) <fig-filtered-eventtype-dist>
 
+#todo[remake this graph while overlapint the same category of @fig-eventtype-dist to see how was changing]
+
 == Reposts Power-law
 <sec-data-reposts>
 
@@ -52,7 +54,7 @@ To characterize the virality of posts in the dataset, we fit a power law to the 
   )
 ) <fig-data-reposts-hist>
 
-The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite lots of literature descibing them as power-law, it is perfectly normal for this to behave as a power-law @clauset2009powerlaw.
+The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite this characteristic magnitude having been refered in this manuscript as "total repost _power-law_" it is, in fact, perfectly normal for social network data to be fitted as a lognormal @clauset2009powerlaw. The more rellevant fact, is that the data exhibits a heavy-tail characteristic.
 
 == Structural Virality
 <sec-data-virality>
@@ -76,7 +78,7 @@ Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repos
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [Cascade-level statistics.],
+    [Cascade general statistics of empirical data.],
     [Tree metrics for the $2,493,540$ cascades with at least one repost.],
   )
 ) <tbl-data-cascade-stats>
@@ -101,9 +103,7 @@ The simulation requires a social graph to run on: that is, users and follows upo
 
 As already explained in the event dataset description of the Firehose (see @sec-data-firehose), there are `graph_following_create`, `graph_following_delete`, `graph_following_block` and `graph_following_unblock`, and despite being just a very few part of the total events, this allows us to reconstruct somewhat the topology of Bluesky ---or at least a subset--- organically.
 
-The dataset is 14 months of Firehose data also collected by the IDea_Lab, spanning from February 2025 to May 2026 with 88.4% calendar-day coverage (outages are 1) a 46-day window from July to August 2025 and an 8-day window from March to April 2026).
-
-This data was ingested and processed (more details on the ingest process in @apx-topology) and exported as a format called SCD Type 2 (see @apx-topology) which allows the topology to be queries time-wise, making the reconstruction and query which edged have been added in a given time frame.
+The dataset is 14 months of Firehose data also collected by the IDea_Lab, spanning from February 2025 to May 2026 with 88.4% calendar-day coverage, more than enough data to obtain a complete network resembling topology. This data was ingested and processed (more details on the ingest process in @apx-topology) and exported as a format called SCD Type 2 (see @apx-topology) which allows the topology to be queries time-wise, making the reconstruction and query which edged have been added in a given time frame.
 
 The resulting graph has $28.9 times 10^6$ users with $1.47 times 10^9$ follow edges, which is a massive network that, for the construction methodology, has all the properties of a social network topology. In order to obtain them, a sample of the network must be obtained. The caveat on this is that, sampling a social network for the sampled graph to still contain the natural properties of a social network needs to be handled with care @kwak2010twitter.
 

@@ -1,11 +1,12 @@
 #import "utils.typ": *
+#import "@preview/lovelace:0.3.0": pseudocode-list
 
 This chapter justifies and methodology elections: why the use of a discrete-event simulation methodology in @sec-method-des, why the DES framework has been chosen over the _de-facto_ standar of Complex and Social Science, Agent-Based Modelling in @sec-method-abm, and which method has been used to create the sessions in @sec-method-session.
 
 Due to lenght constraints of this report, some important sections have been moved to @apx-method, specifically every aspect concerning the Random Number Generation algorithms in @apx-method-rng ---which is an in depth description of the tailored made for this project `distribution` library @soler2025distributions ---, which methods have been used for the goodness-of-fit tests in every distribution in @apx-method-gof, and the decision process on picking DBSCAN as the session algorithm in @apx-method-session.
 
 
-== Discrete-Event Simulation
+== Event Scheduling Discrete-Event Simulation
 <sec-method-des>
 
 Discrete-event simulation is a methodology consisting of a collection of techniques that when applied to a discrete-event dynamical system, generates sequences called sample paths that characterize its behavior. In that system, one or more phenomena of interest change value or state at discrete points in time, rather than continuously in time. @fishman2001des
@@ -14,14 +15,52 @@ Discrete-event simulation usually share a set of key elements, which relate to c
 
 Information diffusion (see @sec-sota-diffusionmodels) models information cascades, which are created by the repost of a post in a specific instant of time. This is, as already discussed when justifying the Continuous-Time Independent Cascade model (see @sec-method-ctic), a discrete-event dynamical system: the events are creation and propagation of a post, which can be reconstructed into the so called information cascades.
 
+
+=== Event Scheduling Algorithm
+<sec-method-des-es>
+
+This project will use the Event Scheduling algorithm, as the input parameters of the simulation (see Design @sec-design, Calibration @sec-calibration) can be easily expressed as a density of the simulation $f$ and its cumulative density $F$.
+
+#todo[find a good source maybe??? not that many tbh]
+
+The Event Scheduling algorithm main characteristic is the *event-list*, *future event set* or *queue $Q$*, a data structure that holds all the already scheduled events that come from an event source. An event source is characterized by sampling from a specific distribution $F$.
+
+The main idea of the algorithm is represented in @proc-event-scheduling, shown here on a M/M/1 queue: a producer and a consumer share the future event set, and each source reschedules itself every time one of its events is popped. $lambda$ is the generation rate and $mu$ the service rate, sampled from the rate-parameterized exponential used throughout this report.
+
+#procedure(caption: flex-caption([Event scheduling], [Event Scheduling algorithm on a M/M/1 queue: the future event set drives the clock, and each event source reschedules itself when popped.]))[
+  #pseudocode-list[
+    + *procedure* $"EventScheduling"(lambda, mu)$
+      + $Q arrow.l "FutureEventSet"()$
+      + $"prod" arrow.l "Exp"(lambda)$
+      + $"cons" arrow.l "Exp"(mu)$
+      + $t_"clock" arrow.l 0$
+      + $"push"(Q, "Event"{t_"clock" + "prod"."sample"(), "producer", 0})$
+      + $"push"(Q, "Event"{t_"clock" + "cons"."sample"(), "consumer", 1})$
+      + *while* $t_"clock" < "horizon"$ *and* $Q != emptyset$
+        + $"event" arrow.l "pop"(Q)$
+        + $t_"clock" arrow.l "event"."time"$
+        + *if* $"event"."type" == "producer"$ *then*
+          + $"client_dispatched"()$
+          + $"push"(Q, "Event"{t_"clock" + "prod"."sample"(), "producer", "event"."id" + 1})$
+        + *else if* $"event"."type" == "consumer"$ *then*
+          + $"client_arrives"()$
+          + $"push"(Q, "Event"{t_"clock" + "cons"."sample"(), "consumer", "event"."id" + 1})$
+        + *end*
+      + *end*
+    + *end*
+  ]
+]<proc-event-scheduling>
+
+It can clearly be divided into three steps: the initialization of the events of each source, which starts the simulation; then, in the main loop, every time an event is processed a new one is scheduled by sampling again from its source ---in the example an exponential for both consumer and producer, as the process is Markovian--- which advances the simulation clock and ends the loop once the clock ---the timestamp of the last processed event--- reaches the simulation horizon.
+
 === Description
 <sec-method-des-mechanics>
 
 The propose of the simulation is the information diffusion, specifically the cascades generated when the content traverses the network. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
 
-$ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_t (u) $ <eq-proc-propagate>
+$ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_"in" (u) $ <eq-proc-propagate>
 
-There are three distinct actions that a user can do in the simulation, which are three different types of entities that can be simultaneously queues at the same time.
+There are four distinct actions that a user can do in the simulation, which translate into four different types of entities that can be in the Future Event Setat the same time.
 1. Create post: creates a new post $j$ and adds it to the simulation. This propagates the created post $j$
 2. Action: $"pop"(cal(T)_t (u))$ and makes one action according to the policy $pi_u$, which can take three possible values:
  - nothing: the user ignores the post, no action is taken.
@@ -30,7 +69,7 @@ There are three distinct actions that a user can do in the simulation, which are
 3. Go online: puts the user back online. When online can do any of the actions mentioned above.
 4. Go offline: changes user state from online to offline. Now it cannot interact with any posts, nor create new ones.
 
-As every user acts as an independent entity, it is convenient to make them act independently from one another; the queue $Q$ always contains an event of each type per user always prescheduled (see @sec-design-datastructrues-queue).
+As every user acts as an independent entity, it is convenient to make them act independently from one another; the queue $Q$ always contains an event of each type per user always prescheduled (see @sec-design-datastructures-queue).
 
 
 To comply with the Continuous-Time Independent Cascade, we have to allow reexposition to a content the user has already ignored but coming from another edge (another of it's followees). It is considered then an interaction as a like or a post, so a user can propagate or not propagate a post but interact with it. A user cannot interact nor see again their own posts.
@@ -57,19 +96,45 @@ As it's been discussed until now, the proposed model is a dynamical system in wh
 
 === Parameters
 
-The main parameters that define the simulation, once the simplificating assumptions are in place (see @sec-method-des-assumptions).
+Taking into account the simplifying assumptions (see @sec-method-des-assumptions), the main parameters of the simulation are:
 1. How often does a user sees a post: this is modeled as the time between every post.
 2. Actions: the probability associated to every action the user can do when sees a post.
 3. Sessions: how often does a user connect (time between sessions) and the session duration of the user. Additionally, from the whole user population, we start with a fraction of the user offline, which is a controllable parameter.
 4. Propagation delay: time it takes for a post to be reposted or created and then be propagated.
 5. Interaction and Creation delay: when a user decides which decision takes, the delay on realizing the action is implemented into the simulation. Additionally, there is a bigger delay when the user decides to create a post, which simulates the actual writing of the post.
 
-To see the parameter calibration and results, see @sec-cal-policy
+@tbl-method-params list the bullet points main parameters with a small descritpion. Note: this is not the final configuration file of for the configuration (this is @tbl-res-config in @sec-results-execution) but to convey the main parameters that define the configuration.
+
+#figure(
+  table(
+    columns: (1.1fr, 2fr),
+    align: (left, left),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Parameter*], [*Description*],
+    table.hline(stroke: 0.5pt),
+    [Interaction time], [Time between two consecutive actions of the same user: how often they check their timeline.],
+    [Action policy], [Probability of each reaction to an inspected post: `ignore`, `like` or `repost`.],
+    [Session duration], [How long a user stays online in a session.],
+    [Gaps between sessions], [How long a user stays offline between two consecutive sessions.],
+    [Initial offline fraction], [Share of the population that starts the simulation offline.],
+    [Propagation delay], [Time for a post to travel from its author's action to a follower's timeline.],
+    [Interaction delay], [Time a user takes to realise an action once decided.],
+    [Creation delay], [Extra time needed to write a created post before it enters the simulation.],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Main parameters of the simulation],
+    [The parameters that define the simulation, once the simplifying assumptions are in place.],
+  )
+) <tbl-method-params>
+
+The value used for each of them in the reported execution is listed in @tbl-res-config (see @sec-results-execution).
 
 === Evaluation Metrics
 <sec-method-des-metrics>
 
-When designing a simulation, one must have a good distinction between desired quantities ---which metrics is the simulation being build to observe--- and characteristic quantities ---which metrics will the simulation produce. The reposts power-law is a characteristic quantity, as must be reproduced by the simulation to verify its behaviour. Post Lifetimes and Structural Virality are in fact desired quantities to replicate, as in how the input changes will change the output.
+When designing a simulation, one must have a good distinction between *evaluation metrics* ---the magnitudes the simulation is built to observe--- and *characteristic magnitudes* ---the magnitudes the simulation must produce to verify its behaviour. Structural Virality is an evaluation metric: it is the cascade shape the simulation intends to replicate, and how it reacts to changes in the input is the object of study. The reposts power-law is instead a characteristic magnitude: it is imposed by the diffusion model (@sec-sota-topo-scalefree), so reproducing it is what certifies that the simulation behaves as the theory prescribes.
 
 ==== Reposts Power-law
 
@@ -105,30 +170,29 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 ]
 
 
-All evaluation metrics listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset to analyze and compute the desired quantities.
+All evaluation metrics listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset to analyze and compute the desired metrics.
 
 
 == Simulation Paradigm Choice
 <sec-method-abm>
 
-The topic of this project is clearly in the Complex Social Science field @miller2007complex, but its author comes from an OR and Statistics master: two disciplines that default to two different paradigms with opposing methodological defaults. Operational Research (OR) heavily relies on Discrete-Event Simulation (DES) @maidstone2012discrete, while Complex Social Science defaults to Agent-Based Modeling (ABM) to study collective behavior and contagion @bonabeau2002agent. While simulating information cascades on a social network conceptually aligns with ABM, this section justifies why DES is the most appropriate mathematical and structural fit for this specific work.
+The topic of this project is clearly in the Complex Social Science field @miller2007complex, a field that, when needs to simulate human behaviour, defaults to Agent Based Modeling. This paradigm feels as the opposite methodological procedure than DES. Operational Research (OR) usually relies on Discrete-Event Simulation (DES) @maidstone2012discrete, while Complex Social Science defaults to Agent-Based Modeling (ABM) to study collective behavior and contagion @bonabeau2002agent. While simulating information cascades on a social network conceptually aligns with more with ABM, this section aims to give an insight why DES is the most appropriate mathematical and structural fit for this specific work.
 
-ABM is a bottom-up paradigm where autonomous agents follow behavioral rules and interact with their environment @bonabeau2002agent. In contrast, DES entities are typically passive tokens moving through a system's process logic @siebers2010discrete. However, the distinction in practice is rarely absolute. As Siebers et al. observe, "true ABS models in OR do not exist"; rather, practitioners build combined models where a DES backbone is augmented with entity-specific states @siebers2010discrete. The present simulation fits this description precisely, as it utilizes a classical DES architecture, yet each user carries personalized, empirically calibrated temporal parameters (e.g., session durations, inter-creation times and the degree in the network topology). Users are heterogeneous, but they are not fully autonomous agents because the simulation _does not model individual cognitive decision-making_.
+Let's first define what both paradigms should be used for: ABM is a bottom-up paradigm where autonomous agents follow behavioural rules and interact with their environment @bonabeau2002agent, while in DES entities are typically passive tokens moving trough a system's process logic @siebers2010discrete. However, Siebers et al. argue that "true ABS models in OR do not exist" in his article, making the previously defined theoretical distinction usless in practice, as none can adhere fully in one paradigm. Following Siebers descritpion, practicioners build combined models where a DES backbone is _augmented_ with entity-specific states. This is a very accurate description of what the _User_ entity has become in the simulation this work offers, as will be explained in @sec-design - Design, as every user carries personalized and empirical calibrated parameters.
 
-This lack of cognition is the key in the paradigm choice. Sumari et al. warn that DES is less suitable for analyzing complex human behavior because its focus is on process flows @sumari2013comparing. If this research explored *why* a user reposts based on emotional or semantic factors, ABM would be a better fit. However, in this content-agnostic model, the user action policy $pi$ is a global categorical distribution sampled independently of the post itself (see @sec-method-des-assumptions). The human element is deliberately abstracted into a stochastic process, removing the cognitive autonomy that ABM is designed to simulate.
+So, one could argue that this simulation is nothing but an ABM in with a DES paint of coat over it, where the user entity exist but has not been designed. Luckly, this is not the case, as Sumari et al. adds another criterion for an Agent Based Simulation to have: every single user should be an autonomous agent with the hability to make decisions, and the implemented simulation _does not model individual cognitive decision-making_. This fact is even more reinforced by the chosen algorithm used in the implementation, the Event-Scheduling @sec-method-des-es. In another article, Sumari's et al. warns of DES being less suited to analyze complex human behaviour as its focus is on process flows @sumari2013comparing, but the simulation specificaly has a content agnostic model, which converts the "autonomy" of the agents in a fixed $pi$ policy (see @sec-method-des-assumptions), uniform regardless of the agent.
 
-By removing user preferences, the model remains more akind to DES territory. DES natively excels at routing entities through networks of queues and servers @fishman2001des, and cucially, while DES is inherently built around queuing structures, the concept of queues does not natively exist in standard ABM frameworks @siebers2010discrete. Because the CTIC model relies on reverse-chronological timelines that function strictly as queues, DES provides the exact architectural infrastructure required to simulate them.
+Without _user preferences_, the remaining of its behaviour can be explained with just density and cumulative functions from empirical data, which supports the Event Scheduling algorithm deeply, as it's almost its main use case. DES natively excels at routing entities thorught networks of queues and servers @fishman2001des. Additionally, the concept of queue is difficult to find on standars ABM frameworks @siebers2010discrete, and the design of the dynamics of the simulation deeply require queues (the timeline of a user, and this would be necessary with more sophisticated recommender algorithms other than reverse-chronological timeline) this makes DES a perfect fit. 
 
-Furthermore, human activity in microblogging is highly bursty @barabási2005bursts; the vast majority of users are offline at any given instant. DES natively exploits this by jumping chronologically from scheduled event to event, bypassing idle intervals entirely. This computational efficiency is critical for scaling to bigger networks, serving as a powerful empirical benefit of the chosen paradigm.
+Ultimately, DES was selected because the designed model suited an Event Scheduling algorithm almost perfectly: several queues to model, empircal data measurements adequate for the current form, and avoidance of modelization of the autonomy of the users. Regardless, the simulation can be argued to have ABM influence, as heterogeneous parametrization of users, viewed as in purely "event sources" framework, would mean that every user three sources of its own, which would came out as a weird modeling choice. If more development on this project is done and more autonomy given to the user entity, probably the architectural constrains should be evaluated if giving more autonomy to the agent might improve overall clarity. Despite that, a good conclusion for this section is that theoretical rigidiy on the paradigm will probably not offer the best results as in simplicty and performance, and that hybrid architectures such as the one this simulation presents ---even if it's more DES than ABM--- will yield better results overall.
 
-Ultimately, DES was selected because the core research question ---aggregate diffusion dynamics under stochastic user activity--- does not require cognitive agent autonomy. The model operates as a combined DES/ABS architecture, using DES for process flow and ABS principles for heterogeneous parametrization. If future iterations lift the content-agnostic assumption and introduce semantic decision-making (see @sec-future-content), the architectural constraints of the model would need to be carefully re-evaluated, potentially prompting a paradigm shift toward a more traditional ABM framework.
 
 == Sessions Creation
 <sec-method-session>
 
-In order to find the both `session_lenght` and `inter_session_duration` variables, data from the Bluesky Firehose will be processed to obtain when the user is online or offline, replicating the $cal(O) (u)$ structure defined in @sec-model.
+In order to find both `session_lenght` and `inter_session_duration` variables, data from the Bluesky Firehose will be processed to obtain when the user is online or offline, replicating the $cal(O) (u)$ structure defined in @sec-model.
 
-As Barbási states in @barabási2005bursts, this won't be approximable by a Poission distirbution. In fact, this problem is known as the Burst Detection problem or State Detection Over an Event Stream in Data Mining @kleinberg2003bursty   or, in a more simple form, a sessionization problem @kooti2016twitter.
+As Barbási states in @barabási2005bursts, this won't be approximable by a Poission distribution. In fact, this problem is known as the Burst Detection problem or State Detection Over an Event Stream in Data Mining @kleinberg2003bursty   or, in a more simple form, a sessionization problem @kooti2016twitter.
 
 The data to obtain the sessions is a series of timestamps of events that mark the user performed one action at a timestamp $t$ (see @sec-data for a more in depth explanation of the events) in which we want to aggregate them into two states: the user being online and interacting with the platform of offline.
 
@@ -137,7 +201,7 @@ It is believed by the author that the most theoretically grounded approach would
 Regaring the alternative methods, Kleinberg @kleinberg2003bursty identifies the central weakness of fixed-threshold approaches to this problem: because activity rate is locally "rugged," a single global cutoff fragments long, low-intensity bursts into spurious short ones, therefore a more nuanced method than global threshold ---despite being used in some studies @kooti2016twitter --- uniform across all users. Instead, this work explores density-based clustering methods such as DBSCAN @ester1996dbscan  as a more tractable alternative for session creation.
 
 
-*DBSCAN*
+==== DBSCAN
 
 DBSCAN (Density-Based Spatial Clustering of Applications with Noise ) is a density-based clustering paradigm that provides a non-hierarchical labeling of data objects based on a global density threshold @mcinnes2017hdbscan. 
 

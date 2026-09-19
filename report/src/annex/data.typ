@@ -57,7 +57,9 @@ While `subject` points to the content the user acts on, `via` records how the us
     [`app.bsky.feed.repost`], [`app.bsky.feed.repost` (55K)], [user reposted after seeing someone else's repost ---a repost-of-repost chain link],
     [`app.bsky.graph.follow`], [`app.bsky.graph.starterpack` (14K)], [user followed the account via a starter pack],
   ),
-  caption: [Meaning of `via_uri` per collection, from one full hour of the 2026-04-11 firehose.],
+  caption: flex-caption(
+  [`via_uri` usage per collection on firehose data.],
+  [Meaning of `via_uri` per collection, from one full hour of the 2026-04-11 firehose.],)
 ) <tbl-anx-via-uri-meaning>
 
 Filtering by reposts only, this construct builds cascades of truly linked content that reached the timeline through a repost mechanism, allowing a direct comparison with what the simulation does.
@@ -177,8 +179,11 @@ in favour of the lognormal (@tbl-anx-lognormal-params).
     [Events per active hour], [0.94], [0.89], [2.6], [$-$366,994], [\<0.001],
     table.hline(stroke: 0.8pt),
   ),
-  caption: [Lognormal parameters and comparison against power-law.
+  caption: flex-caption(
+  [Lognormal vs power-law for events per user, per day and per hour.],
+  [Lognormal parameters and comparison against power-law.
     Negative $R$ indicates lognormal is favoured (Vuong's LLR test).],
+  )
 ) <tbl-anx-lognormal-params>
 
 Since the lognormal lacks a natural cutoff ---unlike the pareto, where $"x_min"$ marks it--- users with fewer than 2 events per active day were excluded heuristically (29% of users, 0.9% of events).

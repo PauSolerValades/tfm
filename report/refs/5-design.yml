@@ -1,7 +1,8 @@
 zig:
-    type: Web
-    title: Zig Programming Language
-    url:
+  type: Web
+  title: Zig Programming Language
+  author: "Zig Software Foundation"
+  url:
     value: https://ziglang.org/
     date: 2026-05-25
 
@@ -18,6 +19,8 @@ python:
 rlang:
   type: Web
   title: "R: A Language and Environment for Statistical Computing"
+  author:
+    name: "R Foundation for Statistical Computing"
   url:
     value: https://www.r-project.org/
     date: 2026-05-28

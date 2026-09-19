@@ -7,7 +7,7 @@ This appendix serves as the sessions extra information.
 
 Despite the utility of the Bluesky Firehose, it is definetly not the best dataset for figuring out what a meaningfull section is.
 
-Firehose #todo[check appropiately] is an event register of all the information that updates the state of the user regarding the platform ---in more techincal terms, that it updates the database. From this information we have data points that confim us that the user is online, as it has interacted with the platform at the time of the event.
+Firehose is an event register of all the information that updates the state of the user regarding the platform ---in more techincal terms, that it updates the database. From this information we have data points that confim us that the user is online, as it has interacted with the platform at the time of the event.
 
 Lets now define the most specific type of session we would be interested in obtaining to highligh the limitations of the Firehose for the ideal data, as well as proposing an experiment to obtain real data from the users using the Bluesky current features and funcitonalities.
 
@@ -27,7 +27,7 @@ For the puroposes of this work, the meaningfull sessions are considered to be eq
 == Alternative Methods
 <apx-sessions-method>
 
-To create the sessions, apart from both DBSCAN and HDBSCAN, the Tukey Fence method has also been investigated. Specifically, apart from the inter-user global session ---known as a platform threshold #todo[cite the shitty twitter session article]--- which has been discarded from the beginnig, the following sweeps have been executed and tried in order to disect the most appropiate parameters per each method:
+To create the sessions, apart from both DBSCAN and HDBSCAN, the Tukey Fence method has also been investigated. Specifically, apart from the inter-user global session ---known as a platform threshold @kooti2016twitter --- which has been discarded from the beginnig, the following sweeps have been executed and tried in order to disect the most appropiate parameters per each method:
 - *Tukey's Fence*: multiplier $k in {1.5, 1.2, 1.7}$ on the inter-quartile range.
 - *DBSCAN*: threshold $epsilon in {300, 600, 1200, 1800}$ seconds.
 - *HDBSCAN*: minimum cluster size $"mc"_s in {2, 3, 5}$, minimum samples $m_s in {1, 2, 3}$, and spatial neighborhood radius $epsilon in {0, 60, 180, 300}$ seconds. That's 36 total executions.
@@ -148,26 +148,23 @@ To check the veracity of such a big $epsilon$, table @tbl-short-sessions shows t
 
 Short DBSCAN sessions are honestly flagged isolated events and pairs — not hidden dense activity (10+ event bursts ≤ 1%). HDBSCAN's short sessions, by contrast, are mostly 2–4 event micro-clusters carved from sparse regions (56% at e300) — the same gluing mechanism that produces its 20h tail.
 
-Another very strong point in DBSCAN against HDBSCAN is that the first embraces the cutoff as a necessary part of the definition (left panel of @fig-session-gaps), while the latter has noise points arbitrarily close to the definitions (right panel of @fig-session-gaps). This would not be a problem if the sessions obtained with HDBSCAN showed a more clean behaviour, but it is not the case as showcased in @apx-session-hdbscan.
+Another very strong point in DBSCAN against HDBSCAN is that the first embraces the cutoff as a necessary part of the definition (@fig-sessiongaps-DBSCAN), while the latter has noise points arbitrarily close to the definitions (@fig-sessiongaps-HDBSCAN). This would not be a problem if the sessions obtained with HDBSCAN showed a more clean behaviour, but it is not the case as showcased in @apx-session-hdbscan.
 
 #figure(
-  grid(
-    columns: (1fr, 1fr),
-    column-gutter: 1em,
-    figure(
-      image("../../images/annex/hist_gap_dbscan_e300_ms2.svg", width: 100%),
-      caption: [Inter-session gap histogram for DBSCAN ($epsilon = 300$ s, $m_"pts" = 2$).],
-    ),
-    figure(
-      image("../../images/annex/hist_gap_hdbscan_mcs2_ms1_e300.svg", width: 100%),
-      caption: [Inter-session gap histogram for HDBSCAN ($"mc"_s = 2$, $m_s = 1$, $epsilon = 300$).],
-    ),
-  ),
+  image("../../images/annex/hist_gap_dbscan_e300_ms2.svg", width: 100%),
   caption: flex-caption(
-    [Inter-session gap distributions for the DBSCAN and HDBSCAN configurations.],
-    [Inter-session gap histograms. DBSCAN exhibits a clean lower edge at the cutoff; HDBSCAN admits gaps arbitrarily close to zero, because noise points can sit directly adjacent to clusters.],
-  )
-) <fig-session-gaps>
+    [Inter-session gap histogram for DBSCAN.],
+    [Inter-session gap histogram for DBSCAN ($epsilon = 300$ s, $m_"pts" = 2$).]
+  ),
+) <fig-sessiongaps-DBSCAN>
+
+
+#figure(
+  image("../../images/annex/hist_gap_hdbscan_mcs2_ms1_e300.svg", width: 100%),
+  caption: flex-caption(
+  [Inter-session gap histogram for HDBSCAN.],    
+[Inter-session gap histogram for HDBSCAN ($"mc"_s = 2$, $m_s = 1$, $epsilon = 300$).],
+  )) <fig-sessiongaps-HDBSCAN>
 
 == Stability
 
@@ -211,8 +208,7 @@ As stated in the first paragraph of @sec-method-session, a density based approac
 
 == Best-Fit Family Composition vs. Observation Cutoff
 
-#todo[Reread and review]
-The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition (per-user maximum-likelihood fits with `fitdistrplus` @fitdistrplus-cran) changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the Pareto family: with three points, a Pareto distribution can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 15--16% Pareto once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---Pareto resurges for very active users (65.2% at $n_"obs" > 200$), and the lognormal family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$ on the duration side). The composition therefore describes the activity stratum under study, not a single universal law.
+The choice of the "active enough user" threshold is not neutral. @tbl-composition-cutoff shows how the best-fit distribution family composition (the per-user fits of @apx-method-gof-dist) changes with the minimum number of observations required per user, for session durations and for inter-session gaps. Below roughly 20 observations the model selection is unreliable and systematically inflates the Pareto family: with three points, a Pareto distribution can fit anything, so it wins AIC spuriously. For session durations the composition stabilises around 15--16% Pareto once the cutoff reaches 20--30 observations, which justifies the $n_"obs" > 30$ criterion applied throughout the distribution analysis. The gap side, by contrast, keeps shifting with the cutoff ---Pareto resurges for very active users (65.2% at $n_"obs" > 200$), and the lognormal family dominates at the extreme cutoffs, where the number of qualifying users collapses to a handful (78 at $n_"obs" > 500$, 9 at $> 1000$ on the duration side). The composition therefore describes the activity stratum under study, not a single universal law.
 
 #figure(
   [
@@ -259,7 +255,7 @@ The choice of the "active enough user" threshold is not neutral. @tbl-compositio
 == Pareto Family Aggregation
 <apx-session-pareto>
 
-The Pareto family of @tbl-cal-dist-family groups three sibling candidates: the Generalized Pareto Distribution (GPD) @evd-cran, the Lomax (Pareto Type II) @actuar-cran, and the Pareto Type I @actuar-cran. The GPD and the Lomax are exact reparametrizations of one another on a zero-based support #todo[cite annex/methodology], so the AIC choice between them is partly arbitrary ---on simulated data the two cross-confuse freely--- and their split should not be interpreted. The Pareto Type I, by contrast, frees the lower bound: its threshold is fixed at the observed minimum $hat(theta) = min(x)$ (the boundary MLE, counted as an estimated parameter in the AIC penalty), so it can represent data bounded away from zero that a zero-based family cannot express. @tbl-powerlaw-breakdown reports how the Pareto users of @tbl-cal-dist-family split among the three siblings.
+The Pareto family of @tbl-cal-dist-family groups three sibling candidates: the Generalized Pareto Distribution (GPD) @evd-cran, the Lomax (Pareto Type II) @actuar-cran, and the Pareto Type I @actuar-cran. The GPD and the Lomax are exact reparametrizations of one another on a zero-based support @apx-method-gof-lomax, so the AIC choice between them is partly arbitrary ---on simulated data the two cross-confuse freely--- and their split should not be interpreted. The Pareto Type I, by contrast, frees the lower bound: its threshold is fixed at the observed minimum $hat(theta) = min(x)$ (the boundary MLE, counted as an estimated parameter in the AIC penalty), so it can represent data bounded away from zero that a zero-based family cannot express. @tbl-powerlaw-breakdown reports how the Pareto users of @tbl-cal-dist-family split among the three siblings.
 
 #figure(
   table(
@@ -283,12 +279,12 @@ The Pareto family of @tbl-cal-dist-family groups three sibling candidates: the G
 ) <tbl-powerlaw-breakdown>
 
 The Pareto I column carries information about the support of the data.
-- On gaps (shifted by $-epsilon$ and therefore zero-based by construction #todo[cite the session creation subsection]) the Pareto I is almost never the best fit (1.7% of Pareto users): the non-zero threshold has nothing to explain, confirming that shifted gaps really do start at zero.
+- On gaps (shifted by $-epsilon$ and therefore zero-based by construction @sec-method-session) the Pareto I is almost never the best fit (1.7% of Pareto users): the non-zero threshold has nothing to explain, confirming that shifted gaps really do start at zero.
 - On durations it wins for a quarter of Pareto users (9.0k users): those sessions are genuinely bounded away from zero.
 
 This asymmetry justifies keeping all three versions of the Pareto in the selected distributions, instead of collapsing them into a single GPD candidate.
 
-It is also worth looking into the shape parameter of the GPD, as it will allow us to properly characterize how the session creation has modified its users, as @tbl-pareto-gpd-shape shows, as well as the histograms of the just the shape parameter for the sessions and the gaps in @fig-pareto-xi-hists.
+It is also worth looking into the shape parameter of the GPD, as it will allow us to properly characterize how the session creation has modified its users, as @tbl-pareto-gpd-shape shows, as well as the histograms of the just the shape parameter for the sessions (@fig-pareto-shape-duration) and the gaps (@fig-pareto-shape-gap).
 
 #figure(
   table(
@@ -311,17 +307,21 @@ It is also worth looking into the shape parameter of the GPD, as it will allow u
 Gaps are overwhelmingly heavy-tail (94.1%), which is what it intuitevly makes sense. The other two categories are minorized, specially the exponential like distribution. For sessions there is a clear different distribution, despite the heavy-tail category (61%) is also the majority, with the smallest category also being a exponential-like with less than 4%. Interestingly, the other large category is the bounded support, meaning that we can guarantee that the sessions will have an upper bound, as the support cannot grow to infinite. 
 
 #figure(
-  grid(
-    columns: 2,
-    column-gutter: 0.8em,
-    figure(image("../../images/annex/xi_tails/xi_hist_duration.svg")),
-    figure(image("../../images/annex/xi_tails/xi_hist_gap.svg")),
-  ),
+  image("../../images/annex/xi_tails/xi_hist_duration.svg"),
   caption: flex-caption(
-    [GPD shape parameter $alpha$ histograms.],
-    [Distribution of the GPD shape parameter $alpha$ for session durations (left) and inter-session gaps (right), shaded by tail regime with $epsilon = 0.1$ ($alpha < -epsilon$ bounded, $|alpha| <= epsilon$ exponential, $alpha > epsilon$ heavy); axes clipped to the 1--99% central mass.],
+    [Distirbution of the GPD shape parameter $alpha$ for session durations.],
+    [Distirbution of the GPD shape parameter $alpha$ for session durations, shaded by tail regime with $epsilon = 0.1$ ($alpha < -epsilon$ bounded, $|alpha| <= epsilon$ exponential, $alpha > epsilon$ heavy); axes clipped to the 1--99% central mass.],
   )
-) <fig-pareto-xi-hists>
+) <fig-pareto-shape-duration>
+
+#figure(
+  image("../../images/annex/xi_tails/xi_hist_gap.svg"),
+  caption: flex-caption(
+    [Distirbution of the GPD shape parameter $alpha$ for session gaps.],
+    [Distirbution of the GPD shape parameter $alpha$ for session gaps, shaded by tail regime with $epsilon = 0.1$ ($alpha < -epsilon$ bounded, $|alpha| <= epsilon$ exponential, $alpha > epsilon$ heavy); axes clipped to the 1--99% central mass.],
+  )
+) <fig-pareto-shape-gap>
+
 
 This histograms showcase the need of ECDF usage, as there are three clear modalities on the parameter distribution. Sessions have the bounded behaviour, a peak with near to zero heavy tail and another peak arround 2.75. This histogram indicates that with a smaller $epsilon$ we would see that the shape parameter is clearly either support bounded ($alpha < 0$) or non support bounded with small values or higher ones (0.3 or 2.75).
 
@@ -445,7 +445,9 @@ For reference, this section collects the per-pair parameter histograms of all 22
 == How to Obtain a Better Dataset
 <apx-sessions-dataset>
 
-Explain that if you create a better appview, you can get information from everything, and the second next thing (and more feasible) is to create a feed that is served by you, therfore you will know exactly what's happening there.
+The Firehose records every record the network creates, but never what a user was shown, so the impression term of @sec-width-cause can only be inferred from the follower ceiling, never observed. A materially better dataset therefore comes from owning part of the delivery path, not from crawling the public one more thoroughly.
 
-#todo[actually finish]
+The first route is to run a full AppView: a self-hosted indexer following the same `subscribeRepos` stream collects every post, follow and like with no dependency on a third-party dataset provider. This widens coverage ---the author's window is six days of events and fourteen months of topology--- but it still sees only what users *did*: a client assembles and ranks its own timeline locally, so the AppView never learns which posts were placed in front of which user. The impressions stay invisible.
+
+The second route, and the more feasible one, is to serve the feed: an AppView exposing a feed generator knows, for every request, exactly which posts it handed to which user at which time. That turns the impression matrix $cal(E)$ (@sec-design-datastructures-engaged) from an inference into a measurement, and it makes exposure the natural parent of every like and repost, so the `via` attribution of @anx-data-via becomes a detail rather than the only trace of discovery. The cost is operational rather than algorithmic: the user sees an ordinary feed, while the operator carries the serving infrastructure.
 

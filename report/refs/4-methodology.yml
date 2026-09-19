@@ -1,6 +1,6 @@
 ross2006simulation:
   type: Chapter
-  title: "Discrete-Event Simulation"
+  title: "Discrete-event simulation"
   author: Ross, Sheldon M.
   date: 2006
   chapter: 6
@@ -12,17 +12,13 @@ ross2006simulation:
 
 
 fishman2001des:
-  type: Chapter
+  type: Book
+  title: "Discrete-Event Simulation: Modeling, Programming, and Analysis"
   author: Fishman, George S.
   date: 2001
-  note: Section 2.3
-  parent:
-    type: Book
-    title: Discrete Event Simulation
-    publisher: Springer
-    parent:
-      type: Periodical
-      title: Springer Series in Operations Research
+  publisher:
+    name: Springer
+    location: New York, NY, USA
 
 
 soler2025distributions:
@@ -38,19 +34,19 @@ soler2025distributions:
 
 sumari2013comparing:
   type: Article
-  title: "Comparing Three Simulation Model Using Taxonomy: System Dynamic Simulation, Discrete Event Simulation and Agent Based Simulation"
+  title: "Comparing three simulation model using taxonomy: System dynamic simulation, discrete event simulation and agent based simulation"
   author:
     - Sumari, Suliza
     - Ibrahim, Roliana
     - Zakaria, Nor Hawaniah
     - Ab Hamid, Amy Hamijah
   date: 2013-08
+  page-range: 54-59
   parent:
     type: Periodical
     title: International Journal of Management Excellence
     volume: 1
     issue: 3
-    page-range: 54-59
 
 barabási2005bursts:
   type: Article
@@ -74,7 +70,7 @@ barabási2005bursts:
 
 kleinberg2003bursty:
   type: Article
-  title: "Bursty and Hierarchical Structure in Streams"
+  title: "Bursty and hierarchical structure in streams"
   author: Kleinberg, Jon
   date: 2003
   serial-number:
@@ -89,7 +85,7 @@ kleinberg2003bursty:
 
 ester1996dbscan:
   type: Article
-  title: "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+  title: "A density-based algorithm for discovering clusters in large spatial databases with noise"
   author:
     - Ester, Martin
     - Kriegel, Hans-Peter

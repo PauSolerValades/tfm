@@ -1,8 +1,8 @@
-#import "../utils.typ": flex-caption, todo
+#import "../utils.typ": flex-caption
 
 This annex contains hardware information where the executions were performed.
 
-The server where the simulation has been executed is Artemis, one of the severs owned by the `IDea_lab` #todo[cite their page] in order for their researchers to conduct research. The server does not run a queue management system like SLURM, therefore isolation in running the simulation processes has not been guaranteed. @tbl-hardware shows the exact specifics of the hardware all simulations have been ran..
+The server where the simulation has been executed is Artemis, one of the severs owned by the `IDea_lab` @idea-lab in order for their researchers to conduct research. The server does not run a queue management system like SLURM, therefore isolation in running the simulation processes has not been guaranteed. @tbl-hardware shows the exact specifics of the hardware all simulations have been ran..
 
 
 #figure(

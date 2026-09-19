@@ -1,6 +1,6 @@
 casteigts2012timevarying:
   type: Article
-  title: "Time-Varying Graphs and Dynamic Networks"
+  title: "Time-varying graphs and dynamic networks"
   author:
     - Casteigts, Arnaud
     - Flocchini, Paola
@@ -15,3 +15,28 @@ casteigts2012timevarying:
     title: "International Journal of Parallel, Emergent and Distributed Systems"
     volume: 27
     issue: 5
+
+budde2026digital:
+  type: Article
+  title: "Digital duty of care: Making Big Tech socially responsible"
+  author: Budde, Paul
+  date: 2026-09-16
+  url:
+    value: https://independentaustralia.net/business/business-display/digital-duty-of-care-making-big-tech-socially-responsible,21556
+    date: 2026-09-18
+  parent:
+    type: Periodical
+    title: Independent Australia
+
+diemel2022digital:
+  type: Article
+  title: "The Digital Services Act: Creating accountability for online platforms and protecting users' rights"
+  author: Diemel, Caroline
+  date: 2022-09-06
+  url:
+    value: https://www.eipa.eu/blog/the-digital-services-act-creating-accountability-for-online-platforms-and-protecting-users-rights/
+    date: 2026-09-18
+  parent:
+    type: Blog
+    title: EIPA
+    publisher: European Institute of Public Administration

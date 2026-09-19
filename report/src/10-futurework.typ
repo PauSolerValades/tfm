@@ -15,16 +15,17 @@ The Future Event Set optimization is a known performance bottleneck in Discrete-
 
 This has not been implemented in this work due to both time constranints, and that the every algorithm replacing the heap requires a well calibrated heuristic. It was the author concern that, with several changed to the simulation, the heuristic tuning would have consumed plenty of time to get right while at the same time degrading performance, and therefore was avoided by commodity.
 
+Despite the heap being a known bottleneck, applying some kind of parallelization to the simulation itself (not just multiple simulations concurrently running) would be the best performance improving for the simulation. Currently, the simulation just uses a 0.2% of the server CPU, which means that is absolutely memory bottlenecked. There are known ways to parallelize a discrete-event simulation, as it is a very well research topic, called PDES. This has not been implemented for the same reason a specialized data structure has not been used for the Future Event Set: the work that such a feature would imply is enormous for the scope of this work.
+
 == Evaluation Metrics
 
 The traces of the simulation allow far more quantites to be extracted from the trace data, and if compared with the empirical Bluesky data, it would provide far more information about the social network and the hits or misses of the model. This project originally included both the Gini coefficient and a Post Lifetime analysis as additional characteristic and desired quantities respectively.
 
 Not only the addition of other metrics, but the current simulation extracts a lot more data than the one reported in Results (@sec-results), as can be seen in @apx-pipeline-datasets, which describes the different datasets that the simulation outputs, including more metrics on the cascade, post lifetime basic information an virality in subcascades, making able to identify in theory where exactly the virality exploded.
 
-
 == Model Limitations
 
-This section aims to address the known limitations introduced to fit this work into a master thesis scope project.
+This section aims to address the known limitations introduced to fit this work into a master thesis project scope.
 
 First, all the characterization of the users in the Data section (@sec-data #todo[afine the specifc one]) charectarize a shy of 20% of users in the dataset: the majority of users on social networks are lurkers, just reading, not interacting nor creating. As the obtention of this data is difficult when talking (as discussed in #todo[appendix of better data]) and there is probably a correlation between the in-out degree of a user and their session duration/inter-session lenght, which probably needs of much more data and a more subtile analysis than the one conducted in this work to get right.
 
@@ -38,14 +39,18 @@ In the same line, an effort to get real navigational data from users should be m
 
 #todo[finish]
 
+Talk about need of either a far more complex sessionization methodology or much more rich data regarding the users actual engagement.
+
 Talk about that computing structual virality is actually complicated, and the intrsection of the data with recomender alforithms is indeed complicated to distinguish true quality and relevant data.
 
 As well talk as the data comparsion is well, weird, due to the nature of the extracted data. TL;DR: $nu (v)$ is a lower bound for the probably true structural virality of the data.
 
+== Analyisis Limitations
+
+There are plenty characteristic magnitudes that could be monitored if the simulation reproduces, as well as more evaluation metrics interesting to reproduce, such as post lifetime analysis.
+
 == A Content Aware Simulation
 <sec-future-content>
-
-#todo[Appendix moved section is a mess of a lot of things. a cleaner shorten version of that goes there, as well as keeping in the appendix some ideas of how to implement mechanisms with the embedding]
 
 This work originaly was going to include this mechanism as its main study point, and the original section can be found in @apx-content. This seciton is a summary of the intent and the mechanisms this simulation could include.
 
@@ -112,4 +117,16 @@ where $alpha$ balances the proportion drawn from the user's own history versus t
 $ x_(i_"new") = sum_(j=1)^K w_j dot x_(i_j) quad "with" bold(w) ~ "Dir"(bold(1)) $
 
 which keeps the generated embedding inside the semantic convex hull of valid posts. At $alpha = 1$ this reduces to the spontaneous-creation limit of the current simulation.
+
+=== Content Through an LLM
+
+#todo[Rewrite later]
+
+The latest developements in social network simulation are using Large Language Models in order to generate content and to handle everything related to content: generating the post contents, deciding to perform an action over a post, or deciding if a post is interesting to the user profiled.
+
+This is a promising idea that is being currently explored in the literatrue, and could definielty be used as a content generator over the simulation engine basis this work offers with the simulation engine implemented. Although this approach would have some problems with the nature of LLM technologies:
+- Biased decision making: an LLM is bad at chosing an option such as repost.
+- Performance: to generate the contents for a user needs a good enough LLM running, and will hurt performance on the long run. Embedding products can be SIMDed to make the extra product a far less cycles.
+
+Despite the caveats, this is probably an very promising line of reasearch that is worth to look into.
 

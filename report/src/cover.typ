@@ -18,13 +18,13 @@
 
   #v(2.8cm)
 
-  // #text(fill: blue, size: 25pt, weight: "bold")[
-  // A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
-  // ]
-  
-  #text(fill: blue, size: 25pt, weight: "bold")[  
-    Replicating Post Structural Virality using a Discrete-Event Simulation with Empirical Bluesky Data
+  #text(fill: blue, size: 25pt, weight: "bold")[
+  A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
   ]
+  
+  // #text(fill: blue, size: 25pt, weight: "bold")[  
+  //   Replicating Post Structural Virality using a Discrete-Event Simulation with Empirical Bluesky Data
+  // ]
   #v(0.3em)
   
   #text(size: 17pt, weight: "bold")[

@@ -50,7 +50,7 @@ The Weibull Distribution is a two parameter distribution, with a shape and scale
 
 $ F(x) = cases( 1 - exp{- (frac(x, lambda))^k} &"if" x >= 0, 0 &"else" x < 0), $
 
-To sample from it, we use the standard Inverse Sampling Method #todo[cite, a simulació tens la font :)], in which we invert $F$ to obtain:
+To sample from it, we use the standard Inverse Sampling Method @devroye1986nonuniform, in which we invert $F$ to obtain:
 
 $ X = lambda · ( -ln(1-U))^(1/k) $
 
@@ -171,7 +171,7 @@ Paretos are organized in 6 types of distributions: Paretos I to IV, with Pareto 
 
 === Generalized Pareto Distribution
 
-This section is sourced from the original article by James Pickands #todo[find the proper reference].
+This section is sourced from the original article by James Pickands @pickands1975statistical.
 
 The Generalized Pareto Distribution ---GPD from now on--- is a family of continous probability distributions, and it's specified by three parameters: location $mu$, scale $theta$ and shape $alpha$, although it can be seen with several reparametrizations. It has a Cumulative Probablity Distribution
 
@@ -282,7 +282,7 @@ There is two types of procedures of goodness-of-fit in this work: finding the $g
 
 ==== Power-law
 
-To find if some data follows a power-law behaviour, we use the highly competent `powerlaw` package, which implements Vuong's Test, already described in @apx-method-gof-vuong. This has been used to fit the events of the firehose #todo[section data first] and to fit the total reposts of the users #todo[section data powerlaw and results powerlaw]
+To find if some data follows a power-law behaviour, we use the highly competent `powerlaw` package @alstott2014powerlaw, which implements Vuong's Test, already described in @apx-method-gof-vuong.
 
 ==== Distributions Fittings
 
@@ -302,17 +302,17 @@ The non pareto families distribution are the most common distributions for heavy
 
 === Goodness-of-fit Strategy
 
-#todo[Here we have to discuss anderson-darling vs ks for the heavy tail, or even wassermann. THis was a lot of the python version lol, dunno if even rellevant. ]
+Each unit ---one user, one quantity--- is fitted independently by maximum likelihood under the natural support of the candidate, deliberately without a free location parameter: an unconstrained location collapses onto $min(x) - epsilon$, buying likelihood without modelling the data. The one support-bound candidate, Pareto Type I, is treated in @apx-session-pareto. Inter-session gaps are fitted after subtracting the sessionization horizon $epsilon = 300$ s, since DBSCAN merges events closer than $epsilon$ into the same session and a gap can only be observed above it: this is a location change of the whole law, not a truncated-likelihood correction.
 
-#todo[cite some of this papers in the discussion ks vs anderson and RSS vs wasserbank]
-ks vs anderson:
-- Stephens, M. A. (1974). "EDF Statistics for Goodness of Fit and Some Comparisons." Journal of the American Statistical Association, 69(347), 730-737
-- Engmann, S., & Cousineau, D. (2011). "Comparing distributions: The two-sample Anderson-Darling test as an alternative to the Kolmogorov-Smirnov test." Journal of Applied Quantitative Methods, 6(3), 1-17
-Powerlaw fitting:
-- Clauset, A., Shalizi, C. R., & Newman, M. E. (2009). "Power-Law Distributions in Empirical Data." SIAM Review, 51(4), 661-703
-Wasserstain:
-- Panaretos, V. M., & Zemel, Y. (2019). "Statistical Aspects of Wasserstein Distances." Annual Review of Statistics and Its Application, 6, 405-431
-- Rüschendorf, L. (2001). "Wasserstein metric." Encyclopedia of Mathematics
+Goodness of fit is then measured with the three classical EDF statistics, computed in closed form against the fitted CDF @stephens1974: Kolmogorov--Smirnov, Cramér--von Mises and Anderson--Darling. The `gofstat` helper is not used ---its internal chi-square binning fails at the small per-user sample sizes--- and the closed-form implementation was verified against it to six decimals on the units where both work.
+
+Selection is made with the Akaike Information Criterion @akaike1974: the lowest AIC wins, ties broken by the lower Anderson--Darling statistic and then by name, so the choice is deterministic. Anderson--Darling is deliberately not the selector ---it weights precisely the tail, where a single user has the fewest observations--- and is kept only as the heavy-tail descriptor.
+
+The three Pareto siblings ---Type I, Lomax and the GPD--- are grouped under one family for the reported composition, since successive AIC preferences among near-identical siblings are not evidence; the sibling split and the boundary case are discussed in @apx-session-pareto.
+
+To say not just which family wins but how safely, the $Delta "AIC"$ margin $"AIC"_(2"nd") - "AIC"_"best"$ is reported, values below two meaning the leading families are indistinguishable; for the within-session inter-post gaps it is small for most users, which is what rules out a parametric law there and routes that quantity to the empirical distribution (@anx-create-gof).
+
+Two bounds close the strategy: units with fewer than 30 observations are excluded, the cutoff justified by the composition sweep of @tbl-composition-cutoff, and ---because the statistics are evaluated on the same data that fitted the parameters--- they are descriptive ordering criteria, not calibrated $p$-value tests.
 
 == Session Creation
 <apx-method-session>
@@ -374,23 +374,6 @@ HDBSCAN fundamentally relies on a single input parameter, $m_"pts"$, which acts 
 
 To provide a usable flat partition from this hierarchy, HDBSCAN employs a simplification process based on cluster stability @mcinnes2017hdbscan. By tracking how long clusters "survive" as the density threshold changes—a metric derived from the relative excess of mass—the algorithm optimally extracts the most significant clusters through local cuts across different density levels in the cluster tree @ester1996dbscan.
 
-== Reproducibility of the Distribution Fits
-<apx-method-repro>
-
-#todo[reread and reload]
-All the scripts and intermediate outputs behind @sec-cal-dist and the parameter histograms are available in the `bsky-data-analysis` repository @soler2025bskydata, under `sessions/distribution-fit/`. The pipeline runs in five stages, each with a single entry point:
-
-1. *Extraction* (`dump_data.py`): per-user session durations and inter-session gaps are dumped from the production table `pau_db.sessions` (DBSCAN $epsilon = 300$ s, $m_"pts" = 2$, see @apx-session-dbscanparams) into ten strided parquet chunks. Durations are non-singleton sessions only; gaps are the intervals between the end of a session and the start of the next.
-2. *Per-user fitting* (`fit_chunk.R`, `fit_lib.R`): each user--column unit is fitted by maximum likelihood against the eight candidate distributions of @apx-method-gof-dist; KS, Cramér--von Mises and Anderson--Darling statistics are computed in closed form. Writes `results/gof__chunk{0..9}.tsv` and `results/params__chunk{0..9}.tsv`.
-3. *Model selection* (`step2_build_best.py`): AIC winner per user and column, with the Pareto/Lomax/GPD siblings grouped under the `power_tail` family. Produces `results/best_per_user.tsv`, `results/best_params.tsv` and `results/family_summary.tsv` ---the source of @tbl-cal-dist-family.
-4. *Canonical power-law parameters* (`step3_powerlaw_canonical.py`): every `power_tail` winner is converted to the canonical GPD($xi$, $sigma$, $mu$) parametrization, verified to $|Delta "CDF"| <= 10^(-16)$.
-5. *Meta-fits and plots* (`step4_fit_parameters.R`, `step5_plot_param_distributions.R`): the across-user parameter series are themselves fitted ---AIC selection among exponential, gamma, lognormal, Weibull and normal, restricted to $n_"obs" >= 30$--- producing `results/param_distributions.tsv`, `results/param_correlations.tsv` and the parameter histograms (a subset is shown in ). The meta-fits themselves are deliberately not used in the simulation: @sec-cal-acrossuser argues that they are unreliable (too few users in several families, multimodal parameter series) and that the per-user parameters are sampled empirically instead.
-
-The complete methodological write-up lives in `sessions/distribution-fit/METHODOLOGY.md` of the same repository, and the sessionization decision behind the input table in `sessions/final_parameters.md`.
-
-Two caveats bound full reproducibility. First, the input `pau_db.sessions` table derives from the Bluesky Firehose dataset, which is not redistributed: stage 1 requires access to the private database, so the pipeline can only be re-run end-to-end by the authors. Second, the per-unit result files are large ---the ten `gof__chunk*.tsv` alone occupy about 3 GB--- and are excluded from the repository; the compact derived tables (`family_summary.tsv`, `param_distributions.tsv`, `param_correlations.tsv`) suffice to verify every figure reported in this chapter.
-
-
 == Stability & Execution
 <apx-method-exec>
 
@@ -404,9 +387,9 @@ RAM usage is recorded by an external monitor script ---`des-ctic/python-utils/ra
 
 The `cnt` field comes from `pgrep -x bskysim`, and `maxrss` is the largest `VmRSS` (resident set size, converted from KB to MB) across those processes. Each line is therefore a 10 s snapshot of the biggest `bskysim` process, not a per-run measurement. Every dataset size runs as a single `bskysim` process (launched as `bskysim -w<workers> -n100 …`), so all of a size's runs share one address space.
 
-Execution time is read from the simulation's own bookkeeping, `execution_times.ssv`, which records one `worker run_idx duration_ms` tuple per run. This is obtained with the `Clock` #todo[add reference] and uses `time option` #todo[which time option]
+Execution time is read from the simulation's own bookkeeping, `execution_times.ssv`, which records one `worker run_idx duration_ms` tuple per run. Each duration is measured with `Io.Timestamp` @zig-std-io under the `.cpu_thread` clock option, that is, CPU time of the calling thread rather than wall-clock time.
 
-=== Derivation of the reported quantities
+=== RAM Usage Reconstruction
 
 The RAM per run reported in @tbl-res-ram is reconstructed in two steps. First, the time window of each size is delimited by two mtimes the process writes itself: the first write of `used_config.json` (start) and the newest `*.bin` trace (end). Second, within that window the peak `maxrss` is taken over each individual run's time slice ---reconstructed from the `duration_ms` column of `execution_times.ssv`--- and divided by the worker count to approximate a single isolated run.
 

@@ -1,4 +1,5 @@
 #import "@preview/cetz:0.4.2"
+#import "../utils.typ": *
 
 == Example of Degeneration and Content Teleporation
 <anx-ex-teleport>
@@ -39,10 +40,12 @@ Consider a minimal microblogging network of three users forming a directed cycle
     // line("B", "A", stroke: (dash: "dashed", paint: blue), mark: (end: ">", fill: blue))
     // content((-0.4, 0.4), text(size: 0.7em, blue)[propagation])
   }),
-  caption: [
+  caption: flex-caption(
+   [Simple user network of the first example], 
+[
     Simple user network $cal(U) = {A, B, C}$. Arrows represent out-neighbor (following) relationships, forming a continuous cycle. Propagation naturally flows in reverse along the in-neighbor edges.
   ]
-) <fig-simple-graph>
+  )) <fig-simple-graph>
 
 $ cal(U) = {A, B, C} $
 

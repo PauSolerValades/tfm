@@ -3,6 +3,7 @@
 This chapter presents the empirical evaluation of the Continuous-Time Independent Cascade (CTIC) model. 
 
 == Execution
+<sec-results-execution>
 
 This section described the parameters and configuration of the execution of the simulation. @tbl-res-config describes all the parameters (@sec-model) and the value used for the run (@sec-calibration).
 
@@ -30,12 +31,12 @@ This section described the parameters and configuration of the execution of the 
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [Final simulation parameters.],
+    [Simulation configuration],
     [Recap of the final simulation parameters, used in the resported execution.],
   )
 ) <tbl-res-config>
 
-@tbl-res-finalbatch descibes which datasets has the simulation ran, as well as the parallelism used (workers), how many replications and which config file has been used, which are the same as described in @tbl-res-config.
+@tbl-res-finalbatch describes which datasets has the simulation ran, as well as the parallelism used (workers), and how many replications for dataset have been performed (no more than 100 as it offers diminishing returns precision wise--- with the configuration described in @tbl-res-config.
 
 #figure(
   table(
@@ -53,8 +54,8 @@ This section described the parameters and configuration of the execution of the 
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [Final run execution of the simulation],
-    [Final run of every dataset, workers and config.],
+    [Workers, runs and batches of execution.],
+    [Final run of every dataset, workers.],
   )
 ) <tbl-res-finalbatch>
 
@@ -63,14 +64,14 @@ This section described the parameters and configuration of the execution of the 
 
 Regarding performance, this section describes the growth of the simulation according to input value both in time and in memory. Check @apx-hardware for a detailed specification of the hardware this was ran on and @apx-method-exec for how the showcased data has been obtained.
  
-@fig-res-time-scalability shows the scalability of the simulation by regressing over the data points in logaritmic scale. Taking into account al 5 datasets, the simulation has a slightly superlinear time growth of $O(n^1.31)$, and if just taking into account the bigger datasets (100K, 500K and 1M) it shows an almost linear growth of $O(n^0.98)$. @tbl-res-time summarizes the execution time per run across datasets, with the 95% confidence interval of the mean, as well as giving the specific values of the plot.
+@fig-res-time-scalability shows the scalability of the simulation by regressing over the data points in logaritmic scale. Taking into account all 5 datasets, the simulation has a slightly superlinear time growth of $O(n^1.31)$, and if just taking into account the bigger datasets (100K, 500K and 1M) it shows an almost linear growth of $O(n^0.98)$. @tbl-res-time summarizes the execution time per run across datasets, with the 95% confidence interval of the mean, as well as giving the specific values of the plot.
 
 
 #figure(
   image("../images/results/time_scalability.svg", width: 100%),
   caption: flex-caption(
     [Simulation wall-clock time versus dataset size.],
-    [Simluation wall-clock per run versus topology size in logarithmic scale. The slope is the grow rate.],
+    [Simulation wall-clock per run versus topology size in logarithmic scale. The slope is the grow rate.],
   )
 ) <fig-res-time-scalability>
 
@@ -96,10 +97,10 @@ Regarding performance, this section describes the growth of the simulation accor
 ) <tbl-res-time>
 
 
- Regarding times, we can see this scalability in more human terms: a 10K run averages about 2.7 s, 50K about 34 s, 100K about 2 min, 500K about 12 min, and 1M about 18 min.
+Regarding times, we can see this scalability in more human terms: a 10K run averages about 2.7 s, 50K about 34 s, 100K about 2 min, 500K about 12 min, and 1M about 18 min.
 
-Regaring memory growth, @fig-res-ram-per-run shows the RAM usage per run across the datasets, and 
-@tbl-res-ram reports the RAM usage per run, normalized per worker, with the minimum and maximum observed to interpret the plot. It paints a very similar picture to the time scalability, with a growth of $O(n^1.31)$ with all datapoints (superlinear) but a $O(n^0.98)$ with just the big datasets (linear).
+Regarding memory growth, @fig-res-ram-per-run shows the RAM usage per run across the datasets, and 
+@tbl-res-ram reports the RAM usage per run, normalized per worker, with the minimum and maximum observed to interpret the plot. It depicts a very similar picture to the time scalability, with a growth of $O(n^1.31)$ with all datapoints (superlinear) but a $O(n^0.98)$ with just the big datasets (linear).
 
 #figure(
   image("../images/results/ram_scalability.png", width: 100%),
@@ -134,16 +135,16 @@ Regaring memory growth, @fig-res-ram-per-run shows the RAM usage per run across 
 The table shows the RAM footprint per run, normalized per worker: it grows from roughly 1.5 GB at 10K to over 600 GB at 1M. These footprints already exceed consumer hardware past the 500K run, so the larger datasets are only feasible on the dedicated server described in @apx-hardware.
 
 
-The decision of fitting the data twice ---both in for time and memory--- attempts to showcase the difference between the smaller and bigger (and denser) networks. Density wise, 10K and 50K should be considered outliers for how much smaller in comparison they are to bigger size networks. The large order fitting gives a linear growth with more complete networks that are much more representative of real life microblogging social networks.
+The decision of fitting the data twice ---both for time and memory--- attempts to showcase the difference between the smaller and bigger (and denser) networks. Density wise, 10K and 50K should be considered outliers for how much smaller in comparison they are to bigger size networks. The large order fitting gives a linear growth with more complete networks that are much more representative of real life microblogging social networks.
 
-Analyzing the bigger picture, that ram and time grow with exactly the same rates makes the case for a trivial observation steaming from the simulation design: the simulation is absolutely memory bounded, whith CPU usage never surpassing 0.2% of usage even with the 16 or 12 workers.
+Analyzing the bigger picture, that ram and time grow with exactly the same rates makes the case for a trivial observation steming from the simulation design: the simulation is absolutely memory bounded, with CPU usage never surpassing 0.2% of usage even with the 16 or 12 workers.
 
-This also validates that the implementation of the design (see @apx-impl) is successfull in acheving reasonable execution times and resource efficiency: we are able to run a 11.4 hours simluation ---converting 42000 ticks into hours using the conversion explicited in
-@sec-exec-agnostic --- in 18 minutes (@tbl-res-time). It is definetly a win.
+This also validates that the implementation of the design (see @apx-impl) is successfull in acheving reasonable execution times and resource efficiency: we are able to run a 11.4 hours simulation ---converting 42000 ticks into hours using the conversion explicited in
+@sec-exec-agnostic --- in 18 minutes (@tbl-res-time). It is definietly a win.
 
 == Reposts Power-law
 
-First metric to evaluate in the simulation is the reposts power-law, a characteristic quantity (see @sec-method-des-metrics) that must behave as real data. In @sec-data-reposts, data did not exactly followed a power-law but a lognormal distribution. @tbl-res-reposts reports, per dataset size, the distribution of the fitted exponent $alpha$ across runs and how many runs are actually better described by a power law according to Vuong's test.
+First metric to evaluate in the simulation is the reposts power-law, a characteristic magnitude (see @sec-method-des-metrics) that must behave as real data. In @sec-data-reposts, data did not exactly followed a power-law but a lognormal distribution. @tbl-res-reposts reports, per dataset size, the distribution of the fitted exponent $alpha$ across runs and how many runs are actually better described by a power law according to Vuong's test.
 
 #figure(
   table(
@@ -178,7 +179,7 @@ No run is a power law: the lognormal is preferred in every case, matching the re
 #figure(
   image("../images/results/powerlaw_alpha_comparison.svg", width: 100%),
   caption: flex-caption(
-    [Power-law tails sharing $x_"min" = 12$.],
+    [Synthetic power-law comparison of $alpha=2.05$ (Bluesky) _v.s._ $alpha=2.9$ (simulation). ],
     [Synthetic power-law tails with the Bluesky exponent ($alpha = 2.05$) and the representative simulated exponent ($alpha = 2.9$), both sharing the Bluesky lower cutoff $x_"min" = 12$. Left: CCDF on log-log axes. Right: density on linear axes.],
   )
 ) <fig-res-powerlaw-comp>
@@ -283,7 +284,7 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
 
 == Comparison with Bluesky Data
 
-With all the metric analyzed in both fronts, the comparison of real vs simulated data can be done.
+With all the metrics analyzed in both fronts, the comparison of real vs simulated data can be done.
 @tbl-res-vs-data contrasts the key metrics: the Bluesky values against each of the four simulated datasets (pooled over all runs).
 
 #figure(
@@ -328,14 +329,14 @@ With all the metric analyzed in both fronts, the comparison of real vs simulated
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [Data vs. simulation, key metrics.],
+    [Key metrics comparison: empirical data vs. simulation results],
     [Bluesky values from @sec-data-reposts and @sec-data-virality against each of the four simulated datasets (pooled over runs). The verdicts are discussed below.],
   )
 ) <tbl-res-vs-data>
 
-#todo[Add an overlay of @fig-data-nu-density with @fig-res-nu-density with just one dataset.]
+#todo[overlap the empirical with the four other datasets]
 
-The following points explitit the main differences between real data and the simulation:
+The following points explicit the main differences between real data and the simulation:
 + *Cascade rate.* The simulation produces roughly half the real share of non-trivial cascades (6.6–7.8% vs. 16.32%), the direct effect of the calibrated 1.2% repost weight.
 + *Size.* The median matches (2 vs. 3), but the tail is ~7× shorter (max 1,697 vs. 12,720).
 + *Depth.* The median matches (1); the tail is ~10× shorter (13 vs. 131) — the sim never builds deep repost chains.
@@ -345,7 +346,7 @@ The following points explitit the main differences between real data and the sim
 + *Broadcast share.* The sim is more broadcast-shaped (79.4–81.6% vs. 71.05%).
 + *Reposts.* Lognormal in both, but the simulated exponent ($2.5$–$2.9$) decays faster than the real $2.053$, with a much lower cutoff ($x_"min" approx 1$–$5$ vs. $12$), consistent with the missing deep cascades.
 
-The simulation manages to replicate all the medians and averages of almost all the quantities: cascade size (2), cascade depth (3), max out-degree (4). There are some other quantities such as the broadcast share (7), and $nu(T)$ (5) where the simulation falls short of actual human behaviour (more broadcast than the real data, shallower virality than real data), almost like the model did not allow the content to propagate as far as its real counterpart. Lastly, the simulation did not manage to reproduce any truly deep viral cascade (6), nor generate as many cascades as the real data (1).
+The simulation manages to replicate all the medians and averages of almost all the magnitudes: cascade size (2), cascade depth (3), max out-degree (4). There are some others, such as the broadcast share (7), and $nu(T)$ (5) where the simulation falls short of actual human behaviour (more broadcast than the real data, shallower virality than real data), almost like the model did not allow the content to propagate as far as its real counterpart. Lastly, the simulation did not manage to reproduce any truly deep viral cascade (6), nor generate as many cascades as the real data (1).
 
 *Conclusions*: The model and the simulation accurately match the bulk of the distribution ---both are tiny-and-shallow broadcast-dominated cascades--- making the model a good representation of the nature of the problem. Despite matching the bulk accurately, it consistently underperforms in replicating the heavy tail of the distribution: it is consistently truncated.
 
@@ -402,7 +403,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
-    [Empirical reproduction number of the simulated cascades.],
+    [Empirical reproduction number $R_0$ of the simulated cascades.],
     [$R_0$ (mean offspring per reposting node) and the mean seed (direct reposts of the root), estimated from the cascade trees, together with the cascade-size mean and the share of zero-offspring reposts. Estimated on 10K and 100K.],
   )
 ) <tbl-res-r0>
@@ -419,7 +420,7 @@ We can compute $R_0$ from the simulation traces, which are the contents of @tbl-
 
 === Content as a Fix Hypothesis
 
-This section presents the intuition behind why adding content would make the simulation recreate the heavy tail more like real data without coding a another full simulation ---as to add content would be an enormous work effort and is delegated to Future Work (see @sec-future)--- with the known knowledge of the stochastic process a cascade represents.
+This section presents the intuition behind why adding content would make the simulation recreate the heavy tail more like real data without coding another full simulation ---as to add content would be an enormous work effort and is delegated to Future Work (see @sec-future)--- with the known knowledge of the stochastic process a cascade represents.
 
 // The argument below is the first-moment version; the full derivation, including the exact tail exponent, is in @apx-branching.
 
@@ -440,8 +441,8 @@ $
   EE(S) = integral_0^1 frac(1, 1 - m) d F(m).
 $ <eq-exp-s>
 
-By analyzing the convergence of <eq-exp-s> we can see the heterogeneous model will generate a heavy tail.
-+ If the support of $F$ is bounded away from $1^-$ (_i.e_ $m <= c <= 1$ where $c$ is far away enough from $1^-$) then the intergal will converge and $E(S) < inf$, implying the tail will remain exponentially bounded.
+By analyzing the convergence <eq-exp-s> we can see the heterogeneous model will generate a heavy tail.
++ If the support of $F$ is bounded away from $1^-$ (_i.e_ $m <= c <= 1$ where $c$ is far away enough from $1^-$) then the integral will converge and $E(S) < inf$, implying the tail will remain exponentially bounded.
 + However, if the support of $F$ lets $m -> 1^-$ arbitrarely (_i.e._ a small fraction of posts are near critical, so good they become viral), the integral will diverge, therefore $E(S)= inf$.
 
 The divergence of the mean of $S$ proves that the tail will not be exponentially bounded ---like an exponential distribution--- but a heavy-tail behaviour ---such a power-law or lognormal distribution--- where rare but enormous cascades will dominate the expected value.
@@ -450,33 +451,134 @@ Therefore, while mantaining the same size average $R_0$, the introduction of pos
 
 == The Missing Width <sec-missing-width>
 
-This section explains the missing width of the simulated cascades. The maximum out-degree of a cascade is $approx 5 times$ shorter than the real data ($1,599$ vs. $7,768$). A subcritical branching process does not explain why the width of the cascade is never achieved, it just talked about the depth.
+The previous section explained why the simulated cascades are not *deep*. A second, independent truncation limits their *width*: the maximum out-degree of a simulated cascade is about five times smaller than the real one ---$1,599$ against $7,768$--- even though the bulk of the out-degree distribution matches. A subcritical branching process says nothing about this: it governs the depth, not the first hop.
 
-The width of the cascade is set entirely at the first propagation, _i.e_ by the amount of people the post creation is followed by. Specifically, out-degree can be factorized as
+Width is set entirely at the first propagation, which for a cascade is exactly the set of direct reposts of the root. Out-degree therefore factorises as
 
 $ "out-degree" = "impressions" times "repost rate", $
 
-Under the Independent Cascade model, out-degree should be explained by:
+and under the Independent Cascade model its expectation should track the author's degree,
 
-$ EE("out-degree") = d_"followers" times pi_"repost" $
+$ EE("out-degree") = d_"followers" times pi_"repost". $
 
-predicting that large hubs should generate very wide cascades. The simulation does not, so some factor truncates the impression term. The LIFO-based queue is the first suspect, and @sec-queue-attention tests it directly; it turns out to be second-order, leaving the attention *budget* itself as the binding constraint.
-
-The realitiy of the simulation is that $d_"followers"$ is far less than it should be due to a post being buried in the user timeline. Normal Independent-Cascade models, every user sees every post, making the propagation far more usable. Three ingredients of the model impose that cap.
+Large hubs should therefore produce very wide cascades. In the simulation they do not, so at least one of the two factors is being truncated below the follower count. Several ingredients of the model can bound the impression term:
 
 1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
-2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: each user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist. The queue experiment (@sec-queue-attention) isolates this ordering and shows it is second-order: randomising the drain reallocates *which* posts are read but does not widen the typical cascade. The binding quantity is the number of posts a session reads, not the order in which it reads them.
-3. *Degree-independent activity.* Every user draws its session behaviour from the same distribution, regardless of its position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and its followers are no more attentive either.
-4. *Inter-action time.* The time a user needs to see the post is a delicate quantity that (see @sec-cal-interaction) has been eyeballed to make a plausible policy $pi$. Making the users more active of changing the distribution could affect the number of posts a user sees per session, potentially mitigating the attention bottleneck.
+2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: a user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
+3. *Degree-independent activity.* Every user draws their session behaviour from the same distribution, regardless of their position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and their followers are no more attentive either.
+4. *Inter-action time.* The time a user needs to act on a post (see @sec-cal-interaction) has been tuned by hand into a plausible policy $pi$; making users more active, or changing the distribution, would change how many posts a session reads.
 
-The first one is a consequence of the session measurement, and it's a natural quantity emerging from the simulation dynamics (see @sec-exec-stationary) therefore cannot be changed. Fourth could be explored with more time, specially moving away from an exponential of by designing a more specific study regarding how to measure this quantity (see @apx-sessions-dataset). 
+Two mechanisms compete for the truncation. The first is *ordering*: the attention ceiling (2) collapses the impression term through *which* posts are read. The second is *budget and conversion*: the impression budget is fixed and shared across every followee (1, 3, 4), so it saturates below the follower count, while the content-agnostic model gives every post the same $pi_"repost"$, so none can convert above baseline.
 
-The third is a homogeneity assumption in exact parallel to the content lever of the previous section, and it is the hypothesis proposed here: correlating activity ---session frequency, duration and scroll depth--- with in- and out-degree would give hubs a proportionally larger attentive audience and widen the broadcast tail toward the real regime, without touching $R_0$.
+This section settles which mechanism binds. It first measures where the width is lost (@sec-width-reach), then tests the ordering suspect with a random-drain experiment (@sec-queue-attention), and finally decomposes the surviving cap (@sec-width-cause).
 
+=== Reach is compressed with followers <sec-width-reach>
 
-The second limitation is directly modifiable, and @sec-queue-attention does exactly that: it replaces the LIFO drain with a uniform random draw ---the cheapest proxy for a recommender, since it gives an old post the same chance of being read as a fresh one--- and measures what changes. It confirms that the queue is an allocation mechanism rather than the capacity bottleneck, and localises the missing width in the impression budget and the homogeneous repost probability.
+To see where the width is lost, we measure the first-hop size against the author's true follower count. For broadcast cascades (depth $1$) the maximum out-degree *is* the number of direct reposts of the root, so this isolates the impression term cleanly. @fig-queue-width and @tbl-queue-width report it for the 500K dataset, bucketed by the author's in-degree (taken from the topology binary the simulator consumed, see @apx-impl-topology). The random columns in both belong to the queue experiment of @sec-queue-attention; here we read the LIFO baseline.
 
-Implementation limitation of the simulation for this analysis: the trace records which parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor cannot be cleanly separated from the repost probability in the current data. The hypothesis above is therefore a prediction, not a measurement. This is easy fixable in the simulation but does not have a empirical data counterpart, as we just can know which post have been shown to which users.
+#figure(
+  image("../images/results/width_vs_followers.svg", width: 100%),
+  caption: flex-caption(
+    [Cascade size vs. author follower count.],
+    [Mean cascade size (left) and probability of reaching at least $50$ reposts (right) as a function of the author's follower count, 500K dataset, LIFO vs. random. The follower buckets are log-spaced and the vertical axis is logarithmic.],
+  )
+) <fig-queue-width>
 
-#include "8b-queue-attention.typ"
+#figure(
+  table(
+    columns: 5,
+    align: (left, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Author followers*], [*Mean size L*], [*Mean size R*], [*$P("size" >= 50)$ L*], [*$P("size" >= 50)$ R*],
+    table.hline(stroke: 0.5pt),
+    [$<= 10$], [1.00], [1.00], [0], [0],
+    [$11$--$100$], [1.02], [1.02], [$< 10^(-8)$], [$< 10^(-8)$],
+    [$101$--$1k$], [1.08], [1.08], [$3.8 dot 10^(-7)$], [$3.7 dot 10^(-7)$],
+    [$1k$--$10k$], [1.32], [1.32], [$3.7 dot 10^(-6)$], [$3.1 dot 10^(-6)$],
+    [$10k$--$100k$], [2.83], [2.83], [$2.9 dot 10^(-4)$], [$2.2 dot 10^(-4)$],
+    [$> 100k$], [173.8], [183.6], [0.729], [0.702],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Cascade size by author follower count (500K).],
+    [Mean cascade size and probability that a post reaches at least $50$ reposts, as a function of the author's follower count, pooled over $100$ runs, LIFO (L) vs. random (R). The tail of the simulated sample is essentially the single largest hub.],
+  )
+) <tbl-queue-width>
+
+The relationship is monotone, so reach *does* grow with followers ---but far too slowly. An author with fewer than ten followers and one with a hundred thousand are separated by four decades of degree, yet the typical cascade moves only from $1.0$ to $2.8$; the jump to $174$ happens only in the top bucket, which at 500K contains a single hub with $211{,}726$ followers. Normalised per follower, the conversion collapses as degree grows, and that collapse is the missing width. The tail is equally concentrated: $73%$ of the giant hub's posts reach $50$ reposts, against $0.03%$ for the $10$k--$100$k authors and essentially zero below $1$k. The simulated cascade sample is therefore the giant hub plus a thin mid-tier.
+
+=== The queue is second-order <sec-queue-attention>
+
+The compression above has an obvious suspect: the reverse-chronological ordering. A LIFO timeline buries a post under whatever arrives after it, so its impression term could collapse before the topology ever matters. This experiment isolates exactly that mechanism. We keep the topology, the seed, the calibrated parameters and the $100$ runs of @tbl-res-finalbatch fixed, and change only how a user drains their own timeline: from a LIFO stack to a *uniform random draw*. Under the random drain an old post has the same probability of being read as a fresh one, which is the cheapest possible proxy for a recommender's re-ranking ---no content, no out-of-network exposure, only a different ordering of the same background timeline. The experiment was run at 10K, 100K and 500K with `-Dtimelinerandom`; all other results in this chapter use the LIFO build.
+
+#figure(
+  table(
+    columns: 7,
+    align: (left, right, right, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Metric*], [*10K L*], [*10K R*], [*100K L*], [*100K R*], [*500K L*], [*500K R*],
+    table.hline(stroke: 0.5pt),
+    [Posts with $>= 1$ repost (%)], [7.33], [7.72], [7.76], [8.31], [7.25], [7.86],
+    [Size, mean], [2.54], [2.47], [2.70], [2.59], [2.92], [2.77],
+    [Size, max], [32], [35], [174], [200], [779], [892],
+    [Depth, max], [10], [9], [12], [11], [13], [11],
+    [Out-degree, mean], [1.256], [1.219], [1.382], [1.322], [1.586], [1.497],
+    [Out-degree, max], [28], [31], [161], [179], [726], [787],
+    [$nu(T)$, mean], [1.157], [1.136], [1.187], [1.159], [1.205], [1.176],
+    [Viral $nu(T)$, mean], [1.585], [1.553], [1.641], [1.600], [1.704], [1.659],
+    [Broadcast (%)], [80.1], [82.0], [79.4], [81.7], [80.3], [82.5],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Comparison of aggregated cascade metrics: LIFO vs Random Timeline],
+    [Aggregate cascade metrics pooled over the 100 runs of each dataset, comparing the LIFO baseline (L) with the random drain (R). Cascade-level statistics are restricted to cascades with at least one repost.],
+  )
+) <tbl-queue-aggregate>
+
+The aggregate picture is a wash, and if anything a regression: randomising raises the share of posts that get at least one repost, but *lowers* the mean size, the mean out-degree and $nu(T)$, and pushes the broadcast share about two points further from the real data ($71.05%$, @tbl-res-vs-data). Yet the extreme tail moves the other way at every size. @tbl-queue-extreme shows the largest cascades of the 500K datasets: under the random drain the widest are both wider and deeper, reaching depth $5$ where the LIFO maximum sat at $3$--$4$, and a slightly higher $nu(T)$.
+
+#figure(
+  table(
+    columns: 5,
+    align: (left, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Policy*], [*Size*], [*Depth*], [*Max out-degree*], [*$nu(T)$*],
+    table.hline(stroke: 0.5pt),
+    [LIFO], [779], [3], [726], [2.14],
+    [LIFO], [724], [4], [654], [2.22],
+    [LIFO], [696], [4], [643], [2.18],
+    table.hline(stroke: 0.3pt),
+    [Random], [892], [5], [772], [2.35],
+    [Random], [856], [4], [762], [2.23],
+    [Random], [856], [5], [787], [2.20],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Largest cascades, LIFO vs. random (500K).],
+    [The three largest cascades by total size in the 500K dataset under each drain policy, with their depth, maximum out-degree and structural virality. These are the extremes of the distribution, not its bulk.],
+  )
+) <tbl-queue-extreme>
+
+This is the signature of an *allocation* mechanism, not a capacity one. The random draw spends the same reads but distributes them differently: it occasionally lets one post accrue attention across many sessions ---which is why the lucky extreme grows deeper as well as wider--- while spreading the ordinary post's reads into a flatter, more star-shaped distribution. The number of reads is fixed; only their assignment changes. @tbl-queue-width confirms it: the random drain moves the largest hub's mean size only from $173.8$ to $183.6$ and leaves the mid-tier essentially unchanged. The queue therefore shapes *which* cascades grow, not *how large* the largest can be, and cannot be the capacity cap.
+
+=== Impressions, conversion and allocation <sec-width-cause>
+
+With ordering ruled out as the capacity cap, two factors remain, and both are truncated independently of the queue.
+
+*Impressions.* Every follower receives the post in their background timeline (@proc-propagate), but a session consumes a bounded number of posts shared across *everyone* the user follows. The queue decides the order of that consumption, not its volume, so the impression term saturates far below the follower count. The arithmetic is unforgiving: the largest hub in the 1M topology has $407{,}981$ followers, so even perfect in-network delivery at the calibrated $pi_"repost" = 1.2%$ caps a post at $0.012 times 407{,}981 approx 4{,}900$ direct reposts, against the $1{,}599$ actually observed ---roughly a third of its own in-network ceiling. The real maximum out-degree of $7{,}768$ would require about $7{,}768 / 0.012 approx 647{,}000$ impressions, more than any in-network audience in the reconstructed topology can supply. Reaching it therefore requires impressions *beyond* the follower graph.
+
+*Conversion.* Because posts carry no content, every post and every user share the same repost probability $pi_"repost"$. No post can convert above the baseline, so the second factor is a constant and the tail is truncated by construction. This is the same homogeneity discussed for the missing depth (@sec-finding-missing-tail): content is the natural way to let a good post convert above baseline, and it is delegated to @sec-future-content.
+
+*Allocation.* The queue is the remaining factor, and the experiment shows it is second-order: it decides which posts get the budget (and hence samples the tail), not how much budget exists. The hub's modest widening under the random drain in @tbl-queue-width is the allocation effect at work ---the lucky post is no longer buried--- but it is dwarfed by the capacity gap above.
+
+Taken together, the queue is an attention bottleneck, but an *allocative* one. That distinction matters for intervention: reordering an in-network feed is cheap and improves tail sampling, yet it cannot manufacture the impressions that the missing width requires. The mechanism that does both ---adding impressions beyond the follower graph and ranking them by post quality--- is a recommender, which is why recommendation appears as the natural structural fix rather than a better queue order (@lasser2025desire). It attacks the impression factor (out-of-network exposure) and, if quality-ranked, the conversion factor (post-level heterogeneity) at once, while leaving the reproduction number $R_0 < 1$ of @sec-finding-missing-tail untouched.
+
+Implementation limitation: the trace records which parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor above is inferred from the in-degree ceiling rather than observed. It is easy to instrument in the simulation, but it has no empirical counterpart, since we can only know which posts were shown to which users.
+
+#todo[Measure impressions directly: the trace records the repost parent, not the number of users who saw each post, so the impression term above is inferred from the in-degree ceiling rather than observed. Instrumenting exposure would turn this decomposition into a measurement.]
+
+#todo[Extend the random-timeline run to 1M and add bootstrap confidence intervals to @tbl-queue-aggregate and @tbl-queue-width.]
 

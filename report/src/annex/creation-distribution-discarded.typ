@@ -159,7 +159,7 @@ Neither test nor probes privilege the global quantity as the "natural" process. 
 == Pooled Parametric Fits
 <apx-interpost-pooledfit>
 
-Per-user fits are unidentifiable (Finding 1, @apx-interpost-truncated) and the permutation test closed the derivation routes (@apx-interpost-independence); the chosen route is ECDF sampling. One question remains open: can _one_ distribution with _one_ parameter set describe the within-session gaps of a whole user group? Two groupings were tried (`pooled_fit.py`, same 8-candidate MLE battery and closed-form KS/CvM/AD as @apx-method-gof-dist, scipy instead of fitdistrplus): everyone pooled (1M uniform subsample of all 11.1M within gaps) and per (duration $times$ gap) pair ---users grouped by their settled parametric type pair, within gaps pooled per pair (250k gaps each).
+Per-user fits are unidentifiable (Finding 1, @apx-interpost-truncated) and the permutation test closed the derivation routes (@apx-interpost-independence); the chosen route is ECDF sampling. One question remains open: can _one_ distribution with _one_ parameter set describe the within-session gaps of a whole user group? Two groupings were tried (`pooled_fit.py`, same 7-candidate MLE battery and closed-form KS/CvM/AD as @apx-method-gof-dist, scipy instead of fitdistrplus): everyone pooled (1M uniform subsample of all 11.1M within gaps) and per (duration $times$ gap) pair ---users grouped by their settled parametric type pair, within gaps pooled per pair (250k gaps each).
 
 === Everyone Pooled
 

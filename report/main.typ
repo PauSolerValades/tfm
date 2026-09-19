@@ -63,6 +63,8 @@
 #let flex-caption(short, long) = context if in-outline.get() { short } else { long }
 
 // ----------------------------------------------------------
+// Official UPC-FME cover, then the styled title page.
+#include "src/cover-official.typ"
 #include "src/cover.typ"
 
 #counter(page).update(1)
@@ -108,7 +110,6 @@
 
 #pagebreak()
 = Introduction
-#todo[warning: this is not the final version, do not review.]
 
 #include "src/1-introduction.typ"
 
@@ -169,6 +170,7 @@
 #bibliography(
   ("refs/1-introduction.yml", "refs/2-context.yml", "refs/3-model.yml", "refs/4-methodology.yml", "refs/5-design.yml", "refs/6-data.yml", "refs/7-calibration.yml", "refs/8-futurework.yml", "refs/9-annex.yml", "refs/6-implementation.yml"),
   title: "References",
+  style: "ieee",
 )
 
 #pagebreak()

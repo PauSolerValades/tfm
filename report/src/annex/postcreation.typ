@@ -90,7 +90,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__expon__weibull_min.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__expon__weibull_min.svg"), 
   ),
-  caption: [Exp $times$ Weibull (39,557 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Exp $times$ Weibull.],
+    [Exp $times$ Weibull (39,557 users)],
+  ),
 ) <fig-interpost-pair-expon-weibull>
 
 #figure(
@@ -100,7 +103,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__weibull_min__weibull_min.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__weibull_min__weibull_min.svg"), 
   ),
-  caption: [Weibull $times$ Weibull (24,423 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Weibull $times$ Weibull.],
+    [Weibull $times$ Weibull (24,423 users)],
+  ),
 ) <fig-interpost-pair-weibull-weibull>
 
 #figure(
@@ -110,7 +116,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__weibull_min__lognorm.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__weibull_min__lognorm.svg"), 
   ),
-  caption: [Weibull $times$ Lognorm (21,095 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Weibull $times$ Lognorm.],
+    [Weibull $times$ Lognorm (21,095 users)],
+  ),
 ) <fig-interpost-pair-weibull-lognorm>
 
 #figure(
@@ -120,7 +129,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__gamma__weibull_min.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__gamma__weibull_min.svg"), 
   ),
-  caption: [Gamma $times$ Weibull (20,141 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Gamma $times$ Weibull.],
+    [Gamma $times$ Weibull (20,141 users)],
+  ),
 ) <fig-interpost-pair-gamma-weibull>
 
 #figure(
@@ -130,7 +142,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__expon__lognorm.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__expon__lognorm.svg"), 
   ),
-  caption: [Exp $times$ Lognorm (19,690 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Exp $times$ Lognorm.],
+    [Exp $times$ Lognorm (19,690 users)],
+  ),
 ) <fig-interpost-pair-expon-lognorm>
 
 #figure(
@@ -140,7 +155,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__power_tail__weibull_min.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__power_tail__weibull_min.svg"), 
   ),
-  caption: [Power-law $times$ Weibull (18,247 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Power-law $times$ Weibull.],
+    [Power-law $times$ Weibull (18,247 users)],
+  ),
 ) <fig-interpost-pair-power-weibull>
 
 #figure(
@@ -150,7 +168,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__lognorm__weibull_min.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__lognorm__weibull_min.svg"), 
   ),
-  caption: [Lognorm $times$ Weibull (17,158 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Lognorm $times$ Weibull.],
+    [Lognorm $times$ Weibull (17,158 users)],
+  ),
 ) <fig-interpost-pair-lognorm-weibull>
 
 #figure(
@@ -160,7 +181,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__gamma__lognorm.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__gamma__lognorm.svg"), 
   ),
-  caption: [Gamma $times$ Lognorm (14,842 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Gamma $times$ Lognorm.],
+    [Gamma $times$ Lognorm (14,842 users)],
+  ),
 ) <fig-interpost-pair-gamma-lognorm>
 
 #figure(
@@ -170,7 +194,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__weibull_min__power_tail.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__weibull_min__power_tail.svg"), 
   ),
-  caption: [Weibull $times$ Power-law (13,603 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Weibull $times$ Power-law.],
+    [Weibull $times$ Power-law (13,603 users)],
+  ),
 ) <fig-interpost-pair-weibull-power>
 
 #figure(
@@ -180,7 +207,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__power_tail__lognorm.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__power_tail__lognorm.svg"), 
   ),
-  caption: [Power-law $times$ Lognorm (10,975 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Power-law $times$ Lognorm.],
+    [Power-law $times$ Lognorm (10,975 users)],
+  ),
 ) <fig-interpost-pair-power-lognorm>
 
 #figure(
@@ -190,7 +220,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__lognorm__lognorm.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__lognorm__lognorm.svg"), 
   ),
-  caption: [Lognorm $times$ Lognorm (10,596 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Lognorm $times$ Lognorm.],
+    [Lognorm $times$ Lognorm (10,596 users)],
+  ),
 ) <fig-interpost-pair-lognorm-lognorm>
 
 #figure(
@@ -200,7 +233,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__gamma__power_tail.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__gamma__power_tail.svg"), 
   ),
-  caption: [Gamma $times$ Power-law (9,041 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Gamma $times$ Power-law.],
+    [Gamma $times$ Power-law (9,041 users)],
+  ),
 ) <fig-interpost-pair-gamma-power>
 
 #figure(
@@ -210,7 +246,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__expon__power_tail.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__expon__power_tail.svg"), 
   ),
-  caption: [Exp $times$ Power-law (8,685 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Exp $times$ Power-law.],
+    [Exp $times$ Power-law (8,685 users)],
+  ),
 ) <fig-interpost-pair-expon-power>
 
 #figure(
@@ -220,7 +259,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__lognorm__power_tail.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__lognorm__power_tail.svg"), 
   ),
-  caption: [Lognorm $times$ Power-law (8,335 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Lognorm $times$ Power-law.],
+    [Lognorm $times$ Power-law (8,335 users)],
+  ),
 ) <fig-interpost-pair-lognorm-power>
 
 #figure(
@@ -230,7 +272,10 @@ This pair split is the fine-grained input of the simulation: a parametric law fo
     image("../../images/annex/interpost_pairs/posts_per_session__power_tail__power_tail.svg"), 
     image("../../images/annex/interpost_pairs/interpost_ecdf__power_tail__power_tail.svg"), 
   ),
-  caption: [Power-law $times$ Power-law (6,780 users)],
+  caption: flex-caption(
+    [Histogram and ECDF of post creation: Power-law $times$ Power-law.],
+    [Power-law $times$ Power-law (6,780 users)],
+  ),
 ) <fig-interpost-pair-power-power>
 
 
@@ -245,7 +290,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__expon__weibull_min.svg"), 
   ),
-  caption: [Exp $times$ Weibull (39,557 users)],
+  caption: flex-caption(
+    [ECDF offset pair Exp $times$ Weibull.],
+    [Exp $times$ Weibull (39,557 users)],
+  ),
 ) <fig-offset-pair-expon-weibull>
 
 #figure(
@@ -254,7 +302,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__weibull_min__weibull_min.svg"), 
   ),
-  caption: [Weibull $times$ Weibull (24,423 users)],
+  caption: flex-caption(
+    [ECDF offset pair Weibull $times$ Weibull.],
+    [Weibull $times$ Weibull (24,423 users)],
+  ),
 ) <fig-offset-pair-weibull-weibull>
 
 #figure(
@@ -263,7 +314,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__weibull_min__lognorm.svg"), 
   ),
-  caption: [Weibull $times$ Lognorm (21,095 users)],
+  caption: flex-caption(
+    [ECDF offset pair Weibull $times$ Lognorm.],
+    [Weibull $times$ Lognorm (21,095 users)],
+  ),
 ) <fig-offset-pair-weibull-lognorm>
 
 #figure(
@@ -272,7 +326,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__gamma__weibull_min.svg"), 
   ),
-  caption: [Gamma $times$ Weibull (20,141 users)],
+  caption: flex-caption(
+    [ECDF offset pair Gamma $times$ Weibull.],
+    [Gamma $times$ Weibull (20,141 users)],
+  ),
 ) <fig-offset-pair-gamma-weibull>
 
 #figure(
@@ -281,7 +338,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__expon__lognorm.svg"), 
   ),
-  caption: [Exp $times$ Lognorm (19,690 users)],
+  caption: flex-caption(
+    [ECDF offset pair Exp $times$ Lognorm.],
+    [Exp $times$ Lognorm (19,690 users)],
+  ),
 ) <fig-offset-pair-expon-lognorm>
 
 #figure(
@@ -290,7 +350,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__power_tail__weibull_min.svg"), 
   ),
-  caption: [Power-law $times$ Weibull (18,247 users)],
+  caption: flex-caption(
+    [ECDF offset pair Power-law $times$ Weibull.],
+    [Power-law $times$ Weibull (18,247 users)],
+  ),
 ) <fig-offset-pair-power-weibull>
 
 #figure(
@@ -299,7 +362,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__lognorm__weibull_min.svg"), 
   ),
-  caption: [Lognorm $times$ Weibull (17,158 users)],
+  caption: flex-caption(
+    [ECDF offset pair Lognorm $times$ Weibull.],
+    [Lognorm $times$ Weibull (17,158 users)],
+  ),
 ) <fig-offset-pair-lognorm-weibull>
 
 #figure(
@@ -308,7 +374,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__gamma__lognorm.svg"), 
   ),
-  caption: [Gamma $times$ Lognorm (14,842 users)],
+  caption: flex-caption(
+    [ECDF offset pair Gamma $times$ Lognorm.],
+    [Gamma $times$ Lognorm (14,842 users)],
+  ),
 ) <fig-offset-pair-gamma-lognorm>
 
 #figure(
@@ -317,7 +386,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__weibull_min__power_tail.svg"), 
   ),
-  caption: [Weibull $times$ Power-law (13,603 users)],
+  caption: flex-caption(
+    [ECDF offset pair Weibull $times$ Power-law.],
+    [Weibull $times$ Power-law (13,603 users)],
+  ),
 ) <fig-offset-pair-weibull-power>
 
 #figure(
@@ -326,7 +398,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__power_tail__lognorm.svg"), 
   ),
-  caption: [Power-law $times$ Lognorm (10,975 users)],
+  caption: flex-caption(
+    [ECDF offset pair Power-law $times$ Lognorm.],
+    [Power-law $times$ Lognorm (10,975 users)],
+  ),
 ) <fig-offset-pair-power-lognorm>
 
 #figure(
@@ -335,7 +410,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__lognorm__lognorm.svg"), 
   ),
-  caption: [Lognorm $times$ Lognorm (10,596 users)],
+  caption: flex-caption(
+    [ECDF offset pair Lognorm $times$ Lognorm.],
+    [Lognorm $times$ Lognorm (10,596 users)],
+  ),
 ) <fig-offset-pair-lognorm-lognorm>
 
 #figure(
@@ -344,7 +422,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__gamma__power_tail.svg"), 
   ),
-  caption: [Gamma $times$ Power-law (9,041 users)],
+  caption: flex-caption(
+    [ECDF offset pair Gamma $times$ Power-law.],
+    [Gamma $times$ Power-law (9,041 users)],
+  ),
 ) <fig-offset-pair-gamma-power>
 
 #figure(
@@ -353,7 +434,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__expon__power_tail.svg"), 
   ),
-  caption: [Exp $times$ Power-law (8,685 users)],
+  caption: flex-caption(
+    [ECDF offset pair Exp $times$ Power-law.],
+    [Exp $times$ Power-law (8,685 users)],
+  ),
 ) <fig-offset-pair-expon-power>
 
 #figure(
@@ -362,7 +446,10 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__lognorm__power_tail.svg"), 
   ),
-  caption: [Lognorm $times$ Power-law (8,335 users)],
+  caption: flex-caption(
+    [ECDF offset pair Lognorm $times$ Power-law.],
+    [Lognorm $times$ Power-law (8,335 users)],
+  ),
 ) <fig-offset-pair-lognorm-power>
 
 #figure(
@@ -371,5 +458,8 @@ Beyond the within-gap cadence, the first post of a session lands at a short offs
     column-gutter: 0.8em,
     image("../../images/annex/interpost_pairs/offset_ecdf__power_tail__power_tail.svg"), 
   ),
-  caption: [Power-law $times$ Power-law (6,780 users)],
+  caption: flex-caption(
+    [ECDF offset pair Power-law $times$ Power-law.],
+    [Power-law $times$ Power-law (6,780 users)],
+  ),
 ) <fig-offset-pair-power-power>

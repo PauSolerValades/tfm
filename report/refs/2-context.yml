@@ -1,7 +1,8 @@
 wiki-network-theory:
   type: Entry
   title: Network theory
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Network_theory
     date: 2026-04-27
@@ -13,7 +14,8 @@ wiki-network-theory:
 wiki-social-network:
   type: Entry
   title: Social network
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Social_network
     date: 2026-04-27
@@ -24,7 +26,7 @@ wiki-social-network:
 
 duan2009informational:
   type: Article
-  title: "Informational Cascades and Software Adoption on the Internet: An Empirical Investigation"
+  title: "Informational cascades and software adoption on the Internet: An empirical investigation"
   author:
     - Duan, Wenjing
     - Gu, Bin
@@ -45,7 +47,7 @@ duan2009informational:
 
 choudhary2023impact:
   type: Article
-  title: "Impact of Graph Theory on Social Media Analytics: A Review"
+  title: "Impact of graph theory on social media analytics: A review"
   author:
     - Ernesto Estrada
   date: 2023-06-20
@@ -61,7 +63,7 @@ choudhary2023impact:
 
 kivela2014multilayer:
   type: Article
-  title: Multilayer Networks
+  title: Multilayer networks
   author:
     - Kivelä, Mikko
     - Arenas, Alex
@@ -86,7 +88,8 @@ kivela2014multilayer:
 wiki-scale-free-network:
   type: Entry
   title: Scale-free network
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Scale-free_network
     date: 2026-04-27
@@ -97,7 +100,7 @@ wiki-scale-free-network:
 
 easley2010powerlaws:
   type: Chapter
-  title: "Chapter 18. Power Laws and Rich-Get-Richer Phenomena"
+  title: "Chapter 18. Power laws and rich-get-richer phenomena"
   author:
     - Easley, David
     - Kleinberg, Jon
@@ -116,7 +119,8 @@ easley2010powerlaws:
 wiki-small-world-network:
   type: Entry
   title: Small-world network
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Small-world_network
     date: 2026-04-27
@@ -127,7 +131,7 @@ wiki-small-world-network:
 
 easley2010smallworld:
   type: Chapter
-  title: "Chapter 20. The Small-World Phenomenon"
+  title: "Chapter 20. The small-world phenomenon"
   author:
     - Easley, David
     - Kleinberg, Jon
@@ -146,7 +150,7 @@ easley2010smallworld:
 
 centola2007complex:
   type: Article
-  title: "Complex Contagions and the Weakness of Long Ties"
+  title: "Complex contagions and the weakness of long ties"
   author:
     - Centola, Damon
     - Macy, Michael
@@ -168,7 +172,8 @@ centola2007complex:
 wiki-assortativity:
   type: Entry
   title: Assortativity
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Assortativity
     date: 2026-04-28
@@ -179,7 +184,7 @@ wiki-assortativity:
 
 easley2010contexts:
   type: Chapter
-  title: "Chapter 4. Networks in Their Surrounding Contexts"
+  title: "Chapter 4. Networks in their surrounding contexts"
   author:
     - Easley, David
     - Kleinberg, Jon
@@ -238,6 +243,7 @@ newman2004finding:
     - Newman, M. E. J.
     - Girvan, M.
   date: 2004-02
+  page-range: 026113
   language: en
   serial-number:
     doi: "10.1103/PhysRevE.69.026113"
@@ -249,13 +255,12 @@ newman2004finding:
     title: Physical Review E
     volume: 69
     issue: 2
-    page-range: 026113
     publisher: American Physical Society
   abstract: "Aquest article presenta un conjunt d'algoritmes per identificar comunitats en xarxes complexes, basats en l'eliminació iterativa d'arestes amb una alta centralitat d'intermediació (betweenness), i introdueix la mesura de modularitat per avaluar la força de l'estructura de comunitats trobada."
 
 lou2013mining:
   type: Article
-  title: "Mining Structural Hole Spanners Through Information Diffusion in Social Networks"
+  title: "Mining structural hole spanners through information diffusion in social networks"
   author:
     - Lou, Tiancheng
     - Tang, Jie
@@ -325,22 +330,24 @@ meng2025spreading:
 
 hirakura2023method:
   type: Article
-  title: "Method for Mitigating Attention to Inappropriate Content Based on Attention Dynamics Model"
+  title: "Method for mitigating attention to inappropriate content based on attention dynamics model"
   author:
     - Hirakura, Naoki
-  date: 2023
+  date: 2025
+  page-range: 68172-68179
   language: en
-  url:
-    value: https://arxiv.org/abs/2305.05139
-    date: 2026-04-28
+  serial-number:
+    doi: "10.1109/ACCESS.2025.3561496"
   organization: "Toyama Prefectural University"
   parent:
-    type: Proceedings
-    title: "International Conference on Information Systems Engineering"
+    type: Periodical
+    title: IEEE Access
+    volume: 13
+    publisher: IEEE
 
 li2017survey:
   type: Article
-  title: "A Survey on Information Diffusion in Online Social Networks: Models and Methods"
+  title: "A survey on information diffusion in online social networks: Models and methods"
   author:
     - Li, Mei
     - Wang, Xiang
@@ -363,7 +370,7 @@ li2017survey:
 
 nettleton2013diffusion:
   type: Chapter
-  title: "3.5 Information Diffusion"
+  title: "3.5 Information diffusion"
   author: Nettleton, David F.
   date: 2013-02-12
   language: en
@@ -382,7 +389,7 @@ nettleton2013diffusion:
 
 kempe2003maximizing:
   type: Article
-  title: Maximizing the Spread of Influence through a Social Network
+  title: Maximizing the spread of influence through a social network
   author:
     - Kempe, David
     - Kleinberg, Jon
@@ -400,7 +407,7 @@ kempe2003maximizing:
 
 singh2026survey:
   type: Article
-  title: "A survey on Information Diffusion Models on Social Networks"
+  title: "A survey on information diffusion models on social networks"
   author:
     - Singh, Shashank Sheshar
     - Singh, Kuldeep
@@ -418,7 +425,7 @@ singh2026survey:
 
 zhang2014chapter1:
   type: Chapter
-  title: Recent Advances in Information Diffusion and Influence Maximization of Complex Social Networks
+  title: Recent advances in information diffusion and influence maximization of complex social networks
   author:
     - Zhang, Huiyuan
     - Mishra, Subhankar
@@ -437,7 +444,8 @@ zhang2014chapter1:
 wiki-complex-contagion:
   type: Web
   title: Complex contagion
-  author: Wikipedia contributors
+  author:
+    name: "Wikipedia contributors"
   date: 2026-04-28
   url:
     value: https://en.wikipedia.org/wiki/Complex_contagion
@@ -449,22 +457,25 @@ wiki-complex-contagion:
 
 pozzana2017epidemic:
   type: Article
-  title: Epidemic Spreading on Activity-Driven Networks with Attractiveness
+  title: Epidemic spreading on activity-driven networks with attractiveness
   author:
     - Pozzana, Iacopo
     - Sun, Kaiyuan
     - Perra, Nicola
-  date: 2017-09-12
+  date: 2017
+  page-range: 042310
   serial-number:
-    arxiv: "1703.02482"
+    doi: "10.1103/PhysRevE.96.042310"
   parent:
-    type: Repository
-    title: arXiv
-    genre: Preprint
+    type: Periodical
+    title: Physical Review E
+    volume: 96
+    issue: 4
+    publisher: American Physical Society
 
 hodas2014simple:
   type: Article
-  title: The Simple Rules of Social Contagion
+  title: The simple rules of social contagion
   author:
     - Hodas, Nathan O.
     - Lerman, Kristina
@@ -482,7 +493,7 @@ hodas2014simple:
 
 gomezrodriguez2011uncovering:
   type: Article
-  title: Uncovering the Temporal Dynamics of Diffusion Networks
+  title: Uncovering the temporal dynamics of diffusion networks
   author:
     - Gomez-Rodriguez, Manuel
     - Balduzzi, David
@@ -490,6 +501,9 @@ gomezrodriguez2011uncovering:
   date: 2011-05-03
   serial-number:
     arxiv: "1105.0697"
+  url:
+    value: https://arxiv.org/abs/1105.0697
+    date: 2026-05-15
   parent:
     type: Repository
     title: arXiv
@@ -497,7 +511,7 @@ gomezrodriguez2011uncovering:
 
 gomezrodriguez2012inferring:
   type: Article
-  title: Inferring Networks of Diffusion and Influence
+  title: Inferring networks of diffusion and influence
   author:
     - Gomez-Rodriguez, Manuel
     - Leskovec, Jure
@@ -530,7 +544,8 @@ atproto-overview:
 wiki-bluesky:
   type: Entry
   title: Bluesky
-  author: "Wikipedia contributors"
+  author:
+    name: "Wikipedia contributors"
   url:
     value: https://en.wikipedia.org/wiki/Bluesky
     date: 2026-03-09
@@ -552,7 +567,8 @@ atproto-repo:
 mastodon-social-network:
   type: Web
   title: Mastodon (social network)
-  author: Wikipedia contributors
+  author:
+    name: "Wikipedia contributors"
   date: 2026-05-04
   url:
     value: http://en.wikipedia.org/wiki/Mastodon_(social_network)
@@ -562,13 +578,24 @@ mastodon-social-network:
     title: Wikipedia, The Free Encyclopedia
     publisher: Wikimedia Foundation
 
+x-platform:
+  type: Web
+  title: X (formerly Twitter)
+  author: X Corp.
+  date: 2026-05-28
+  url:
+    value: https://x.com
+    date: 2026-05-28
+  organization: X Corp.
+
 lasser2025desire:
   type: Article
-  title: "Designing Social Media Content Recommendation Algorithms for Societal Good"
+  title: "Designing social media content recommendation algorithms for societal good"
   author:
     - Lasser, Jana
     - Poechhacker, Nikolaus
   date: 2025-05-05
+  page-range: 20-28
   language: en
   serial-number:
     doi: "10.1111/nyas.15359"
@@ -580,14 +607,422 @@ lasser2025desire:
     title: "Annals of the New York Academy of Sciences"
     volume: 1548
     issue: 1
-    page-range: 20-28
     publisher: Wiley
 
 
 blueskyfeeds-user-growth:
   type: Web
   title: "Bluesky User Growth Statistics"
+  author:
+    name: "BSkyCheck"
   url:
     value: https://bskycheck.com/stats.php
     date: 2026-05-28
   organization: BSkyCheck
+
+mastroeni2019agentbased:
+  type: Article
+  title: "Agent-based models for opinion formation: A bibliographic survey"
+  author:
+    - Mastroeni, Loretta
+    - Vellucci, Pierluigi
+    - Naldi, Maurizio
+  date: 2019
+  page-range: 58836-58848
+  language: en
+  serial-number:
+    doi: "10.1109/ACCESS.2019.2913787"
+  parent:
+    type: Periodical
+    title: IEEE Access
+    volume: 7
+    publisher: IEEE
+
+digitaltwinsimulators2023:
+  type: Article
+  title: "Review and assessment of digital twin-oriented social network simulators"
+  author:
+    - Wen, Jiaqi
+    - Gabrys, Bogdan
+    - Musial, Katarzyna
+  date: 2023
+  language: en
+  serial-number:
+    arxiv: "2305.03234"
+  url:
+    value: https://arxiv.org/abs/2305.03234
+    date: 2026-05-15
+  parent:
+    type: Repository
+    title: arXiv
+    genre: Preprint
+
+gao2023s3:
+  type: Article
+  title: "S3: Social-network simulation system with large language model-empowered agents"
+  author:
+    - Gao, Chen
+    - Lan, Xiaochong
+    - Lu, Zhihong
+    - Mao, Jinzhu
+    - Piao, Jinghua
+    - Wang, Huandong
+    - Jin, Depeng
+    - Li, Yong
+  date: 2023
+  language: en
+  serial-number:
+    arxiv: "2307.14984"
+  url:
+    value: https://arxiv.org/abs/2307.14984
+    date: 2026-05-15
+  parent:
+    type: Repository
+    title: arXiv
+    genre: Preprint
+
+fromindividualtosociety2026:
+  type: Article
+  title: "From individual to society: A survey on social simulation driven by large language model-based agents"
+  author:
+    - Mou, Xinyi
+    - Ding, Xuanwen
+    - He, Qi
+    - Wang, Liang
+    - Liang, Jingcong
+    - Zhang, Xinnong
+    - Sun, Libo
+    - Lin, Jiayu
+    - Zhou, Jie
+    - Huang, Xuanjing
+    - Wei, Zhongyu
+  date: 2026
+  page-range: 1-41
+  language: en
+  serial-number:
+    doi: "10.1145/3800683"
+  parent:
+    type: Periodical
+    title: ACM Computing Surveys
+    volume: 58
+    issue: 11
+    publisher: ACM
+
+gao2024llmabm:
+  type: Article
+  title: "Large language models empowered agent-based modeling and simulation: A survey and perspectives"
+  author:
+    - Gao, Chen
+    - Lan, Xiaochong
+    - Li, Nian
+    - Yuan, Yuan
+    - Ding, Jingtao
+    - Zhou, Zhilun
+    - Xu, Fengli
+    - Li, Yong
+  date: 2024
+  language: en
+  serial-number:
+    doi: "10.1057/s41599-024-03611-3"
+  parent:
+    type: Periodical
+    title: Humanities and Social Sciences Communications
+    volume: 11
+    issue: 1
+    article-number: 1259
+    publisher: Springer Nature
+
+validation2025:
+  type: Article
+  title: "Validation is the central challenge for generative social simulation: A critical review of LLMs in agent-based modeling"
+  author:
+    - Larooij, Maik
+    - Törnberg, Petter
+  date: 2025
+  language: en
+  serial-number:
+    doi: "10.1007/s10462-025-11412-6"
+  parent:
+    type: Periodical
+    title: Artificial Intelligence Review
+    volume: 59
+    issue: 1
+    article-number: 15
+    publisher: Springer
+
+llmagentssurvey2025:
+  type: Article
+  title: "A survey on LLM-based agents for social simulation: Taxonomy, evaluation and applications"
+  author:
+    - Wang, Zixu
+    - Xie, Bin
+    - Xu, Bingbing
+    - Zhu, Shengmao
+    - Yuan, Yige
+    - Pang, Liang
+    - Su, Du
+    - Yang, Long
+    - Li, Zixuan
+    - Shen, Huawei
+    - Cheng, Xueqi
+  date: 2025
+  language: en
+  note: Under review
+  url:
+    value: https://www.researchgate.net/publication/393357027
+    date: 2026-05-15
+  parent:
+    type: Periodical
+    title: Engineering Applications of Artificial Intelligence
+    publisher: Elsevier
+
+bouanan2019devs:
+  type: Article
+  title: "Discrete event system specification-based framework for modeling and simulation of propagation phenomena in social networks: Application to the information spreading in a multi-layer social network"
+  author:
+    - Bouanan, Youssef
+    - Zacharewicz, Gregory
+    - Ribault, Judicaël
+    - Vallespir, Bruno
+  date: 2019
+  page-range: 411-427
+  language: en
+  serial-number:
+    doi: "10.1177/0037549718776368"
+  parent:
+    type: Periodical
+    title: SIMULATION
+    volume: 95
+    issue: 5
+    publisher: SAGE
+
+bouanan2015wip:
+  type: Article
+  title: "Simulating information diffusion in a multidimensional social network using the DEVS formalism (WIP)"
+  author:
+    - Bouanan, Youssef
+    - Forestier, Mathilde
+    - Ribault, Judicaël
+    - Zacharewicz, Gregory
+    - Vallespir, Bruno
+  date: 2015
+  language: en
+  parent:
+    type: Proceedings
+    title: "Proceedings of the Symposium on Theory of Modeling and Simulation - DEVS Integrative M&S Symposium"
+
+bouanan_celldevs:
+  type: Chapter
+  title: "Using DEVS and CELL-DEVS for modelling of information impact on individuals in social network"
+  author:
+    - Bouanan, Youssef
+    - El Alaoui, Merouane Bouhamidi
+    - Zacharewicz, Gregory
+    - Vallespir, Bruno
+  date: 2014
+  language: en
+  serial-number:
+    doi: "10.1007/978-3-662-44733-8_51"
+  page-range: 409-416
+  parent:
+    type: Book
+    title: Advances in Production Management Systems
+    volume: 440
+    publisher: Springer
+
+hou2013supenet:
+  type: Article
+  title: "Modeling and simulation of large-scale social networks using parallel discrete event simulation"
+  author:
+    - Hou, Bonan
+    - Yao, Yiping
+    - Wang, Bing
+    - Liao, Dongsheng
+  date: 2013
+  page-range: 1173-1183
+  language: en
+  serial-number:
+    doi: "10.1177/0037549713495752"
+  parent:
+    type: Periodical
+    title: SIMULATION
+    volume: 89
+    issue: 10
+    publisher: SAGE
+
+barrett2008episimdemics:
+  type: Article
+  title: "EpiSimdemics: An efficient algorithm for simulating the spread of infectious disease over large realistic social networks"
+  author:
+    - Barrett, Christopher L.
+    - Bisset, Keith R.
+    - Eubank, Stephen G.
+    - Feng, Xizhou
+    - Marathe, Madhav V.
+  date: 2008
+  language: en
+  organization: Virginia Bioinformatics Institute
+  serial-number:
+    doi: "10.1109/SC.2008.5214892"
+  page-range: 1-12
+  parent:
+    type: Proceedings
+    title: "2008 SC - International Conference for High Performance Computing, Networking, Storage and Analysis"
+    publisher: IEEE
+
+kitson2024loimos:
+  type: Article
+  title: "Pandemics in silico: Scaling an agent-based simulation on realistic social contact networks"
+  author:
+    - Kitson, Joy
+    - Costello, Ian
+    - Chen, Jiangzhuo
+    - Jiménez, Diego
+    - Hoops, Stefan
+    - Mortveit, Henning
+    - Meneses, Esteban
+    - Yeom, Jae-Seung
+    - Marathe, Madhav V.
+    - Bhatele, Abhinav
+  date: 2025
+  page-range: 484-496
+  language: en
+  serial-number:
+    doi: "10.1109/IPDPS64566.2025.00050"
+    arxiv: "2401.08124"
+  parent:
+    type: Proceedings
+    title: "2025 IEEE International Parallel and Distributed Processing Symposium (IPDPS)"
+    publisher: IEEE
+
+stapelberg2021dessabnet:
+  type: Article
+  title: "A discrete-event, simulated social agent-based network transmission (DESSABNeT) model for communicable diseases: Method and validation using SARS-CoV-2 data in three large Australian cities"
+  author:
+    - Stapelberg, Nicolas J. C.
+    - Smoll, Nicolas R.
+    - Randall, Marcus
+    - Palipana, Dinesh
+    - Bui, Bryan
+    - Macartney, Kristine
+    - Khandaker, Gulam
+    - Wattiaux, Andre
+  date: 2021
+  page-range: e0251737
+  language: en
+  serial-number:
+    doi: "10.1371/journal.pone.0251737"
+  parent:
+    type: Periodical
+    title: PLOS ONE
+    volume: 16
+    issue: 5
+    publisher: Public Library of Science
+
+gatti2013smsim:
+  type: Article
+  title: "A simulation-based approach to analyze the information diffusion in microblogging online social network"
+  author:
+    - Gatti, Maira Athanazio de Cerqueira
+    - Appel, Ana Paula
+    - Santos, Cicero Nogueira dos
+    - Pinhanez, Claudio Santos
+    - Cavalin, Paulo Rodrigo
+    - Neto, Samuel Barbosa
+  date: 2013
+  page-range: 1685-1696
+  language: en
+  serial-number:
+    doi: "10.1109/WSC.2013.6721550"
+  parent:
+    type: Proceedings
+    title: "2013 Winter Simulations Conference (WSC)"
+    publisher: IEEE
+
+serena2021temporal:
+  type: Article
+  title: "Simulation of dissemination strategies on temporal networks"
+  author:
+    - Serena, Luca
+    - Zichichi, Mirko
+    - D'Angelo, Gabriele
+    - Ferretti, Stefano
+  date: 2021
+  page-range: 1-12
+  language: en
+  serial-number:
+    doi: "10.23919/ANNSIM52504.2021.9552126"
+  parent:
+    type: Proceedings
+    title: "2021 Annual Modeling and Simulation Conference (ANNSIM)"
+    publisher: IEEE
+
+despachedcomparison2010:
+  type: Article
+  title: "Comparing simulation output accuracy of discrete event and agent based models: A quantitative approach"
+  author:
+    - Abdul Majid, Mazlina
+    - Aickelin, Uwe
+    - Siebers, Peer-Olaf
+  date: 2010
+  language: en
+  serial-number:
+    arxiv: "1001.2170"
+  url:
+    value: https://arxiv.org/abs/1001.2170
+    date: 2026-05-15
+  parent:
+    type: Repository
+    title: arXiv
+    genre: Preprint
+
+schelling1971:
+  type: Article
+  title: "Dynamic models of segregation"
+  author:
+    - Schelling, Thomas C.
+  date: 1971
+  page-range: 143-186
+  language: en
+  serial-number:
+    doi: "10.1080/0022250X.1971.9989794"
+  parent:
+    type: Periodical
+    title: The Journal of Mathematical Sociology
+    volume: 1
+    issue: 2
+    publisher: Taylor & Francis
+
+sugarscape1996:
+  type: Book
+  title: "Growing Artificial Societies: Social Science from the Bottom Up"
+  author:
+    - Epstein, Joshua M.
+    - Axtell, Robert L.
+  date: 1996
+  language: en
+  serial-number:
+    doi: "10.7551/mitpress/3374.001.0001"
+  publisher:
+    name: MIT Press
+    location: Cambridge, MA, USA
+
+park2023generative:
+  type: Article
+  title: "Generative agents: Interactive simulacra of human behavior"
+  author:
+    - Park, Joon Sung
+    - O'Brien, Joseph
+    - Cai, Carrie Jun
+    - Morris, Meredith Ringel
+    - Liang, Percy
+    - Bernstein, Michael S.
+  date: 2023
+  page-range: 1-22
+  language: en
+  serial-number:
+    doi: "10.1145/3586183.3606763"
+  parent:
+    type: Proceedings
+    title: "Proceedings of the 36th Annual ACM Symposium on User Interface Software and Technology (UIST)"
+    publisher: ACM
