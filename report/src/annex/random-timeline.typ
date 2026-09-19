@@ -1,10 +1,11 @@
-#import "../utils.typ": flex-caption
+#import "../utils.typ": flex-caption, todo
 
-This appendix reports the full results of the random-timeline experiment (@sec-queue-attention) in the same format as the LIFO baseline of @sec-results. The experiment keeps the topology, seed, calibrated parameters and the $100$ runs of @tbl-res-finalbatch fixed, and changes only how each user drains their own timeline: from a LIFO stack to a *uniform random draw* (`-Dtimelinerandom`), so an old post has the same probability of being read as a fresh one. The three sections mirror @sec-results sections 8.3, 8.4 and 8.5 exactly: repost power-law, structural virality, and the comparison with Bluesky data. Everything below is pooled across the $100$ runs of each dataset, and every metric is computed from the `cascades.parquet` of the random-timeline build, so the numbers are directly comparable to @tbl-res-reposts, @tbl-res-cascade-stats and @tbl-res-vs-data.
+This appendix reports the full results of the random-timeline experiment (@sec-queue-attention) analogously to the LIFO baseline of @sec-results. The experiment keeps the topology, seed, calibrated parameters and the runs of @tbl-res-finalbatch fixed, and changes only how each user drains their own timeline: from a LIFO stack to a uniform random draw (`-Dtimelinerandom`), as motivated in @sec-missing-width and designed in @sec-queue-attention, so an old post has the same probability of being read as a fresh one. First, we check whether the repost power law still holds (@apx-rtl-powerlaw); second, we compute structural virality (@apx-rtl-sv); lastly, we compare every magnitude against the empirical Bluesky data of @sec-data (@apx-rtl-comparison).
 
 == Reposts Power-law
+<apx-rtl-powerlaw>
 
-As in @sec-results section 8.3, the first metric is the repost power-law. @tbl-apx-random-reposts reports, per dataset size, the distribution of the fitted exponent $alpha$ across runs and how many runs are better described by a power law according to Vuong's test.
+As in @sec-results-powerlaw, the first metric is the repost power-law. @tbl-apx-random-reposts reports, per dataset size, the distribution of the fitted exponent $alpha$ across runs and how many runs are better described by a power law according to Vuong's test.
 
 #figure(
   table(
@@ -45,8 +46,9 @@ The picture is the same as the LIFO baseline: no run is a power law, the lognorm
 ) <fig-apx-random-powerlaw-comp>
 
 == Structural Virality
-
-As in @sec-results section 8.4, structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree. Across the four datasets between 91.7% and 92.8% of all posts receive no repost at all (`CascadeSize` = 1), leaving 7.2%--8.3% that form a non-trivial cascade ---about half the rate of the real Bluesky data (16.32%), and slightly above the LIFO baseline's 6.6%--7.8% (randomising the drain raises the share of posts that get at least one repost, @tbl-queue-aggregate). @tbl-apx-random-cascade-stats summarises the tree-level metrics: the typical cascade is tiny and shallow in every dataset, and the heavy tail grows with the network from a maximum of $35$ nodes at 10K up to $2{,}040$ at 1M, with a maximum out-degree of $1{,}795$.
+<apx-rtl-sv>
+ 
+As in @sec-results-sv, structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree. Across the four datasets between 91.7% and 92.8% of all posts receive no repost at all (`CascadeSize` = 1), leaving 7.2%--8.3% that form a non-trivial cascade ---about half the rate of the real Bluesky data (16.32%), and slightly above the LIFO baseline's 6.6%--7.8%: randomising the drain raises the number of posts that get at least one repost, @tbl-queue-aggregate. @tbl-apx-random-cascade-stats summarises the tree-level metrics: the typical cascade is tiny and shallow in every dataset, and the heavy tail grows with the network from a maximum of $35$ nodes at 10K up to $2040$ at 1M, with a maximum out-degree of $1795$.
 
 #figure(
   table(
@@ -140,7 +142,8 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean rises gently from 
 ) <fig-apx-random-nu-density>
 
 == Comparison with Bluesky Data
-
+<apx-rtl-comparison>
+ 
 With all the metrics computed on the random-timeline build, @tbl-apx-random-vs-data contrasts them against the Bluesky values of @tbl-res-vs-data.
 
 #figure(
@@ -190,4 +193,4 @@ With all the metrics computed on the random-timeline build, @tbl-apx-random-vs-d
   )
 ) <tbl-apx-random-vs-data>
 
-The comparison reads almost identically to @tbl-res-vs-data, so the conclusions of @sec-results section 8.5 carry over unchanged. The random drain produces roughly half the real share of non-trivial cascades, matching medians but truncated tails (size $2{,}040$ vs. $12{,}720$, depth $13$ vs. $131$, max out-degree $1{,}795$ vs. $7{,}768$), a shallower $nu(T)$ ($1.14$--$1.18$ vs. $1.454$), and a more broadcast-shaped profile ($82$--$84%$ vs. $71.05%$). The repost exponent stays lognormal with a faster decay ($2.5$--$2.9$ vs. $2.053$) and a lower cutoff. Relative to the LIFO baseline, the only notable shifts are a slightly *higher* cascade rate (7.2%--8.3% vs. 6.6%--7.8%) and a slightly *more* broadcast-heavy shape, both consistent with @tbl-queue-aggregate: reordering the drain decides *which* cascades grow, not how large the largest can be.
+The comparison reads almost identically to @tbl-res-vs-data, so the conclusions of @sec-results section 8.5 carry over unchanged. The random drain produces roughly half the real share of non-trivial cascades, matching medians but truncated tails (size $2,040$ vs. $12,720$, depth $13$ vs. $131$, max out-degree $1,795$ vs. $7,768$), a shallower $nu(T)$ ($1.14$--$1.18$ vs. $1.454$), and a more broadcast-shaped profile ($82$--$84%$ vs. $71.05%$). The repost exponent stays lognormal with a faster decay ($2.5$--$2.9$ vs. $2.053$) and a lower cutoff. Relative to the LIFO baseline, the only notable shifts are a slightly higher cascade rate (7.2%--8.3% vs. 6.6%--7.8%) and a slightly more broadcast-heavy shape, both consistent with @tbl-queue-aggregate: reordering the drain decides which cascades grow, not how large the largest can be.

@@ -143,6 +143,7 @@ This also validates that the implementation of the design (see @apx-impl) is suc
 @sec-exec-agnostic --- in 18 minutes (@tbl-res-time). It is definietly a win.
 
 == Reposts Power-law
+<sec-results-powerlaw>
 
 First metric to evaluate in the simulation is the reposts power-law, a characteristic magnitude (see @sec-method-des-metrics) that must behave as real data. In @sec-data-reposts, data did not exactly followed a power-law but a lognormal distribution. @tbl-res-reposts reports, per dataset size, the distribution of the fitted exponent $alpha$ across runs and how many runs are actually better described by a power law according to Vuong's test.
 
@@ -185,6 +186,7 @@ No run is a power law: the lognormal is preferred in every case, matching the re
 ) <fig-res-powerlaw-comp>
 
 == Structural Virality
+<sec-results-sv>
 
 Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree, distinguishing *broadcast* diffusion (one-to-many) from *viral* spread (person-to-person chains). As with the repost power law, the statistics are pooled across all runs of each dataset: the cascades produced by different runs of the same topology are statistically indistinguishable (per-run mean $nu(T)$ spans at most $0.012$ within a dataset, apart from the aborted 1M run noted in @tbl-res-finalbatch), so a per-run breakdown adds noise without information.
 
@@ -451,30 +453,25 @@ Therefore, while mantaining the same size average $R_0$, the introduction of pos
 
 == The Missing Width <sec-missing-width>
 
-The previous section explained why the simulated cascades are not *deep*. A second, independent truncation limits their *width*: the maximum out-degree of a simulated cascade is about five times smaller than the real one ---$1,599$ against $7,768$--- even though the bulk of the out-degree distribution matches. A subcritical branching process says nothing about this: it governs the depth, not the first hop.
+The previous section explained why the simulated cascades are not *deep*. A second, independent truncation limits their *width*: the maximum out-degree of a simulated cascade is about five times smaller than the real one ---$1,599$ against $7,768$--- even though the bulk of the out-degree distribution matches. A subcritical branching process says nothing about this: it governs the reproduction *after* a node has been reposted, not the first hop. For a broadcast cascade the first hop is the whole cascade, so the width can be read directly at the root.
 
-Width is set entirely at the first propagation, which for a cascade is exactly the set of direct reposts of the root. Out-degree therefore factorises as
+Out-degree factorises into an impression and a conversion term,
 
-$ "out-degree" = "impressions" times "repost rate", $
+$ "out-degree" = "impressions" times "repost rate", quad EE("out-degree") = F times p_"read" times pi_"repost", $
 
-and under the Independent Cascade model its expectation should track the author's degree,
+with $F$ the author's follower count, $p_"read"$ the probability that a given follower ever reads the post, and $pi_"repost" = 1.2%$ from @sec-cal-policy. Calibration fixes $pi$ and the topology fixes $F$, so only $p_"read"$ can silently collapse. Delivery is not the problem: `propagate` inserts the post into *every* follower's timeline (@proc-propagate), so the loss is entirely in consumption. For a follower $v$, the chance that one specific post is read is the ratio of what $v$ consumes to what arrives,
 
-$ EE("out-degree") = d_"followers" times pi_"repost". $
+$ p_"read" approx frac(r, lambda), quad r = "posts " v " reads per unit time", quad lambda = "posts arriving in " v "'s timeline per unit time". $
 
-Large hubs should therefore produce very wide cascades. In the simulation they do not, so at least one of the two factors is being truncated below the follower count. Several ingredients of the model can bound the impression term:
+The two terms come from different populations. $r$ is a property of $v$ alone (one post every $3$ seconds during a session, @sec-cal-interaction), while $lambda$ is the sum of the posting rates of everyone $v$ follows. A model that inflates $lambda$ cannot reproduce the width, no matter how it orders the timeline ---the ordering only changes *which* post consumes the budget, not the budget itself.
 
-1. *Online fraction.* Only $approx 2%$ of users are online at any instant (@tbl-cal-stable-equil), so a post's effective audience at creation time is $approx 2%$ of its followers.
-2. *Attention ceiling.* A reverse-chronological feed is a LIFO stack: a user reads a handful of posts per session, so a post is buried under whatever arrives after it. This bounds how many followers see the post, independently of how many exist.
-3. *Degree-independent activity.* Every user draws their session behaviour from the same distribution, regardless of their position in the graph (@sec-cal-dist): a central user with ten thousand followers is no more active than a peripheral one, and their followers are no more attentive either.
-4. *Inter-action time.* The time a user needs to act on a post (see @sec-cal-interaction) has been tuned by hand into a plausible policy $pi$; making users more active, or changing the distribution, would change how many posts a session reads.
+Could the reverse-chronological feed itself be the cap? @sec-queue-attention tests exactly that hypothesis by removing the order, and discards it. The section proceeds in that order: it measures where the width is lost (@sec-width-reach), discards the ordering suspect (@sec-queue-attention), and collects the candidates that survive (@sec-width-cause).
 
-Two mechanisms compete for the truncation. The first is *ordering*: the attention ceiling (2) collapses the impression term through *which* posts are read. The second is *budget and conversion*: the impression budget is fixed and shared across every followee (1, 3, 4), so it saturates below the follower count, while the content-agnostic model gives every post the same $pi_"repost"$, so none can convert above baseline.
+=== Out-degree versus author followers <sec-width-reach>
 
-This section settles which mechanism binds. It first measures where the width is lost (@sec-width-reach), then tests the ordering suspect with a random-drain experiment (@sec-queue-attention), and finally decomposes the surviving cap (@sec-width-cause).
+To see where the width is lost, we measure the first-hop size against the author's true follower count. For broadcast cascades (depth $1$) the maximum out-degree *is* the number of direct reposts of the root, so this isolates the impression term cleanly. @fig-queue-width and @tbl-queue-width report it for the 500K dataset, bucketed by the author's in-degree (taken from the topology binary the simulator consumed, see @apx-impl-topology). The random column belongs to the timeline-order experiment of @sec-queue-attention; here we read the reverse-chronological (LIFO) baseline.
 
-=== Reach is compressed with followers <sec-width-reach>
-
-To see where the width is lost, we measure the first-hop size against the author's true follower count. For broadcast cascades (depth $1$) the maximum out-degree *is* the number of direct reposts of the root, so this isolates the impression term cleanly. @fig-queue-width and @tbl-queue-width report it for the 500K dataset, bucketed by the author's in-degree (taken from the topology binary the simulator consumed, see @apx-impl-topology). The random columns in both belong to the queue experiment of @sec-queue-attention; here we read the LIFO baseline.
+#todo[Recompute in server: @fig-queue-width and @tbl-queue-width, together with the hub statistics quoted below, from the fresh reverse-chronological and random builds.]
 
 #figure(
   image("../images/results/width_vs_followers.svg", width: 100%),
@@ -506,11 +503,13 @@ To see where the width is lost, we measure the first-hop size against the author
   )
 ) <tbl-queue-width>
 
-The relationship is monotone, so reach *does* grow with followers ---but far too slowly. An author with fewer than ten followers and one with a hundred thousand are separated by four decades of degree, yet the typical cascade moves only from $1.0$ to $2.8$; the jump to $174$ happens only in the top bucket, which at 500K contains a single hub with $211{,}726$ followers. Normalised per follower, the conversion collapses as degree grows, and that collapse is the missing width. The tail is equally concentrated: $73%$ of the giant hub's posts reach $50$ reposts, against $0.03%$ for the $10$k--$100$k authors and essentially zero below $1$k. The simulated cascade sample is therefore the giant hub plus a thin mid-tier.
+The relationship is monotone, so reach *does* grow with followers ---but far too slowly. An author with fewer than ten followers and one with a hundred thousand are separated by four decades of degree, yet the typical cascade moves only from $1.0$ to $2.8$; the jump to $174$ happens only in the top bucket, which at 500K contains a single hub with $211{,}726$ followers. Normalised per follower, the conversion collapses as degree grows: the hub's $174$ reposts are roughly $0.08%$ of its followers, against the $1.2%$ the policy allows, so $p_"read"$ for its posts is only $approx 6.8%$ even though the post reaches every one of those timelines. That collapse is the missing width, and it points straight at the arrival rate $lambda$ (@sec-missing-width): the timeline is receiving more content than a real follower would. The tail is equally concentrated: $73%$ of the giant hub's posts reach $50$ reposts, against $0.03%$ for the $10$k--$100$k authors and essentially zero below $1$k. The simulated cascade sample is therefore the giant hub plus a thin mid-tier.
 
-=== The queue is second-order <sec-queue-attention>
+=== Alternative to Reverse-Chronological Timeline as a Fix Hypothesis <sec-queue-attention>
 
-The compression above has an obvious suspect: the reverse-chronological ordering. A LIFO timeline buries a post under whatever arrives after it, so its impression term could collapse before the topology ever matters. This experiment isolates exactly that mechanism. We keep the topology, the seed, the calibrated parameters and the $100$ runs of @tbl-res-finalbatch fixed, and change only how a user drains their own timeline: from a LIFO stack to a *uniform random draw*. Under the random drain an old post has the same probability of being read as a fresh one, which is the cheapest possible proxy for a recommender's re-ranking ---no content, no out-of-network exposure, only a different ordering of the same background timeline. The experiment was run at 10K, 100K and 500K with `-Dtimelinerandom`; all other results in this chapter use the LIFO build.
+The compression above has an obvious suspect: the reverse-chronological ordering. A LIFO timeline buries a post under whatever arrives after it, so its $p_"read"$ could collapse long before the topology matters. This experiment isolates exactly that mechanism. We keep the topology, the seed, the calibrated parameters and the runs of @tbl-res-finalbatch fixed, and change only how a user drains their timeline: from a LIFO stack to a *uniform random draw* (`-Dtimelinerandom`). Under the random drain an old post has the same probability of being read as a fresh one ---the cheapest possible proxy for a recommender's re-ranking, with no content and no out-of-network exposure, only a different order over the same background timeline. The full random-timeline build ---@sec-results-powerlaw, @sec-results-sv and @tbl-res-vs-data recomputed--- is reported in @apx-random-timeline.
+
+#todo[Recompute in server: @tbl-queue-aggregate from the new LIFO and random runs, over every available size.]
 
 #figure(
   table(
@@ -537,7 +536,11 @@ The compression above has an obvious suspect: the reverse-chronological ordering
   )
 ) <tbl-queue-aggregate>
 
-The aggregate picture is a wash, and if anything a regression: randomising raises the share of posts that get at least one repost, but *lowers* the mean size, the mean out-degree and $nu(T)$, and pushes the broadcast share about two points further from the real data ($71.05%$, @tbl-res-vs-data). Yet the extreme tail moves the other way at every size. @tbl-queue-extreme shows the largest cascades of the 500K datasets: under the random drain the widest are both wider and deeper, reaching depth $5$ where the LIFO maximum sat at $3$--$4$, and a slightly higher $nu(T)$.
+The aggregate picture is a wash, and if anything a regression: randomising raises the share of posts that get at least one repost, but *lowers* the mean size, the mean out-degree and $nu(T)$, and pushes the broadcast share about two points further from the real data ($71.05%$, @tbl-res-vs-data). Had the timeline order been the capacity cap, removing it should have moved all of these toward the data; it moved the bulk away from it.
+
+The extreme tail is the exception. It moves toward the data at every size: at 500K the largest cascade grows from $779$ to $892$ nodes and the widest from $726$ to $787$ direct reposts (@tbl-queue-extreme). This is the signature of an *allocation* mechanism, not a capacity one. The random draw spends the same reads but distributes them differently: it occasionally lets one post accrue attention across many sessions ---which is why the lucky extreme grows deeper as well as wider--- while spreading the ordinary post's reads into a flatter, more star-shaped distribution. The number of reads is fixed; only their assignment changes. @tbl-queue-width confirms it: the random drain moves the largest hub's mean size only from $173.8$ to $183.6$ and leaves the mid-tier essentially unchanged.
+
+#todo[Recompute in server: @tbl-queue-extreme from the new 500K LIFO and random builds.]
 
 #figure(
   table(
@@ -562,23 +565,21 @@ The aggregate picture is a wash, and if anything a regression: randomising raise
   )
 ) <tbl-queue-extreme>
 
-This is the signature of an *allocation* mechanism, not a capacity one. The random draw spends the same reads but distributes them differently: it occasionally lets one post accrue attention across many sessions ---which is why the lucky extreme grows deeper as well as wider--- while spreading the ordinary post's reads into a flatter, more star-shaped distribution. The number of reads is fixed; only their assignment changes. @tbl-queue-width confirms it: the random drain moves the largest hub's mean size only from $173.8$ to $183.6$ and leaves the mid-tier essentially unchanged. The queue therefore shapes *which* cascades grow, not *how large* the largest can be, and cannot be the capacity cap.
+The timeline order is therefore *exonerated*: it is not why the cascades are narrow. Removing it buys the extreme tail roughly $10%$ ---and buys it by luck, through the one post that happens to be drawn often enough--- while the gap to the data is a factor of $approx 5$. What the order does control is *which* post is lucky. In that narrow sense a random, or re-ranked, feed is an improvement: the extremes it produces sit slightly closer to the empirical tail. But it cannot manufacture the impressions that the missing width requires, because it is an allocative lever on an impression budget whose size is set elsewhere.
 
-=== Impressions, conversion and allocation <sec-width-cause>
+=== Width Truncation Hypothesis <sec-width-cause>
 
-With ordering ruled out as the capacity cap, two factors remain, and both are truncated independently of the queue.
+With ordering ruled out, the remaining candidates can be read directly off the decomposition of @sec-missing-width, $EE("out-degree") = F times r slash lambda times pi_"repost"$. They are not mutually exclusive, and the experiment narrows but does not single one out.
 
-*Impressions.* Every follower receives the post in their background timeline (@proc-propagate), but a session consumes a bounded number of posts shared across *everyone* the user follows. The queue decides the order of that consumption, not its volume, so the impression term saturates far below the follower count. The arithmetic is unforgiving: the largest hub in the 1M topology has $407{,}981$ followers, so even perfect in-network delivery at the calibrated $pi_"repost" = 1.2%$ caps a post at $0.012 times 407{,}981 approx 4{,}900$ direct reposts, against the $1{,}599$ actually observed ---roughly a third of its own in-network ceiling. The real maximum out-degree of $7{,}768$ would require about $7{,}768 / 0.012 approx 647{,}000$ impressions, more than any in-network audience in the reconstructed topology can supply. Reaching it therefore requires impressions *beyond* the follower graph.
+*Impressions: the arrival rate $lambda$ is inflated.* This is the strongest candidate, and it is a property of the simulated population rather than of the model. $lambda$ ---the post arrival rate onto a timeline--- is set entirely by the *followee* population, and the simulation builds that population from the active tail of the data: the session and gap distributions are fitted on the $243$K users ($18%$) with at least $30$ sessions, and the within-session creation ECDF on the $65$K users with at least $30$ gaps, while $82%$ of the users with fits are excluded and $90%$ of all users have no computable within-session gap (@sec-cal-dist, @sec-cal-create-dist). Every simulated user then samples from this active-only table (@sec-cal-acrossuser), so every followee posts like a heavy poster and $lambda$ is systematically larger than on a real timeline, where most followees are near-silent. With $r$ fixed by @sec-cal-interaction, a larger $lambda$ depresses $p_"read"$ and truncates the width. The same composition is consistent with the rest of the failures ---the low cascade rate and the low reproduction number--- and with the null result of the timeline-order experiment, since reordering reads changes neither $r$ nor $lambda$. This is a known limitation of the calibration, accepted under the time available; it is also the one candidate that is methodological rather than fundamental, since representing the inactive majority explicitly would lower $lambda$ and restore part of the width. #todo[Quantify $lambda$ directly: posts arriving per timeline per unit time, empirical vs simulated, over the same user set.]
 
-*Conversion.* Because posts carry no content, every post and every user share the same repost probability $pi_"repost"$. No post can convert above the baseline, so the second factor is a constant and the tail is truncated by construction. This is the same homogeneity discussed for the missing depth (@sec-finding-missing-tail): content is the natural way to let a good post convert above baseline, and it is delegated to @sec-future-content.
+*Conversion: $pi$ is uniform.* Because posts carry no content, every post shares the same $pi_"repost"$, so none can convert above the baseline. Even a perfect impression budget would therefore cap the tail at the baseline conversion. This is the same homogeneity behind the missing depth (@sec-finding-missing-tail): letting a good post convert above baseline is exactly what post-level randomness buys, and it is delegated to @sec-future-content.
 
-*Allocation.* The queue is the remaining factor, and the experiment shows it is second-order: it decides which posts get the budget (and hence samples the tail), not how much budget exists. The hub's modest widening under the random drain in @tbl-queue-width is the allocation effect at work ---the lucky post is no longer buried--- but it is dwarfed by the capacity gap above.
+*Reach: no impressions beyond the follower graph.* Every impression in the model is in-network: propagation inserts the post only into the timelines of the author's followers (@proc-propagate). The empirical maximum out-degree of $7{,}768$ presumes an audience the follower graph does not contain ---a hub with $407{,}981$ followers already caps a perfectly-read post at $0.012 times 407{,}981 approx 4{,}900$ direct reposts. Part of the gap therefore cannot be closed by the current model at all; it needs exposure outside the graph. #todo[Recompute in server: largest-hub follower count and the in-network ceiling from the new topology build.]
 
-Taken together, the queue is an attention bottleneck, but an *allocative* one. That distinction matters for intervention: reordering an in-network feed is cheap and improves tail sampling, yet it cannot manufacture the impressions that the missing width requires. The mechanism that does both ---adding impressions beyond the follower graph and ranking them by post quality--- is a recommender, which is why recommendation appears as the natural structural fix rather than a better queue order (@lasser2025desire). It attacks the impression factor (out-of-network exposure) and, if quality-ranked, the conversion factor (post-level heterogeneity) at once, while leaving the reproduction number $R_0 < 1$ of @sec-finding-missing-tail untouched.
+Two measurement caveats bound how far any of this can be pushed. First, the comparison is not like-for-like: the empirical cascades come from the full six-day firehose graph, whereas the simulated ones run on a forest-fire sample of a $14$-month topology, so the author of the real $7{,}768$ cascade need not exist in the sample and part of the apparent gap may be a sampling artefact. Second, the trace records the *parent* of each repost, not how many followers actually saw the post, so $p_"read"$ is inferred from the in-degree ceiling instead of observed. #todo[Instrument the trace with the number of followers exposed to each post, turning the decomposition into a measurement.]
 
-Implementation limitation: the trace records which parent each repost is attributed to, not how many followers actually saw each repost, so the impression factor above is inferred from the in-degree ceiling rather than observed. It is easy to instrument in the simulation, but it has no empirical counterpart, since we can only know which posts were shown to which users.
+Taken together, the width is capped by an impression budget that is (i) shared with an over-active followee population, (ii) converted at a uniform baseline, and (iii) confined to the follower graph. The timeline order is not one of the caps; it only decides who wins the budget. This is why the natural structural fix is a recommender rather than a better feed order (@lasser2025desire): it attacks (iii) by adding out-of-network impressions and, if quality-ranked, (ii) by letting good posts convert above baseline, while leaving the reproduction number $R_0 < 1$ of @sec-finding-missing-tail untouched. One caveat carries back to the depth section: the same over-active composition that depresses $p_"read"$ also depresses $R_0$ (@tbl-res-r0), so $0.22$ should be read as measured under this composition. The mechanism of @sec-finding-missing-tail ---homogeneous policy, hence subcritical, hence an exponentially bounded tail--- is unchanged, but a population with realistic activity would move the number.
 
-#todo[Measure impressions directly: the trace records the repost parent, not the number of users who saw each post, so the impression term above is inferred from the in-degree ceiling rather than observed. Instrumenting exposure would turn this decomposition into a measurement.]
-
-#todo[Extend the random-timeline run to 1M and add bootstrap confidence intervals to @tbl-queue-aggregate and @tbl-queue-width.]
+#todo[Recompute in server: extend the random-timeline run to the remaining sizes and add bootstrap confidence intervals to @tbl-queue-aggregate and @tbl-queue-width.]
 
