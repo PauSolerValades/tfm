@@ -243,6 +243,12 @@
 #include "src/annex/stability-plots.typ"
 
 #pagebreak()
+= Random Timeline Experiment
+<apx-random-timeline>
+
+#include "src/annex/random-timeline.typ"
+
+#pagebreak()
 = Pipeline
 <apx-pipeline>
 
