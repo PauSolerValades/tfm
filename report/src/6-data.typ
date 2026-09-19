@@ -34,12 +34,10 @@ This proves that there is an enormous quantity of users with very few events in 
 #figure(
   image("../images/data/613_filtered_event_distribution.svg", width: 100%),
   caption: flex-caption(
-    [Filtered event type distribution.],
-    [Event type distribution after filtering by users with $<=2$ events and no `updates` nor `delete` events ($N=231,643,526$)],
+    [Event type distribution: raw vs. filtered.],
+    [Top event types, raw (grey) against the filtered set (blue, $N=231,643,526$), showing how the exclusions shift the composition.],
   )
 ) <fig-filtered-eventtype-dist>
-
-#todo[remake this graph while overlapint the same category of @fig-eventtype-dist to see how was changing]
 
 == Reposts Power-law
 <sec-data-reposts>

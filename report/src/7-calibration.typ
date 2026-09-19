@@ -242,8 +242,6 @@ As it can clearly be seen, there are not many post creation in the created sessi
 
 This sparsity of posts creation when sessionized indicates that a parametric goodness-of-fit is impossible, as verified in @anx-create-gof .
 
-#todo[recompute this paragraph]
-
 The measurement yields $11.1 times 10^6$ within gaps, from which $65,311$ users pass the $n_"obs" >= 30$ filter.
 
 === Sampling Creation Gaps

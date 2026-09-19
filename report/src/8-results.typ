@@ -336,7 +336,13 @@ With all the metrics analyzed in both fronts, the comparison of real vs simulate
   )
 ) <tbl-res-vs-data>
 
-#todo[overlap the empirical with the four other datasets]
+#figure(
+  image("../images/results/overlap_empirical_sim.svg", width: 100%),
+  caption: flex-caption(
+    [Cascade size tail: empirical vs. simulation.],
+    [Complementary cumulative distribution of cascade size (nodes, root included) on log-log axes, comparing the Bluesky data against the four simulated datasets (pooled over runs). The simulation reproduces the bulk of the distribution but truncates the heavy tail.],
+  )
+) <fig-res-overlap>
 
 The following points explicit the main differences between real data and the simulation:
 + *Cascade rate.* The simulation produces roughly half the real share of non-trivial cascades (6.6–7.8% vs. 16.32%), the direct effect of the calibrated 1.2% repost weight.
@@ -495,12 +501,12 @@ To see where the width is lost, we measure the first-hop size against the author
     [$101$--$1k$], [1.08], [1.08], [$3.8 dot 10^(-7)$], [$3.7 dot 10^(-7)$], [1.10], [1.10], [$1.8 dot 10^(-6)$], [$1.6 dot 10^(-6)$],
     [$1k$--$10k$], [1.32], [1.32], [$3.7 dot 10^(-6)$], [$3.1 dot 10^(-6)$], [1.41], [1.41], [$1.7 dot 10^(-5)$], [$1.4 dot 10^(-5)$],
     [$10k$--$100k$], [2.83], [2.83], [$2.9 dot 10^(-4)$], [$2.2 dot 10^(-4)$], [3.61], [3.62], [$1.9 dot 10^(-3)$], [$1.5 dot 10^(-3)$],
-    [$> 100k$], [173.8], [183.6], [0.729], [0.702], [194.4], [211.2], [0.537], [0.707],
+    [$> 100k$], [173.8 ±6.3], [183.6 ±5.3], [0.729 ±0.016], [0.702 ±0.017], [194.4 ±7.9], [211.2 ±7.2], [0.537 ±0.013], [0.707 ±0.011],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
     [Cascade size by author follower count (500K and 1M).],
-    [Mean cascade size and probability that a post reaches at least $50$ reposts, as a function of the author's follower count, pooled over runs, LIFO (L) vs. random (R). The tail of the simulated sample is essentially the single largest hub.],
+    [Mean cascade size and probability that a post reaches at least $50$ reposts, as a function of the author's follower count, pooled over runs, LIFO (L) vs. random (R). The tail of the simulated sample is essentially the single largest hub. The largest-hub bucket shows its 95% CI across runs (±); all lower buckets have negligible CI.],
   )
 ) <tbl-queue-width>
 
@@ -518,20 +524,20 @@ The compression above has an obvious suspect: the reverse-chronological ordering
     table.hline(stroke: 0.8pt),
     [*Metric*], [*10K L*], [*10K R*], [*100K L*], [*100K R*], [*500K L*], [*500K R*], [*1M L*], [*1M R*],
     table.hline(stroke: 0.5pt),
-    [Posts with $>= 1$ repost (%)], [7.33], [7.72], [7.76], [8.31], [7.25], [7.86], [6.58], [7.16],
-    [Size, mean], [2.54], [2.47], [2.70], [2.59], [2.92], [2.77], [2.97], [2.82],
+    [Posts with $>= 1$ repost (%)], [7.33 ±0.02], [7.72 ±0.02], [7.76 ±0.006], [8.31 ±0.005], [7.25 ±0.003], [7.86 ±0.003], [6.58 ±0.1], [7.16 ±0.002],
+    [Size, mean], [2.54 ±0.002], [2.47 ±0.002], [2.70 ±0.001], [2.59 ±0.001], [2.92 ±0.001], [2.77 ±0.001], [2.97 ±0.007], [2.82 ±0.001],
     [Size, max], [32], [35], [174], [200], [779], [892], [1,697], [2,040],
     [Depth, max], [10], [9], [12], [11], [13], [11], [13], [13],
-    [Out-degree, mean], [1.256], [1.219], [1.382], [1.322], [1.586], [1.497], [1.645], [1.553],
+    [Out-degree, mean], [1.256 ±0.001], [1.219 ±0.001], [1.382 ±0.001], [1.322 ±0.001], [1.586 ±0.001], [1.497 ±0.001], [1.645 ±0.004], [1.553 ±0.001],
     [Out-degree, max], [28], [31], [161], [179], [726], [787], [1,599], [1,795],
-    [$nu(T)$, mean], [1.157], [1.136], [1.187], [1.159], [1.205], [1.176], [1.198], [1.173],
-    [Viral $nu(T)$, mean], [1.585], [1.553], [1.641], [1.600], [1.704], [1.659], [1.716], [1.673],
-    [Broadcast (%)], [80.1], [82.0], [79.4], [81.7], [80.3], [82.5], [81.6], [83.5],
+    [$nu(T)$, mean], [1.157 ±0.0005], [1.136 ±0.0004], [1.187 ±0.0002], [1.159 ±0.0001], [1.205 ±0.0001], [1.176 ±0.0001], [1.198 ±0.001], [1.173 ±0.00004],
+    [Viral $nu(T)$, mean], [1.585 ±0.001], [1.553 ±0.001], [1.641 ±0.0003], [1.600 ±0.0003], [1.704 ±0.0002], [1.659 ±0.0002], [1.716 ±0.001], [1.673 ±0.0001],
+    [Broadcast (%)], [80.1 ±0.07], [82.0 ±0.06], [79.4 ±0.02], [81.7 ±0.02], [80.3 ±0.008], [82.5 ±0.007], [81.6 ±0.1], [83.5 ±0.006],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
     [Comparison of aggregated cascade metrics: LIFO vs Random Timeline],
-    [Aggregate cascade metrics pooled over the runs of each dataset, comparing the LIFO baseline (L) with the random drain (R). Cascade-level statistics are restricted to cascades with at least one repost.],
+    [Aggregate cascade metrics pooled over the runs of each dataset, comparing the LIFO baseline (L) with the random drain (R). Cascade-level statistics are restricted to cascades with at least one repost. Means and proportions are shown with their 95% confidence interval across runs (±); the within-cascade 95% CI (bootstrap over the pooled cascades) is an order of magnitude smaller ($<= 0.0017$ for means, $<= 0.06$ for proportions).],
   )
 ) <tbl-queue-aggregate>
 
@@ -576,15 +582,14 @@ The timeline order is therefore *exonerated*: it is not why the cascades are nar
 
 With ordering ruled out, the remaining candidates can be read directly off the decomposition of @sec-missing-width, $EE("out-degree") = F times r slash lambda times pi_"repost"$. They are not mutually exclusive, and the experiment narrows but does not single one out.
 
-*Impressions: the arrival rate $lambda$ is inflated.* This is the strongest candidate, and it is a property of the simulated population rather than of the model. $lambda$ ---the post arrival rate onto a timeline--- is set entirely by the *followee* population, and the simulation builds that population from the active tail of the data: the session and gap distributions are fitted on the $243$K users ($18%$) with at least $30$ sessions, and the within-session creation ECDF on the $65$K users with at least $30$ gaps, while $82%$ of the users with fits are excluded and $90%$ of all users have no computable within-session gap (@sec-cal-dist, @sec-cal-create-dist). Every simulated user then samples from this active-only table (@sec-cal-acrossuser), so every followee posts like a heavy poster and $lambda$ is systematically larger than on a real timeline, where most followees are near-silent. With $r$ fixed by @sec-cal-interaction, a larger $lambda$ depresses $p_"read"$ and truncates the width. The same composition is consistent with the rest of the failures ---the low cascade rate and the low reproduction number--- and with the null result of the timeline-order experiment, since reordering reads changes neither $r$ nor $lambda$. This is a known limitation of the calibration, accepted under the time available; it is also the one candidate that is methodological rather than fundamental, since representing the inactive majority explicitly would lower $lambda$ and restore part of the width. #todo[Quantify $lambda$ directly: posts arriving per timeline per unit time, empirical vs simulated, over the same user set.]
+*Impressions: the arrival rate $lambda$ is inflated.* This is the strongest candidate, and it is a property of the simulated population rather than of the model. $lambda$ ---the post arrival rate onto a timeline--- is set entirely by the *followee* population, and the simulation builds that population from the active tail of the data: the session and gap distributions are fitted on the $243$K users ($18%$) with at least $30$ sessions, and the within-session creation ECDF on the $65$K users with at least $30$ gaps, while $82%$ of the users with fits are excluded and $90%$ of all users have no computable within-session gap (@sec-cal-dist, @sec-cal-create-dist). Every simulated user then samples from this active-only table (@sec-cal-acrossuser), so every followee posts like a heavy poster and $lambda$ is systematically larger than on a real timeline, where most followees are near-silent. With $r$ fixed by @sec-cal-interaction, a larger $lambda$ depresses $p_"read"$ and truncates the width. The same composition is consistent with the rest of the failures ---the low cascade rate and the low reproduction number--- and with the null result of the timeline-order experiment, since reordering reads changes neither $r$ nor $lambda$. This is a known limitation of the calibration, accepted under the time available; it is also the one candidate that is methodological rather than fundamental, since representing the inactive majority explicitly would lower $lambda$ and restore part of the width. Measured directly, the empirical mean arrival rate is $approx 338$ posts per timeline per day, against $approx 1.7 times 10^4$--$7.2 times 10^4$ in the simulated topologies ---roughly two orders of magnitude more, the quantitative signature of the over-active followee population.
 
 *Conversion: $pi$ is uniform.* Because posts carry no content, every post shares the same $pi_"repost"$, so none can convert above the baseline. Even a perfect impression budget would therefore cap the tail at the baseline conversion. This is the same homogeneity behind the missing depth (@sec-finding-missing-tail): letting a good post convert above baseline is exactly what post-level randomness buys, and it is delegated to @sec-future-content.
 
-*Reach: no impressions beyond the follower graph.* Every impression in the model is in-network: propagation inserts the post only into the timelines of the author's followers (@proc-propagate). The empirical maximum out-degree of $7{,}768$ presumes an audience the follower graph does not contain ---a hub with $407{,}981$ followers already caps a perfectly-read post at $0.012 times 407{,}981 approx 4{,}900$ direct reposts. Part of the gap therefore cannot be closed by the current model at all; it needs exposure outside the graph. #todo[Recompute in server: largest-hub follower count and the in-network ceiling from the new topology build.]
+*Reach: no impressions beyond the follower graph.* Every impression in the model is in-network: propagation inserts the post only into the timelines of the author's followers (@proc-propagate). The empirical maximum out-degree of $7{,}768$ presumes an audience the follower graph does not contain ---a hub with $407{,}981$ followers already caps a perfectly-read post at $0.012 times 407{,}981 approx 4{,}900$ direct reposts. Part of the gap therefore cannot be closed by the current model at all; it needs exposure outside the graph.
 
 Two measurement caveats bound how far any of this can be pushed. First, the comparison is not like-for-like: the empirical cascades come from the full six-day firehose graph, whereas the simulated ones run on a forest-fire sample of a $14$-month topology, so the author of the real $7{,}768$ cascade need not exist in the sample and part of the apparent gap may be a sampling artefact. Second, the trace records the *parent* of each repost, not how many followers actually saw the post, so $p_"read"$ is inferred from the in-degree ceiling instead of observed. #todo[Instrument the trace with the number of followers exposed to each post, turning the decomposition into a measurement.]
 
 Taken together, the width is capped by an impression budget that is (i) shared with an over-active followee population, (ii) converted at a uniform baseline, and (iii) confined to the follower graph. The timeline order is not one of the caps; it only decides who wins the budget. This is why the natural structural fix is a recommender rather than a better feed order (@lasser2025desire): it attacks (iii) by adding out-of-network impressions and, if quality-ranked, (ii) by letting good posts convert above baseline, while leaving the reproduction number $R_0 < 1$ of @sec-finding-missing-tail untouched. One caveat carries back to the depth section: the same over-active composition that depresses $p_"read"$ also depresses $R_0$ (@tbl-res-r0), so $0.22$ should be read as measured under this composition. The mechanism of @sec-finding-missing-tail ---homogeneous policy, hence subcritical, hence an exponentially bounded tail--- is unchanged, but a population with realistic activity would move the number.
 
-#todo[Add bootstrap confidence intervals to @tbl-queue-aggregate and @tbl-queue-width.]
 
