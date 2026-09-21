@@ -189,7 +189,7 @@ With all the metrics computed on the random-timeline build, @tbl-apx-random-vs-d
   ),
   caption: flex-caption(
     [Key metrics comparison: empirical data vs. random-timeline simulation.],
-    [Bluesky values from @sec-data-reposts and @sec-data-virality against each of the four random-timeline datasets (pooled over runs).],
+    [Bluesky values from @sec-data-reposts, @sec-data-cascade-shape and @sec-data-virality against each of the four random-timeline datasets (pooled over runs).],
   )
 ) <tbl-apx-random-vs-data>
 

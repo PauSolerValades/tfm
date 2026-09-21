@@ -1,6 +1,6 @@
 #import "utils.typ": todo, comment, flex-caption
 
-This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in @apx-data. Then, the evaluation metric and the characteristic magnitude described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's test in @sec-data-reposts and Structual Virality is computed in all the cascades within the dataset timeframe, as well as some descriptive analysis of the data provided in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in @apx-topology
+This chapter describes the Bluesky Firehose dataset, which encompases 6 days of full events: types of events, its distribution and other characteristics found in @apx-data. Then, the evaluation metric and the characteristic magnitude described in @sec-method-des-metrics are verified: total reposts per post are fitted with the Vuong's test in @sec-data-reposts, the cascade shape statistics are reported in @sec-data-cascade-shape, and structural virality is analysed in @sec-data-virality. Lastly, the process to obtain the topologies needed for the simulation to run are described in @sec-data-topology and explained in depth in @apx-topology
 
 
 == Firehose Data Description
@@ -54,12 +54,10 @@ To characterize the virality of posts in the dataset, we fit a power law to the 
 
 The tail is not a power law: a maximum-likelihood fit gives $alpha = 2.053$ ($x_min = 12$), but Vuong's log-likelihood ratio test decisively prefers the lognormal ($R = -16.84$, $p = 1.18 dot 10^(-63)$). The repost counts are therefore better described as lognormal than as a pure power law. Despite this characteristic magnitude having been refered in this manuscript as "total repost _power-law_" it is, in fact, perfectly normal for social network data to be fitted as a lognormal @clauset2009powerlaw. The more rellevant fact, is that the data exhibits a heavy-tail characteristic.
 
-== Structural Virality
-<sec-data-virality>
+== Cascade Shape
+<sec-data-cascade-shape>
 
-Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
-
-Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repost at all, leaving $2,493,540$ (16.32%) that form a non-trivial cascade (at least one repost). @tbl-data-cascade-stats summarises the tree-level metrics of these cascades: the typical cascade is tiny and shallow (median size 3, median depth 1), but the heavy tail reaches a cascade of $12,720$ nodes, depth $131$ and a maximum out-degree of $7,768$.
+A post together with its reposts forms an information cascade, defined by its size, depth and width in @sec-method-des-metrics. Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repost at all, leaving $2,493,540$ (16.32%) that form a non-trivial cascade (at least one repost). @tbl-data-cascade-stats summarises the tree-level metrics of these cascades: the typical cascade is tiny and shallow (median size 3, median depth 1), but the heavy tail reaches a cascade of $12,720$ nodes, depth $131$ and a maximum out-degree of $7,768$.
 
 #figure(
   table(
@@ -81,7 +79,22 @@ Of the $15,282,058$ posts in the dataset, $12,788,518$ (83.68%) receive no repos
   )
 ) <tbl-data-cascade-stats>
 
+@fig-data-cascade-shape shows the same three metrics sorted from largest to smallest on log-log axes. Size and maximum out-degree decay almost in lockstep across the whole rank range, their tails running about an order of magnitude above depth: the widest cascades are also the largest, the numerical signature of broadcast hubs. Depth, by contrast, stops at $131$ generations, so the three metrics all share the heavy tail, but the mass is concentrated in shallow, wide trees.
+
+#figure(
+  image("../images/data/cascade_shape_ranksize.svg", width: 100%),
+  caption: flex-caption(
+    [Cascade shape: size, depth and width sorted largest to smallest.],
+    [The $2,493,540$ non-trivial cascades (size $>= 2$) ranked from largest to smallest for each tree metric, log-log axes.],
+  )
+) <fig-data-cascade-shape>
+
 Following @goel2016structural, the cascades split into *broadcast* (depth 1: a star, every repost hangs directly off the root) and *viral* (depth ≥ 2: at least one repost-of-repost). Broadcast diffusion dominates: $1,771,631$ cascades (71.05%) are broadcasts and only $721,909$ (28.95%) are viral.
+
+== Structural Virality
+<sec-data-virality>
+
+Structural virality $nu(T)$ @goel2016structural captures the macro-level shape of the repost propagation tree — distinguishing between broadcast diffusion (one-to-many) and viral spread (person-to-person chains). This is the other objective quantity the simulation wants to study, and has already been defined in @sec-method-des-metrics.
 
 For the viral cascades alone, $nu(T)$ has mean $2.142$ (95% CI $[2.140, 2.144]$), median $2.000$, minimum $1.333$ and maximum $50.269$. @fig-data-nu-density shows the distribution: it is concentrated right at the broadcast floor $nu = 2$ and decays as a heavy tail, with only $311$ cascades (0.04% of viral) above $nu = 10$ and none reaching $nu >= 100$ — a genuinely viral chain would need a repost chain roughly 300 hops deep, which never occurs inside the six-day window.
 

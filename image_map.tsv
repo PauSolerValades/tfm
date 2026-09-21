@@ -101,6 +101,7 @@ images/data/612_fitting_userevents.png	firehose-analysis/eda-raw-dataset/user-ev
 images/data/613_filtered_event_distribution.png	firehose-analysis/eda-raw-dataset/percentage_plots/top9_filtered.py	firehose-analysis/eda-raw-dataset/percentage_plots/plots/top9_filtered.png
 images/data/reposts_histogram.png	firehose-analysis/cascade-creation/repost_powerlaw.py	firehose-analysis/cascade-creation/results/reposts_histogram.png
 images/data/viral_nu_density.png	firehose-analysis/cascade-creation/viral_nu_stats.py	firehose-analysis/cascade-creation/results/viral_nu_density.png
+images/data/cascade_shape_ranksize.svg	firehose-analysis/cascade-creation/cascade_shape_plots.py	firehose-analysis/cascade-creation/results/cascade_shape_ranksize.svg
 images/results/offspring_distribution_100K.png	bskysim-data-analysis/simulation-evaluation/test1_r0.py	run: 100K
 images/results/powerlaw_alpha_comparison.png	[MISSING FILE] synthetic; recreate (alpha 2.05 vs 2.9, xmin=12)	no repo source
 images/results/ram_scalability.png	[MISSING FILE] bskysim-data-analysis/performance-analysis/fit_ram_complexity.py	None
