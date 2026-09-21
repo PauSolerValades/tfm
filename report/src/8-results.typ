@@ -242,28 +242,6 @@ The $±$ values are the 95% confidence interval of the mean across runs, the run
   )
 ) <fig-res-cascade-shape>
 
-Following @goel2016structural, the cascades split into *broadcast* (depth 1: a star, every repost hangs directly off the root) and *viral* (depth ≥ 2: at least one repost-of-repost). Broadcast diffusion dominates everywhere: 79.4%–81.6% of cascades are broadcasts and only 18.4%–20.6% are viral (@tbl-res-broadcast), a slightly stronger broadcast bias than the real data (71.05% broadcast). The split is flat across the four sizes, so the broadcast/viral balance does not depend on the network size.
-
-#figure(
-  table(
-    columns: 6,
-    align: (left, center, center, center, center, center),
-    stroke: none,
-    table.hline(stroke: 0.8pt),
-    [*Dataset*], [*Total*], [*Broadcast*], [*Broadcast %*], [*Viral*], [*Viral %*],
-    table.hline(stroke: 0.5pt),
-    [10K], [1.758e6], [1.408e6], [80.1%], [3.502e5], [19.9%],
-    [100K], [1.961e7], [1.557e7], [79.4%], [4.044e6], [20.6%],
-    [500K], [9.399e7], [7.549e7], [80.3%], [1.850e7], [19.7%],
-    [1M], [1.504e8], [1.228e8], [81.6%], [2.762e7], [18.4%],
-    table.hline(stroke: 0.8pt),
-  ),
-  caption: flex-caption(
-    [Broadcast vs. viral cascades per dataset.],
-    [Split of the non-trivial cascades into broadcast (depth 1) and viral (depth ≥ 2), pooled over all runs. Counts in scientific notation, with each category's share of the total.],
-  )
-) <tbl-res-broadcast>
-
 == Structural Virality
 <sec-results-sv>
 
@@ -306,6 +284,30 @@ For the viral cascades alone, $nu(T)$ stays shallow: the mean is $1.585$ at 10K 
     [Log-$x$ density of $nu(T)$ for the viral cascades (depth ≥ 2) in each dataset, with the broadcast floor $nu = 2$ (dashed) and the median (dotted) marked.],
   )
 ) <fig-res-nu-density>
+
+
+Following Goel et al. @goel2016structural, the cascades split into *broadcast* (depth 1: a star, every repost hangs directly off the root) and *viral* (depth ≥ 2: at least one repost-of-repost). Broadcast diffusion dominates everywhere: 79.4%–81.6% of cascades are broadcasts and only 18.4%–20.6% are viral (@tbl-res-broadcast), a slightly stronger broadcast bias than the real data (71.05% broadcast). The split is flat across the four sizes, so the broadcast/viral balance does not depend on the network size.
+
+#figure(
+  table(
+    columns: 6,
+    align: (left, center, center, center, center, center),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Dataset*], [*Total*], [*Broadcast*], [*Broadcast %*], [*Viral*], [*Viral %*],
+    table.hline(stroke: 0.5pt),
+    [10K], [1.758e6], [1.408e6], [80.1%], [3.502e5], [19.9%],
+    [100K], [1.961e7], [1.557e7], [79.4%], [4.044e6], [20.6%],
+    [500K], [9.399e7], [7.549e7], [80.3%], [1.850e7], [19.7%],
+    [1M], [1.504e8], [1.228e8], [81.6%], [2.762e7], [18.4%],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Broadcast vs. viral cascades per dataset.],
+    [Split of the non-trivial cascades into broadcast (depth 1) and viral (depth ≥ 2), pooled over all runs. Counts in scientific notation, with each category's share of the total.],
+  )
+) <tbl-res-broadcast>
+
 
 
 == Comparison with Bluesky Data <sec-results-comparison>
