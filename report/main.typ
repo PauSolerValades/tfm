@@ -37,7 +37,12 @@
   weight: "bold",
 )
 
+// Main sections (level-1 headings) always start on the same side of the
+// sheet. `pagebreak(to: "odd")` forces the page parity and inserts a blank
+// page when needed; it is measured on the physical page, so the front-matter
+// and body counter resets below do not disturb it.
 #show heading: it => [
+  #if it.level == 1 { pagebreak(to: "odd", weak: true) }
   #block(above: 1.5em, below: 1em, it)
 ]
 
@@ -64,24 +69,25 @@
 
 // ----------------------------------------------------------
 // Official UPC-FME cover, then the styled title page.
+// Covers are not part of the page numbering.
+#set page(numbering: none)
 #include "src/cover-official.typ"
+#pagebreak()
+#pagebreak()
 #include "src/cover.typ"
 
+// Front matter starts here, in roman numerals, at the abstract (i).
+#pagebreak(to: "odd")
+#set page(numbering: "i")
 #counter(page).update(1)
 
-#set page(numbering: "i")
-
-#pagebreak()
-#pagebreak()
 #heading(outlined: false, numbering: none)[Abstract]
 #include "src/0-abstract.typ"
 
-#pagebreak()
 #heading(outlined: false, numbering: none)[Acknowledgments]
 
 #include "src/0-aknowledgments.typ"
 
-#pagebreak()
 #outline(title: "Table of Contents")
 
 #show outline.entry.where(level: 1): it => {
@@ -89,91 +95,76 @@
   it
 }
 
-#pagebreak()
 #heading(outlined: true, numbering: none)[List of Figures]
 #outline(title: none, target: figure.where(kind: image))
 
-#pagebreak()
 #heading(outlined: true, numbering: none)[List of Tables]
 #outline(title: none, target: figure.where(kind: table))
 
-#pagebreak()
 #heading(outlined: true, numbering: none)[List of Procedures]
 #outline(title: none, target: figure.where(kind: "procedure"))
 
-#pagebreak()
 #heading(outlined: true, numbering: none)[List of Codes]
 #outline(title: none, target: figure.where(kind: "code"))
 
+#pagebreak(to: "odd")
 #set page(numbering: "1")
 #counter(page).update(1)
 
-#pagebreak()
 = Introduction
 
 #include "src/1-introduction.typ"
 
-#pagebreak()
 = Social Networks State of the Art
 <sec-sota>
 
 #include "src/2-sota.typ"
 
-#pagebreak()
 = Problem Formulation 
 <sec-model>
 
 #include "src/3-model.typ"
 
-#pagebreak()
 = Methodology
 <sec-method>
 
 #include "src/4-methodology.typ"
 
-#pagebreak()
 = Design 
 <sec-design>
 
 #include "src/5-design.typ"
 
-#pagebreak()
 = Bluesky Data Analysis
 <sec-data>
 
 #include "src/6-data.typ"
 
-#pagebreak()
 = Calibration
 <sec-calibration>
 
 #include "src/7-calibration.typ"
 
-#pagebreak()
 = Results
 <sec-results> 
 
 #include "src/8-results.typ"
 
-#pagebreak()
 = Conclusions
 
 #include "src/9-conclusions.typ"
 
-#pagebreak()
 = Future Work
 <sec-future>
 
 #include "src/10-futurework.typ"
 
-#pagebreak()
 #bibliography(
   ("refs/1-introduction.yml", "refs/2-context.yml", "refs/3-model.yml", "refs/4-methodology.yml", "refs/5-design.yml", "refs/6-data.yml", "refs/7-calibration.yml", "refs/8-futurework.yml", "refs/9-annex.yml", "refs/6-implementation.yml"),
   title: "References",
   style: "ieee",
 )
 
-#pagebreak()
 #counter(heading).update(0)
 #set heading(numbering: "A.1", supplement: "Appendix")
 
@@ -182,85 +173,71 @@
 
 #include "src/annex/ai.typ"
 
-#pagebreak()
 = Code Repositories
 <apx-code>
 
 #include "src/annex/code.typ"
 
-#pagebreak()
 = Methodology 
 <apx-method>
 
 #include "src/annex/methodology.typ"
 
-#pagebreak()
 = Examples
 <apx-examples>
 
 #include "src/annex/example.typ"
 
-#pagebreak()
 = Discarded Features
 <apx-mechanics>
 
 #include "src/annex/mechanics.typ"
 
-#pagebreak()
 = Implementation
 <apx-impl>
 
 #include "src/annex/implementation.typ"
 
-#pagebreak()
 = Data Analysis
 <apx-data>
 
 #include "src/annex/data.typ"
 
-#pagebreak()
 = Topology Ingestion and Sampling 
 <apx-topology>
 
 #include "src/annex/topology.typ"
 
-#pagebreak()
 = Sessions
 <apx-sessions>
 
 #include "src/annex/sessions.typ"
 
-#pagebreak()
 = Post Creation
 <apx-creation>
 
 #include "src/annex/postcreation.typ"
 
-#pagebreak()
 = Stability Plots
 <apx-stability-plots>
 
 #include "src/annex/stability-plots.typ"
 
-#pagebreak()
 = Random Timeline Experiment
 <apx-random-timeline>
 
 #include "src/annex/random-timeline.typ"
 
-#pagebreak()
 = Pipeline
 <apx-pipeline>
 
 #include "src/annex/pipeline.typ"
 
-#pagebreak()
 = Content Aware Posts
 <apx-content>
 
 #include "src/annex/future-content.typ"
 
-#pagebreak()
 = Hardware Specifications
 <apx-hardware>
 
