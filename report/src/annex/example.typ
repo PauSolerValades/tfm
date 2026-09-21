@@ -1,6 +1,8 @@
 #import "@preview/cetz:0.4.2"
 #import "../utils.typ": *
 
+This appendix contains examples showcasing the necessity of certain design decisions: why a delay in content propagation is needed $Delta_p$ (@anx-ex-teleport) and how to handle stale events inside the Future Event Set (@anx-ex-session-gen).
+
 == Example of Degeneration and Content Teleporation
 <anx-ex-teleport>
 
@@ -93,7 +95,7 @@ $ Q = [(A, "propagate", 3Delta_p)] $
 
 4. $t = 3Delta_p: quad$ Pop $(A, "propagate", 3Delta_p)$. $p_0$ lands in $A$'s timeline. Since $A$ created $p_0$, the already-interacted check $(A, p_0) in cal(H)_(3Delta_p)(A)$ prevents re-exposure. The cascade ends.
 
-Each hop now costs $Delta_p$ units of time. The cascade unfolds as a genuine temporal process, with every user action tied to a distinct timestamp. The queue $Q$ regains its role as a proper temporal scheduler, and the resulting cascade graph reflects the incubation time that is central to the CTIC model (see @sec-sota-diffusion-ctic).
+Each hop now costs $Delta_p$ units of time. The cascade unfolds as a genuine temporal process, with every user action tied to a distinct timestamp. The queue $Q$ regains its role as a proper temporal scheduler, and the resulting cascade graph reflects the delivery component of the incubation time that is central to the CTIC model (see @sec-model-incubation).
 
 As it can be seen in the example, a delay is not a luxury, but a necessity for the model to not degenerate. Following DES best practices, instead of modifying the timelines of the user directly with the added delay, we create a `propagate` event, which will make the posts appear to the users timelines at $t + Delta_p$, when it's properly popped from the queue $Q$ and processed as an actual event.
 

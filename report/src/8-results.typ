@@ -21,7 +21,7 @@ This section described the parameters and configuration of the execution of the 
     [`offset_creation_time`], [ECDF of within-session post offset], [@sec-cal-interpost],
     [`user_inter_action`], [$lambda = 1/3$ (mean 3 s)], [@sec-cal-interaction],
     [`user_policy`], [Weights $[0.915, 0.073, 0.012]$ on `ignore`, `like`, `repost`], [@sec-cal-policy],
-    [`propagation_delay`], [1 s], [@sec-method-ctic],
+    [`propagation_delay`], [1 s], [@sec-model-incubation],
     [`interaction_delay`], [1 s], [@sec-method-des-assumptions],
     [`creation_delay`], [1 s], [@sec-method-des-assumptions],
     [`offline_startup_ratio`], [0.5], [@sec-cal-warmup],

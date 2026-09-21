@@ -1,19 +1,20 @@
 #import "utils.typ": def, flex-caption, todo, comment
 #import "@preview/cetz:0.4.2"
 
-This section justifies which features of Bluesky are going to be modeled from the exhaustive description provided in @sec-sota-description. Then, proceeds to model and introduce notation for the problem. 
+This section models and introduced notation for a microblogging social network objects and features, as well as establishing the scope of the implemented features in @sec-model-notation. Then, it introduces the full model that will be used to synthetically generate cascades in @sec-model-ctic.
 
 == Modelization and Notation
+<sec-model-notation>
 
-To pick the most rellevant subset of features is needed to not drown in unnecessary complexity and to keep adhered to the time and scope constraints. It is believed that the selected subset of features will behave as a microblogging social network.
+As described in @sec-sota-description and @sec-sota-bluesky, a microblogging social network is a very extensive set of features to model and later implement. To adapt it into a reasonable scope, the following features have been chosen as a minimum features to reproduce a microblogging social media platform. 
 
-*1. Just the Following Feed*: The "Following" feed is a timeline with a reverse-chronological post showing criteria, and from now on this will be referred to as the _timeline_ of every user. As simulating a recommender is a difficult challenge in itself, it is believed that the flow of information can be meaningfully studied with a more traditional content strategy. Even if the use of more traditional timelines is not how the majority of users engage with content, are still rellevant to study as they are the most simplest recomendations feeds, which will produce information diffusion patterns and is usually used in the literature as a baseline. #footnote[In fact, new European legislation is making the existence of a non-algorithmic recommender feed (as well as Australia), and most of the companies opt to implement a traditional reverse-chronological timeline. @diemel2022digital @budde2026digital]
+*1. Just the Following Feed*: The "Following" feed is a timeline with a reverse-chronological post showing criteria, and from now on this will be referred to as the _timeline_ of every user. As simulating a recommender is a difficult challenge in itself, it is believed that the flow of information can be meaningfully studied with a more traditional content strategy. Even if the use of more traditional timelines is not how the majority of users engage with content, are still rellevant to study as they are the most simplest recomendations feeds, which will produce information diffusion patterns and is usually used in the literature as a baseline. #footnote[In fact, European Digital Services Act is making the existence of a non-algorithmic recommender feed obligatory @diemel2022digital (as well as very recent Australian law @budde2026digital), and most of the companies opt to implement a traditional reverse-chronological timeline. ]
 
 *2. Static Users and Followers*: During the course of the simulation, no new users will be added, nor new relationships between them. The inter-user relationships are considered static during the whole duration of the simulation, as the flow of content can be studied without this behavior.
 
 *3. No Mutes nor Blocks*: We assume that if user $u$ follows user $v$, user $u$ will receive all posts from user $v$.
 
-*4. No Quotes, no Replies*: To further simplify the model (and given the assumptions that will be stated in @sec-method-des-assumptions) quotes and replies will not be included. They are going to add a lot of modelization complexity for what is deemed diminishing returns. See @apx-mechanics for more about additional mechanics.
+*4. No Quotes, no Replies*: To further simplify the model (and given the assumptions that will be stated in @sec-method-des-assumptions) quotes and replies will not be included. They are going to add a lot of modelization complexity for what is deemed as diminishing returns. See @apx-mechanics for more about additional mechanics.
 
 *5. No Profile of a User*: A user won't be able to enter to see other users' profiles; they will be limited to observing their posts on the timeline.
 
@@ -30,7 +31,7 @@ The following text defines and maps all the functions and sets according to this
 
 === Network Entities and Topology
 
-The model consists of two entities: users $cal(U)$ and posts $cal(I)$ #footnote[the nomenclature $cal(I)$ stems from recommender theory, and stands for items]. Unlike traditional dynamic graphs where the set of vertices grows, we define the graph over the universe of all entities that will ever participate in the simulation. 
+The model consists of two entities: users $cal(U)$ and posts $cal(I)$ #footnote[the nomenclature $cal(I)$ (caligraphic I) stems from recommender theory, and stands as I from Items]. Unlike traditional dynamic graphs where the set of vertices grows, we define the graph over the universe of all entities that will ever participate in the simulation. 
 
 #def(name: "Universal Nodes")[The node set $V$ is the static union of all participating entities throughout the entire simulation lifecycle: $V = cal(U) union cal(I)$.]
 
@@ -61,10 +62,10 @@ To capture the specific temporal dynamics of these connections, we define two co
 
 #def(name: "Edge Latency")[Information dissemination and user reactions are not instantaneous. We define a latency function $eta: E times T -> T$ that maps every edge to a specific temporal delay based on its interaction type:
 - *Propagation Delay*: Associated with structural follow edges $e in E_(cal(U)cal(U))$, dictating the time required for a followee's action to surface on the observer's timeline.
-- *Interaction Delay*: Associated with reactive event edges $e = (u, i, r)$ where $r in {"like", "repost", "ignore"}$, representing the cognitive processing time before a user reacts to a post.
+- *Interaction Delay*: Associated with reactive event edges $e = (u, i, r)$ where $r in {"like", "repost", "view"}$, representing the cognitive processing time before a user reacts to a post.
 - *Creation Delay*: Associated with generative event edges $e = (u, i, "create")$, representing the time taken to compose and publish a new item.]
 
-It is necessary to have a delay when information propagates to avoid instant information transmission. In Implementation @sec-design-sources-propagate there is an example showcasing why it is necessary. In Methodology @sec-model-ctic it is also explained why is necessary to fit a specific model.
+It is necessary to have a delay when information propagates to avoid instant information transmission. In @anx-ex-teleport there is an example showcasing why the propagation delay is necessary.
 
 === User Session Dynamics
 <sec-model-sessions>
@@ -126,7 +127,7 @@ $A$ is a pure source (follows no one, two followers). $B$ sits in the middle (on
 To construct a user's timeline, we extract the historical footprint of the network using the edge presence function $rho$, while accounting for the delays defined by $eta$.
 
 #def(name: "User Activity")[The active footprint of a user $cal(A)_t(u)$ includes all items the user has actively propagated prior to time $t$. 
-$ cal(A)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) = 1 "for some" tau < t "and" r in {"repost", "create"} } $ <def-activity>
+$ cal(A)_t (u) = { i in cal(I) | exists e = (u, i, r) in E \ "where" rho(e, tau) = 1 "for some" tau < t "and" r in {"repost", "create"} } $ <def-activity>
 ]
 
 #def(name: "Timeline")[The timeline $cal(T)_t (u)$ is the aggregated activity of the user's out-neighborhood $cal(N)_"out" (u)$, strictly excluding items the user organically authored themselves, $cal(P)_t(u)$. The time at which an item from followee $v$ appears in $u$'s timeline is offset by the propagation delay $eta((u, v, "follow"), t)$:
@@ -138,9 +139,8 @@ Lastly, we have to define a set that contains all the interacted posts by a give
 
 #def(name: "User Interaction History")[The Interaction History set of a user $cal(H)_t (u)$ includes all the items the user has either propagated or liked prior to time $t$
 
-$ cal(H)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" rho(e, tau) = 1 "for some" tau < t "and" r in {"repost", "like"} } $ 
+$ cal(H)_t (u) = { i in cal(I) | exists e = (u, i, r) in E "where" \\ rho(e, tau) = 1 "for some" tau < t "and" r in {"repost", "like"} } $ 
 ]
-
 
 === User Decisions and Policy
 <sec-model-def-policy>
@@ -156,33 +156,26 @@ $ sum_(a in cal(R)'_(cal(U)cal(I))) pi (a) = 1 $
 == Model
 <sec-model-ctic>
 
-This section details the model chosen to evaluate the information diffusion. To accurately capture the real-world dynamics of the phenomena, we integrate the mathematically rigorous Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a Queue-Based (see @sec-model-ctic), Activity-Driven simulation architecture.
+This section details the model chosen to evaluate the information diffusion. To accurately capture the real-world dynamics of the phenomena, we integrate the Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) with a queue-based timeline (see @sec-model-def-policy) and activity-driven users (see @sec-method-activity).
 
-=== Continuous-Time Diffusion in Microblogging
-<sec-method-ctic>
+=== CTIC for Multiple Concurrent Cascades
+<sec-model-incubation>
 
-To accurately represent the dynamics of information diffusion on a microblogging platform like Bluesky (see @sec-sota-description), we utilize the Continuous-Time Independent Cascade (CTIC) (see @sec-sota-diffusion-ctic) model. While standard diffusion models operate in discrete, synchronized epochs @gomezrodriguez2012inferring, real-world microblogging is fundamentally asynchronous: users do not consume information in locked steps; rather, information propagation occurs continuously over time. 
+The model of this work is built on the Continuous-Time Independent Cascade (CTIC) model (see @sec-sota-diffusion-ctic) for two of its main properties we need to take advantage of. First, *diffusion is asynchronous*: users adopt content at exact timestamps rather than in synchronized epochs, so a discrete time step is an artifact of the model rather than a feature of the phenomenon. Second, an adoption is separated from the next one by an *incubation time*: if $j$ reposts a post at $t_j$, a follower $i$ can only repost it at some $t_i > t_j$, and it is the distribution of that delay that the CTIC model parameterizes per directed edge.
 
-The CTIC model is a good fit for microblogging networks due to its reliance on survival analysis and time-dependent transmission likelihoods: posts are injected into a fast-moving, chronologically ordered feed. A post's "survival" (its probability of being seen and reposted before being buried by newer content) is heavily dependent on the exact continuous time elapsed since its creation @gomezrodriguez2011uncovering. By allowing transmission at different rates using continuous temporal processes (such as exponential or power-law distributions), the CTIC model naturally captures the temporally heterogeneous interactions and long-tailed viral fads characteristic of modern social media.
+In the original formulation @gomezrodriguez2011uncovering, every ordered pair $(j, i)$ carries its own transmission rate $alpha_(j,i)$, estimated from observed cascades or fixed a priori, and realized through a survival function: the delay of the edge is a random variable sampled for that pair, independently of the others. This work decomposes that delay into the transmission time itself and the platform-side delivery of the post, so the incubation time of an edge is
 
-The CTIC model provides of a fitting theoretical framework for a continuous-time diffusion, and as a discrete event system ---the cascade creation is discrete, as the propagation is user-by-user despite being in a timely continuous manner--- makes a Discrete-Event Simulation the perfect tool for the job, specifically the Event Scheduling techinque, as availability of the density and cumulative funcitons for the wanted quantites can be easily obtained (see @sec-method-des  for more).
+$ t_i - t_j = T_(j,i) + Delta_p, $ <eq-incubation>
 
-By modeling the system as a chronological sequence of discrete events—such as post creation, propagation, and user session initializations—we can simulate the exact continuous-time timestamps of the CTIC model without calculating the continuous time in between. Needless to say, the distinction is purely practical, as the definition of CTIC just impose a different quantity $t_i > t_j$, which the DES modelization absolutely fulfills. The methodology and assumptions of this DES approach are detailed in @sec-method-des, while the design of the simulation (architecture, event semantics) is documented in @sec-design and its concrete implementation (data structures, performance optimizations) in @apx-impl
+where $T_(j,i)$ is the CTIC transmission time and $Delta_p$ is the propagation delay (see @sec-design-sources-propagate) associated with pyhsical information transmission.
 
-=== The Homogeneous Rate Simplification
+With a single cascade, a CTIC model choses to give $T_(j,i)$ an specific distribution and observes how the cascade changes according to the chosen distribution, as said in @sec-sota-diffusion-ctic. This work though, needs to simulate several cascades simultaneously over the same network  topology, and therefore $T_(j,i)$ cannot be sampled: the many cascades travel at once and share the same user timelines, so the time a post waits before it _might_ be inspected depends on the volume of posts that are already in the timeline that every other cascade has pushed above it, as well as on the receiver's sessions. This is exactly what the ensemble of cascades is considered complex system (@def-complexsystem in @sec-sota-background), as the propagation of a cascade will affect how others propagate by being bounded by the users attention span: the parts (individual cascades) and the whole (the attention they share) are not separable, so no set of independent per-edge rates $alpha_(j,i)$ describes it. Therefore, the ensemble of CTIC models is not itself an independent cascade model, and the rate of an edge is not constant in time but a function ---an extremey hard to analytically describe--- of the state of the system.
 
+As sampling $T_(j,i)$ is impossible, the model opts to generate it with the reverse-chronological timeline. The post is delivered to $i$'s timeline after $Delta_p$ and then waits there until $i$ inspects it, so the incubation time is the delivery plus that wait. The survival mechanism of the CTIC model is thus preserved but realized as a queue instead of fitted, and the wait itself has structure.
 
-In the Gomez Rodríguez et. al article @gomezrodriguez2011uncovering, the theoretical formulation of the CTIC model has the transmission likelihood governed by a specific pairwise transmission rate, $alpha_(j,i)$, defined uniquely for every directed edge from node $j$ to node $i$. This parameter needs to be "flattened" due to the user homogeneity (see @sec-method-des-assumptions for context), so the transmission rate wil be uniform across all network edges, such that:
+The delivery delay $Delta_p$ is uniform across edges and constant in the reported run (@tbl-res-config). Uniformity keeps the platform-side component deterministic, which is what prevents a post from teleporting from one user to the next (see @sec-design-sources-propagate) and preserves the global creation order of the timeline: the reverse-chronological feed operates as a LIFO queue @hodas2014simple, and a per-edge delivery delay would let an older post arrive after a newer one. With uniform $Delta_p$, if post $p_1$ is created before $p_2$, then $p_1$ appears in every follower's timeline before $p_2$.
 
-$ alpha_(j,i) = alpha quad forall i, j in V $
-
-where $V$ is the set of all users in the network. Since $alpha$ is a rate (with units of inverse time) and not a duration, the model's global propagation delay is its reciprocal, $Delta_p = 1 slash alpha$: the mean continuous time required for a post to be processed by the platform's infrastructure and appearing into a follower's timeline. The simulation samples $Delta_p$ directly from `propagation_delay`, which is a degenerate transmission-time distribution (a constant in the reported run, see @tbl-res-config); its mean is what plays the role of $1 slash alpha$.
-
-This simplification plays very nice into the actual dynamics of modeling an OSN: content cannot immediately appear in other users timelines without any explanation, as that is not accurate in respect of reality and could generate degenerated cases (post being created and immediately having several reposts) on the simulation traces (see @sec-design-traces). Also, this conveys a implicit and very noticeable computational advantage.
-
-A more structural justification for uniform $Delta_p$ comes from the timeline itself. The reverse-chronological feed operates as a LIFO (Last-In, First-Out) queue @hodas2014simple: the most recently propagated post sits at the top, and the user scrolls downward through progressively older content. When $alpha$ varies per edge, a post created earlier but delayed by a slow transmission could arrive after a post created later via a fast edge, scrambling the expected temporal ordering. Uniform $Delta_p$ guarantees that propagation preserves the global creation order: if post $p_1$ is created before post $p_2$, then $p_1$ will appear in every follower's timeline before $p_2$. This makes the timeline a faithful temporal projection of the platform's activity, which is both analytically cleaner and closer to how a real microblogging feed behaves in the absence of algorithmic reordering. 
-
-
+In short, the model preserves the decision rule of the independent cascade ---one-shot adoption, exposure distinct from adoption, decisions drawn from the user's policy--- and not the independent per-edge transmission times: the cascades are independent in how a user decides and coupled in when, or whether, a user is exposed. It is this coupling, absent from the original model, that turns the cascades into a single continuous-time process that must be advanced as a whole instead of sampled or solved edge by edge. That process only changes state at discrete event times ---a repost, a propagation, a session boundary--- so discrete-event simulation is its natural execution paradigm (the choice is justified in @sec-method-des and the implementation in @sec-design and @apx-impl). The wait that the model generates is a consequence of the users' activity dynamics, introduced next and quantified in @sec-model-rate.
 
 === Activity-Driven Network Dynamics
 <sec-method-activity>
@@ -204,4 +197,42 @@ In OSNs, these activity states are usually called sessions: a user starts a sess
 
 While the Activity-Driven framework dictates when users are present in the network via $cal(O)(u)$, it does not fully explain how they consume information. Social contagion is heavily moderated by the cognitive limits of human processing and the user interface of the platform itself @hirakura2023method @hodas2014simple. 
 
+=== The Effective Transmission Rate
+<sec-model-rate>
 
+Even though $T_(j,i)$ cannot be sampled, its structure can still be analyzed, revealing the role it plays in the model and how it couples with the activity-driven and queue-based parts of it. Once a post is in a receiver's timeline $cal(T)_t (v)$, the wait it experiences has two components, both consequences of the activity dynamics of @sec-method-activity:
+
+- *Idle time* $Delta_"idle"$: the time until the post becomes readable ---the receiver's next session start, or the next refresh when the current feed empties.
+- *Scrolling time* $Delta_"scroll"$: the time the receiver needs to process the posts positioned above it once the feed is being consumed.
+
+Their sum is the queue-generated transmission time that the CTIC model leaves implicit in @eq-incubation,
+
+$ T_(j,i) = Delta_"idle" + Delta_"scroll", $
+
+so the full incubation time of an edge that ends in a repost is the delivery plus this wait, $t_i - t_j = Delta_p + Delta_"idle" + Delta_"scroll"$. The rest of this section derives the expected value of that wait.
+
+#def(name: "Influx Rate")[The influx rate $mu_v$ is the expected number of posts arriving per unit of time in user $v$'s timeline. As a macroscopic quantity, it aggregates the out-degree of $v$ and the creation and repost activity of its followees, for which no closed form is attempted.]
+
+During the idle window the backlog above the post grows at rate $mu_v$, so the expected number of newer posts obstructing it is
+
+$ EE[N_"newer"] approx mu_v dot Delta_"idle" $
+
+Each of those posts costs an expected $EE[D_"action"]$ to process ---the calibrated inter-action time--- so the expected scrolling time required to reach the post is
+
+$ EE[Delta_"scroll"] approx EE[N_"newer"] dot EE[D_"action"] = mu_v dot Delta_"idle" dot EE[D_"action"] $
+
+
+Of course, this section just moved the complexity being unable to sample $T_(j,i)$ into a conveniently defined $mu_v$, which is not possible to sample either. The value of this is to narrow down which factors of $T_(j,i)$ were the system-induced parts, rather than keeping it as a misterious magnitude. 
+
+Transmission requires both that the post is reached within its session and that the receiver's policy selects a repost at that inspection (see @sec-model-def-policy). Because whatever remains unread in the active feed when the session ends is discarded, a post that is not reached within the session budget, $EE[Delta_"scroll"] < Delta_k$, has an infinite incubation time ($alpha_(j,i) = inf$). The effective transmission rate is therefore *a decreasing function of the receiver's influx and idle time*: this is the precise sense in which $alpha_(j,i)$ is an output of the system rather than a parameter, and why an empirical fit of it would be of little use to this project ---the simulation must produce it, not consume it. Obtaining the rate exactly would require convolving the arrival process, the action times and the session schedule, which has no closed form.
+
+
+=== Final Model
+
+In conclusion, the model implemented is a complex system consisting of an ensamble of multiples Time-Continuous Independent Cascades. Denoting as super index the i-th cascade, for any cascade $c$ the propagation of time just needs to satisfy $t^c_v < t^c_u$ for any pair of users $u, v$.
+
+The time for a piece of content to travel from $u$ to $v$ is called expousure time $alpha_u,v$. On the contrary with a single Continuous-Time Independent Cascade (just one cascade) where $alpha$ is a parameter to observe with the cascade, in the ensamble model is a magnitude affected by the $cal(T)_t (u)$ timeline per user. This project models the timeline as a reverse-chronological timeline ---in techincal terms, a LIFO queue--- which determines the $alpha_(u,v)$ where $u$ is the user acting on a repost and $v in cal(N)_"in" (u)$, as if there are a lot of posts queued in that user cascades, the probability that new post $i$ entering the queue at instant $t_c$ is going to be smaller than a user which the post $j$ is the only post in the queue. This means that the $alpha_(j,i)$ from the CTIC model are now a function $alpha(u, v, t)$ that depens on the edge $(u,v)$ and the time $t$, which makes it depend of course on the system state $cal(T)_t (u)$.
+
+The description of the function $alpha$ depends on the state of the users, as when a user is offline, the lesser will be the chances of a specific post $i$ to be seen, as other will arrive an get on top of it due to the stack behaviour of the user timeline. The best way to characterize it is that $alpha_(u,v,t)$ is a decreasing function of $v$ influx (how buisy is the network) and their offline times.
+
+Therefore, and to summarize in one sentence, this model is an Ensemble of Continuous-Time Cascades determined by a LIFO-based transmission time with an activity-driven delay factor. 

@@ -1026,3 +1026,25 @@ park2023generative:
     type: Proceedings
     title: "Proceedings of the 36th Annual ACM Symposium on User Interface Software and Technology (UIST)"
     publisher: ACM
+
+taylor2014introducing:
+  type: Chapter
+  title: "Introducing agent-based modeling and simulation"
+  author: Taylor, Simon J. E.
+  date: 2014
+  page-range: 1-10
+  language: en
+  serial-number:
+    doi: "10.1057/9781137453648_1"
+    isbn: "978-1-137-45364-8"
+  url:
+    value: https://doi.org/10.1057/9781137453648_1
+    date: 2026-09-21
+  parent:
+    type: Book
+    title: Agent-Based Modeling and Simulation
+    editor: Taylor, Simon J. E.
+    publisher:
+      name: Palgrave Macmillan UK
+      location: London
+    date: 2014

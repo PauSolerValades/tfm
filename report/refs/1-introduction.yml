@@ -75,3 +75,26 @@ palmer2019twitter:
   parent:
     type: Newspaper
     title: CNBC
+
+bluesky-social-network:
+  type: Web
+  title: Bluesky
+  author: Bluesky Social PBC
+  date: 2026-09-21
+  url:
+    value: https://bsky.social/about
+    date: 2026-09-21
+  organization: Bluesky Social PBC
+
+abramov2025opensocial:
+  type: Article
+  title: "Open Social"
+  author: Abramov, Dan
+  date: 2025-09-26
+  url:
+    value: https://overreacted.io/open-social/
+    date: 2026-09-21
+  parent:
+    type: Blog
+    title: overreacted
+    publisher: Dan Abramov

@@ -23,11 +23,11 @@
 
 // ---------------------------------------------------------------- data ----
 #let thesis-title = [
-  A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
+  Replicating Information Cascades with a Discrete-Event Simulation Calibrated on Empirical Bluesky Data
 ]
 #let thesis-author = [Pau Soler Valadés]
 #let thesis-director = [Esteve Codina, Jana Lasser and Pau Fontseca]
-#let thesis-department = [#todo[confirm the official department name]]
+#let thesis-department = [Statistics and Operations Research]
 #let thesis-city-date = [Barcelona, 22nd of September, 2026]
 #let thesis-title-max-size = 33.5pt // "Ttulo" style: w:sz 67 half-points
 // --------------------------------------------------------------------------
@@ -62,7 +62,7 @@
 #page(paper: "a4", margin: 0pt, header: none, footer: none)[
   // Never justify, hyphenate or indent: the cover inherits nothing from the body.
   #set par(justify: false, first-line-indent: 0pt)
-  #set text(hyphenate: false)
+  #set text(font: cover-sans, hyphenate: false)
 
   // Left blue bar, full bleed.
   #place(top + left, rect(width: 2.3089cm, height: 29.7004cm, fill: cover-blue))

@@ -20,6 +20,19 @@ fishman2001des:
     name: Springer
     location: New York, NY, USA
 
+fishman2001eventscheduling:
+  type: Chapter
+  title: "Event-Scheduling Approach"
+  author: Fishman, George S.
+  date: 2001
+  chapter: "2.3"
+  parent:
+    type: Book
+    title: "Discrete-Event Simulation: Modeling, Programming, and Analysis"
+    publisher:
+      name: Springer
+      location: New York, NY, USA
+
 
 soler2025distributions:
   type: Repository

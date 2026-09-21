@@ -4,20 +4,21 @@
 This section introduces context to the project: what a microblogging social network is, how the phenomena of information diffusion has been studied, and why Bluesky is the chosen social network to simulate.
 
 == Background
+<sec-sota-background>
 
-This section aims to provide with basic definitions and understanding of the Social Network subfield.
+Let's provide the basic definitions and understanding of the Social Network subfield.
 
 #def(name: "Network")[a network is a special case of a graph, where the vertices, edges or both, possess attributes @wiki-network-theory.]
 
 #def(name: "Social Network")[a Social Network is a social structure consisting of a set of social actors (such as individuals or organizations) and social interactions between actors @wiki-social-network. They are studied by the SNA (Social Network Analysis field) which examines the structure of the relationships within those entities.]
 
-According to the definition then, any network that models any relationship between humans, groups of humans or human-made-organizations is classified as a social network.
+According to the definition, any network that models any relationship between humans, groups of humans or human-made-organizations is a social network.
 
-Online social networks (OSN) are a specific case of Social Networks, where the entities are users and posts, and the relationships are follow, followee, mute, block, create, repost, like, comment, quote, reply...
+Online social networks (OSN) are a specific case of Social Networks, where the entities are users and posts, and the relationships are such as the following, inherent to an online context: follow, followee, mute, block, create, repost, like, comment, quote, reply...
 
-A social network is also considered a complex system. To describe the behaviour of this fact, ---and given that the definition of complex system is still debated up to date--- the Edgars Morin definition of complex system is used @choudhary2023impact as it showcases the complexity of the elements adequately.
+A social network is also categorized as a complex system. To describe the behaviour of this fact, ---and given that the definition of complex system is still debated up to date, the Edgars Morin definition of complex system is used @choudhary2023impact as it showcases the complexity of the elements adequately.
 
-#def(name: "Complex System")[A complex system is defined as the system where there is a bidirectional non-separability between the identities of the parts and the identity of the whole.]
+#def(name: "Complex System")[A complex system is defined as the system where there is a bidirectional non-separability between the identities of the parts and the identity of the whole.] <def-complexsystem>
 
 The unique identities of the parts (users and their individual posts) combine to create the overarching identity and emergent behaviors of the platform. In turn, this macro-structure dictates how information spreads and what content is amplified, which fundamentally alters the user's worldview, online identity, and subsequent behavior within the system.
 
@@ -26,11 +27,11 @@ To define and study content diffusion, the two most important factors are the to
 == Social Network Topologies
 <sec-sota-topologies>
 
-This section aims to characterize the topology of social networks according to their main factors. To explain the features of the topology, we must introduce first a way to model the heterogeneity and multiple edge types of a Social Network rigorously.
+This section aims to characterize the topology of social networks according to their main factors. To explain the features of the topology, we must introduce first a way to model the heterogeneity and multiple edge types of a Social Network rigorously, with the use of a mathematical construct called a Multilayer network.
 
 === Multilayer Network
 
-While a social network has been modeled traditionally as a graph, it's a very narrow model to reason about. Kivela et al @kivela2014multilayer introduces the concept of Multilayer Network, which perfectly encapsulates what a complex social network is.
+Social networks can be seen, specially if dealing with multiple relationships and entities, as different networks linked together by some attributes. Kivela et al. @kivela2014multilayer introduces the concept of Multilayer Network, which fullfiles a mental model of what an OSN can be understood as:
 
 #def(name: "Multilayer Network")[
 A Multilayer Network is a quadruplet $M = (V_M, E_M, V, L)$, where:
@@ -40,9 +41,15 @@ A Multilayer Network is a quadruplet $M = (V_M, E_M, V, L)$, where:
 - $E_M subset.eq V_M times V_M$ is the multilayer edge set connecting these tuples
 ]
 
-In an online social network environment, we can define two primary aspects ($d=2$): node types (users, posts, profiles...)and interaction types (follows, likes, reposts...). This structure feels natural as $G_M = (V_M, E_M)$ is a graph, so a Multilayer Network can be interpreted as a graph with specific labellings over the nodes and edges.
+In an online social network environment, we can define two primary aspects ($d=2$): node types (users, posts, profiles...) and interaction types (follows, likes, reposts...). This structure feels natural as $G_M = (V_M, E_M)$ is a graph, so a Multilayer Network can be interpreted as a graph with specific labels over the nodes and edges.
 
-We can conveniently partition the edges into _intra-layer edges_ $E_A = {((u, bold(alpha)), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))}$ ---they connect two nodes of the same type--- and the _inter-layer edges_ ---they connect two nodes of different type--- as $E_C = E_M - E_A$.
+Natually, edges can be partitioned into _intra-layer edges_, connecting two nodes of the same type.
+
+$ E_A = {((u, bold(alpha)), (v, bold(beta))) in E_M | bold(alpha) = bold(beta))} $
+
+And the _inter-layer edges_, connecting two nodes of different types
+
+$ E_C = E_M - E_A $.
 
 The adjacency matrix for a fully interconnected multilayer network can be represented by an order-$2(d+1)$ adjacency tensor $cal(A)$ @eq-adj-mln. The tensor elements $cal(A)_(u v bold(alpha) bold(beta))$ have a value of $1$ if there is an edge between node $u$ in layer $bold(alpha)$ and node $v$ in layer $bold(beta)$, and $0$ otherwise.
 
@@ -53,11 +60,11 @@ cal(A)_(u v bold(alpha) bold(beta)) = cases(
 )
 $ <eq-adj-mln>
 
-To isolate the topological properties of specific subsystems (or, more intuitively, to "slice" the adjacency tensor), we can apply structural constraints. If we restrict our analysis to interactions occurring strictly within the same layer (disallowing inter-layer edges), the network possesses only diagonal couplings. With this restriction, we can express the relevant subsystem as an intra-layer adjacency tensor with elements $cal(A)_(u v bold(alpha)) = cal(A)_(u v bold(alpha) bold(beta))$. 
+To isolate the topological properties of specific subsystems (more intuitively, to "slice" the adjacency tensor into a graph restricting the entites and the edges to just one), we can apply structural constraints. If we restrict our analysis to interactions occurring strictly within the same layer (disallowing inter-layer edges), the network possesses only diagonal couplings. With this restriction, we can express the relevant subsystem as an intra-layer adjacency tensor with elements $cal(A)_(u v bold(alpha)) = cal(A)_(u v bold(alpha) bold(beta))$. 
 
 In other words, instead of analyzing the entire complex tensor $cal(A)$ simultaneously, we can fix the layer index $bold(alpha)$ to isolate a specific relationship. This extracts a standard 2D adjacency matrix $A^(bold(alpha))$ representing a single "slice" of the original tensor. This extraction process will be implicitly used in the following sections when describing the macroscopic topological properties of a single entity type and a single relationship.
 
-To ground this structure, @fig-sota-multilayer shows a minimal two-layer network. The _user layer_ (red) contains the users and their mutual _follow_ relationships (red arrows), whereas the _post layer_ (blue) contains the posts. Cross-layer edges encode the remaining interactions: in this example $A$ creates ---and therefore owns--- $P_1$ and $P_2$, while $C$ creates $P_3$ (black arrows), and $B$ reposts $P_1$ and likes $P_2$ (green and purple arrows, respectively). Edges within the post layer encode relations between posts: $P_3$ quotes $P_1$ (orange arrow) and $P_2$ replies to $P_1$ (teal arrow). Each relationship type thus defines its own edge set ---its own slice--- of the multilayer network.
+To ground this structure, @fig-sota-multilayer shows a minimal two-layer network. The _user layer_ $L_1$ (red) contains the users ($V times L_1$) and their mutual _follow_ relationships (red arrows), whereas the _post layer_ $L_2$ (blue) contains the posts ($V times L_2$). Cross-layer edges encode the remaining interactions: in this example $A$ creates ---and therefore owns--- $P_1$ and $P_2$, while $C$ creates $P_3$ (black arrows), and $B$ reposts $P_1$ and likes $P_2$ (green and purple arrows, respectively). Edges within the post layer encode relations between posts: $P_3$ quotes $P_1$ (orange arrow) and $P_2$ replies to $P_1$ (teal arrow). Each relationship type thus defines its own edge set ---its own slice--- of the multilayer network.
 
 #figure(
   cetz.canvas({
@@ -133,16 +140,20 @@ To ground this structure, @fig-sota-multilayer shows a minimal two-layer network
 
 As a complex system, social networks properties can be classified in three distinct levels of magnification: the micro-scale, the macro-scale, and the meso-scale @wiki-social-network.
 
-- *Micro-scale* analysis focuses on the individual building blocks of the network: a single node and its immediate edges. Metrics at this level include a user's individual degree, their specific centrality.  
-- *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. All the homophily based process affect
+- *Micro-scale* analysis focuses on the individual building blocks of the network: a single node and its immediate edges. Metrics at this level include a user's individual degree or their specific centrality.  
+- *Meso-scale* sits directly between the individual and the global. It focuses on the intermediate, sub-graph structures that emerge when groups of nodes interact collectively. All the homophily based process affect this layer.
 - *Macro-scale* analysis of the global properties of the entire system. This includes the overarching scale-free degree distribution or the small-world average path length of the whole platform, such as structural virality. Macro-scale metrics treat the network as a single, unified entity.
 
 Because the formation of online social networks are very driven by human homophily (see @sec-sota-topo-homophily), they do not grow uniformly; they naturally self-organize into meso-scale substructures. The levels that contain the more know metrics and emergent properties relevant to societal metrics ---an therefore relevant for this work--- are the meso and macro-scale of the network.
 
+Beyond the scale of analysis, the metrics and emergent phenomena of social networks can also be classified by their origin: their reliance on the underlying graph topology versus their dependence on external, non-topological attributes @wiki-social-network. The vast majority of standard network properties are strictly topological ---degree and local clustering coefficient, the identification of structural holes, community and core-periphery structure, scale-free and small-world behaviour, and structural homophily--- derived exclusively from the structural arrangement of nodes and edges, and requiring no additional user metadata at any scale.
+
+Conversely, the primary metric that cannot be explained by topology alone is homophily. While structural homophily remains strictly graph-dependent, understanding the human dynamics behind edge formation requires supplementary, non-topological data integrated into the multilayer model. Specifically, categorical homophily relies on external metadata, such as user demographics or geographic location, while semantic homophily necessitates a qualitative analysis of user-generated content and shared interests. Ultimately, while a network's foundational architecture is topological, contextualizing why these specific connections form relies entirely on these non-topological dimensions.
+
 === Scale-Free Distribution
 <sec-sota-topo-scalefree>
 
-Let $k$ be the degree of a node $i in V$. Then, the probability $PP$ of a random node to be $k$ follows a power law.
+Given a Multilayer network  $M$, let $k$ be the degree of a node $i in V$. Then, the probability $PP$ of a random node to be $k$ follows a power law.
 
 $ PP(k = "deg(i)") = k^(-gamma) $
 
@@ -155,7 +166,7 @@ Networks which follow this specific power law are called scale-free networks @wi
 === Small-World Phenomena
 <sec-sota-topo-smallworld>
 
-Let's consider now the graph $G$ induced by the tensor which slice $A = cal(A)_(bold(alpha))$ by users and followers. That is, $G$ is an homogeneous graph with one type of directed edge: users and followers.
+Let's consider now the graph $G$ induced by the tensor which slice $A = cal(A)_(bold(alpha))$ by users and followers over M. That is, $G$ is an homogeneous graph with one type of directed edge: users and followers.
 
 Social Networks tend to organize themselves with clusters or friends or known people, with enough links between clusters (_weak links_) which make the distance between two nodes very small @easley2010smallworld. 
 
@@ -204,36 +215,67 @@ There are other factors much more affected by homophily, such as user attributes
 
 // The analysis of those communities is performed by an statistical analysis, the Stochastic Block Model (SBM). SBM assigns a latent group membership to each node and defines the probability of an edge existing between node $i$ and node $j$ strictly based on their respective group assignments @karrer2011stochastic.
 
-=== Properties Classification by Origin
-
-To consolidate the theoretical framework presented in the preceding sections, the metrics and emergent phenomena of social networks can be fundamentally categorized by their reliance on the underlying graph topology versus their dependence on external, non-topological attributes @wiki-social-network.
-
-The vast majority of standard network properties are strictly topological; they are derived exclusively from the structural arrangement of nodes and edges within the adjacency tensor, requiring no additional user metadata. At the micro-scale, this encompasses a node's degree and local clustering coefficient, as well as the identification of structural holes via the constraint index. Moving to the meso-scale, community structures and core-periphery modules are delineated purely through the comparative density of internal and external edge formations. At the macro-scale, overarching phenomena such as the scale-free degree distribution and small-world properties—characterized by global clustering and logarithmic average path lengths—are entirely emergent from the global architectural topology. Furthermore, structural homophily falls into this category, as it describes preferential attachment based solely on network equivalences, such as degree centrality, rather than personal traits.
-
-Conversely, the primary metric that cannot be explained by topology alone is homophily. While structural homophily remains strictly graph-dependent, understanding the human dynamics behind edge formation requires supplementary, non-topological data integrated into the multilayer model. Specifically, categorical homophily relies on external metadata, such as user demographics or geographic location, while semantic homophily necessitates a qualitative analysis of user-generated content and shared interests. Ultimately, while a network's foundational architecture is topological, contextualizing why these specific connections form relies entirely on these non-topological dimensions.
-
 == Information Diffusion Models
 <sec-sota-diffusionmodels>
 
 Once that a given topology of a social network is defined and we know which properties it has (see @sec-sota-topologies), we can address the main point of this work: information diffusion, or how content propagates through a social network. 
 
-#def(name: "Information Diffusion")[Information diffusion refers to the process of spreading information through a network, whether it is desired or not @nettleton2013diffusion.]
+#def(name: "Information Diffusion")[Information diffusion refers to the process of spreading information through a network, whether it is desired or not @nettleton2013diffusion.] <def-informationdiffusion>
 
 And what information diffusion tries to model are the information cascades the content produces when traversing the network topology. The form of this cascades is what unequivocally defines the social network 
 
 #def(name: "Information Cascade")[An information cascade is a phenomena in which a number of people make the same decision in a sequential fashion. It can be modeled as a temporal graph.] @duan2009informational
 
-Specifically, an information cascade can be defined as a graph, where the nodes are the actors (users) involved in the propagation, and the edges are the relationships of those users. A new level is added to the graph when the action of information propagation (_e.g_ a repost) happens at a certain time $t$. 
+Specifically, an information cascade can be defined as a graph, where the nodes are the actors (users) involved in the propagation, and the edges are the relationships of those users. A new level is added to the graph when the action of information propagation (_e.g_ a repost) happens at a certain time $t$, as @fig-sota-cascade depicts. 
 
 #figure(
-  image("../images/sota/broadcast-vs-viral.jpg", width: 80%),
-  caption: flex-caption(
-    [Broadcast vs viral cascade.],
-    [Broadcast vs viral cascade. A viral cascade (left) propagates through multiple generations of reposts, forming a deeper tree structure. A broadcast cascade (right) radiates directly from a single source to many followers.  Image from Goel et. al @goel2016structural]
-  )
-) <fig-broadcast-vs-viral>
+  cetz.canvas({
+    import cetz.draw: *
 
-Traditionally, diffusion models are classified into three distinct mathematical paradigms based on their underlying mechanical rules: epidemic models driven by continuous global rates, cascading models driven by independent stochastic probabilities, and threshold models driven by cumulative fractional influence @singh2026survey. The latter is not used in the model of the work, so it's introduced as part of a proposed new architecture (see @sec-future).
+    // Label helper: white background so text stays legible above crossing edges.
+    let lbl(pos, body, c: black) = content(pos,
+      box(fill: white, inset: 0.08em, outset: 0.02em,
+        text(size: 0.72em, fill: c)[#body]))
+
+    // ── Generation guides: time advances downwards ──
+    for (i, y) in (3.0, 1.6, 0.2, -1.2).enumerate() {
+      line((-3.2, y), (3.4, y), stroke: (paint: gray, dash: "dashed"))
+      lbl((-3.45, y), [$t_#i$], c: gray)
+    }
+
+    // ── Users ──
+    circle((0, 3.0), radius: 0.32, name: "A", stroke: red, fill: red.transparentize(80%))
+    content("A", [*A*])
+    circle((-1.6, 1.6), radius: 0.32, name: "B", stroke: blue, fill: blue.transparentize(80%))
+    content("B", [*B*])
+    circle((1.6, 1.6), radius: 0.32, name: "C", stroke: blue, fill: blue.transparentize(80%))
+    content("C", [*C*])
+    circle((-2.8, 0.2), radius: 0.32, name: "D", stroke: blue, fill: blue.transparentize(80%))
+    content("D", [*D*])
+    circle((-0.6, 0.2), radius: 0.32, name: "E", stroke: blue, fill: blue.transparentize(80%))
+    content("E", [*E*])
+    circle((1.6, 0.2), radius: 0.32, name: "F", stroke: blue, fill: blue.transparentize(80%))
+    content("F", [*F*])
+    circle((2.4, -1.2), radius: 0.32, name: "G", stroke: blue, fill: blue.transparentize(80%))
+    content("G", [*G*])
+
+    // ── Reposts ──
+    line("A", "B", mark: (end: ">", fill: black), stroke: black)
+    line("A", "C", mark: (end: ">", fill: black), stroke: black)
+    line("B", "D", mark: (end: ">", fill: black), stroke: black)
+    line("B", "E", mark: (end: ">", fill: black), stroke: black)
+    line("C", "F", mark: (end: ">", fill: black), stroke: black)
+    line("F", "G", mark: (end: ">", fill: black), stroke: black)
+    lbl((-1.7, 2.45), [reposts])
+  }),
+  caption: flex-caption(
+    [Information cascade example.],
+    [A single information cascade as a tree. User $A$ (red) creates the post at generation 0; each following generation (blue) is a user who reposted the post from a user of the previous generation, so every edge is a repost event. The depth of the cascade is its number of generations and its width the number of reposts per generation.]
+  )
+) <fig-sota-cascade>
+
+Traditionally, diffusion models are classified into three distinct mathematical paradigms based on their underlying mechanical rules: epidemic models driven by continuous global rates, cascading models driven by independent stochastic probabilities, and threshold models driven by cumulative fractional influence @singh2026survey. The latter is not used in the model of the work, so it's introduced as part of a proposed new architecture (see
+ @apx-content).
 
 === Epidemic Models
 <sec-sota-diffusion-epidemic>
@@ -259,9 +301,9 @@ $
 
 where $beta$ is the contact rate from $S$ to $I$ and $1 / gamma$ the average infectious period. $R$ is the critical value, if $R>1$ implies that an epidemic is possible.
 
-This models a single cascade of information, and there are ways to combine epidemiologic models to describe multiple cascades of information.
+This models a *single cascade of information* or contagion, and there are ways to combine epidemiologic models to describe multiple cascades of information.
 
-While this type of models being elegant and computationally inexpensive compared with the alternatives (and being useful to model news spreading or rumours) @singh2026survey, they are usually not adequate to model diffusion in general in social network due to the cascades produced by the model differing from empirical data. In the article "The structural virality of online diffusion", Goel et al. introduced the concept of Structural Virality, quantified using the Wiener index of cascade trees @goel2016structural. Their analysis of real OSN data demonstrates that the vast majority of massive information cascades are actually incredibly shallow. Instead of spreading via deep contagion across dozens of generations (as SIS or SIRS models generated cascades), most large cascades are driven by massive hubs (e.g., users with millions of followers) broadcasting a single message that primarily propagates only one degree deep. Consequently, traditional epidemic models fail to accurately capture microblogging dynamics.
+While this type of models being elegant and computationally inexpensive compared with the alternatives (and being useful to model news spreading or rumours) @singh2026survey, they are usually not adequate to model diffusion in general in social network due to the cascades produced by the model differing from empirical data. The analysis conducted by Goel et al. @goel2016structural of real OSN data demonstrates that the vast majority of massive information cascades are actually incredibly shallow. Instead of spreading via deep contagion across dozens of generations (as SIS or SIRS models generated cascades), most large cascades are driven by massive hubs (e.g., users with millions of followers) broadcasting a single message that primarily propagates only one degree deep. Consequently, traditional epidemic models fail to accurately capture microblogging dynamics.
 
 The two other alternatives covered in the next sections reject the differential equations (which can be described as a macroscopic description) and embrace the discrete event mechanic (which can be described as microscopic approaches), where the OSNs are driven by discrete individual user decisions to model interactions chronologically.
 
@@ -277,7 +319,9 @@ The Cascade model is a stochastic process that describes the flow of information
 
 The process then goes as follows: for every active node $v$ at step $t$, it attempts to change state of every inactive neighbors $u$ with probability $p_(u,v)$. If the attempt succeeds, $u$ will be active and transmit the information at time $t+1$. Regardless of the result of that operation, the edge gets discarded from future information spread.
 
-According how the probability is defined, we will have different cascade models. The most simple one, is the _Independent Cascade Model_, where the probability of $v$ activating $u$ at time $t$ $p_u (v)$ is constant, independent of the history of the history process so far. Another characteristic feature of the IC model is its order independence: the final integrated probability of a node being activated remains strictly invariant regardless of the temporal sequence in which its neighbors attempt transmission @zhang2014chapter1, or in other words, what matters is not the order of activations, but the amount of them.
+According to how the probability is defined, we will have different cascade models. The most simple one defines the probability of $v$ activating $u$ at time $t$ as a constant, independent of the process history:
+
+#def(name: "Independent Cascade Model")[a cascade model where the probability $p_u (v)$ of $v$ activating $u$ at time $t$ is constant, independent of the history of the process so far. Its final integrated probability of a node being activated remains strictly invariant regardless of the temporal sequence in which its neighbors attempt transmission @zhang2014chapter1 ---what matters is not the order of activations, but the amount of them.] <def-ic>
 
 Crucially, regardless of whether the neighbor adopts the information, the original node can never attempt to activate that neighbor with that specific post again. This permanent refractory state perfectly encapsulates a simple contagion (see @sec-future-content-contagion), where a single exposure is entirely sufficient to trigger adoption @centola2007complex.
 
@@ -285,23 +329,40 @@ Crucially, regardless of whether the neighbor adopts the information, the origin
 === Continuous-Time Independent Cascade Model
 <sec-sota-diffusion-ctic>
 
-While the standard Independent Cascade (IC) model operates in discrete epochs, real-world information and disease propagation occurs continuously over time. In many scenarios we observe the exact timestamps when a node adopts a piece of information, necessitating a shift from discrete steps to a continuous temporal dynamic. @gomezrodriguez2012inferring
+While the standard Independent Cascade (IC) model (@def-ic) operates in discrete epochs, real-world information and disease propagation occurs continuously over time. In many scenarios we observe the exact timestamps when a node adopts a piece of information, necessitating a shift from discrete steps to a continuous temporal dynamic. @gomezrodriguez2012inferring
 
-The Continuous-Time Independent Cascade model preserves the core assumption of independent transmission across edges but replaces fixed step-based probabilities with a time-dependent transmission likelihood. Rather than assuming a neighbor attempts activation in the immediate next time step, the continuous formulation models the incubation time, which is the delay between a node $j$ becoming infected at time $t_j$ and subsequently infecting an uninfected neighbor $i$ at time $t_i > t_j$. @gomezrodriguez2011uncovering @gomezrodriguez2012inferring
+The Continuous-Time Independent Cascade model is generalization of the Independent Cascade Model, as it preserves the core assumption of independent transmission across edges but replaces fixed step-based probabilities with a time-dependent transmission likelihood. Rather than assuming a neighbor attempts activation in the immediate next time step, the continuous formulation models the incubation time, which is the delay between a node $j$ becoming infected at time $t_j$ and subsequently infecting an uninfected neighbor $i$ at time $t_i > t_j$. @gomezrodriguez2011uncovering @gomezrodriguez2012inferring
 
-This temporal dynamic is mathematically expressed through survival analysis @gomezrodriguez2011uncovering, which decomposes the transmission process into two complementary perspectives. For every directed edge from $j$ to $i$, we define a pairwise transmission rate $alpha_(j,i)$. The likelihood that $j$ infects $i$ at exactly time $t_i$, given that $j$ became infected at $t_j$, is governed by two functions that describe the same phenomenon from different angles:
-- *Survival Function* $S(t_i | t_j; alpha_(j,i))$: The probability that node $i$ has *not yet* been infected by node $j$ as of time $t_i$. It starts at 1 and decays toward 0 as time passes.
-- *Hazard Function* $H(t_i | t_j; alpha_(j,i))$: The instantaneous rate at which infection occurs at time $t_i$, conditioned on survival up to that moment. If the hazard is high, transmission is imminent; if it is low, the edge is dormant.
+Each directed edge $j -> i$ is governed by a pairwise transmission rate $alpha_(j,i)$ that fixes the distribution of incubation times. Making the transmissoin rate follow different distributions (memoryless exponential to heavy-tailed power-law forms @gomezrodriguez2011uncovering) makes the model behave completely different, modeling different "costs" for the information to arrive from user to user. In its original form, these rates are fitted to observed cascades by maximizing the per-edge transmission likelihood, in order to reconstruct hidden networks; this work uses the CTIC generatively instead, the incubation time is not sampled per edge but realized by the timeline dynamics (see @sec-model-incubation)
 
-The total conditional likelihood of transmission is computed using both the survival and hazard functions. Because each edge operates independently, the probability that a node survives up to time $T$ without being infected by any of its already infected neighbors is the product of the individual survival functions across all infected nodes targeting it @gomezrodriguez2011uncovering.
+== Social Networks Simulations
+<sec-sota-simulations>
 
-By varying the parametric model of the transmission likelihood, the continuous-time IC model can capture drastically different propagation behaviors: @gomezrodriguez2011uncovering
-- *Exponential Model*: A monotonic model that assumes a constant hazard rate, well-suited for standard memoryless diffusion. 
-- *Power-Law Model*: Captures infections with "long-tails," where the likelihood of transmission decays heavily over time but can still trigger late adoptions.
-- *Rayleigh Model*: A non-monotonic model where the infection likelihood rises to a peak and then drops extremely rapidly, often used to model fads.
+This section aims to cover how research has approached the simulations of social networks historically and offer comparisons to what this project objectives are. Historically, it has been approached from two complementary lenses: Agent-Based Modeling (ABM) @taylor2014introducing, a bottom-up paradigm in which every actor of the system is modelled as an autonomous agent that holds its own state and follows its own behavioural rules, so the global phenomenon is expected to emerge from the interactions of many of these agents. The second one is Discrete-Event Simulation (DES) @fishman2001des, a top-down paradigm in which the system is understood as a state machine that only changes at discrete, chronologically ordered events, and the simulation advances by jumping from one event to the next instead of by fixed time steps. The two are not mutually exclusive ---a DES can embed agent logic and an ABM can be executed over an event queue--- and the comparison of their output accuracy on the same model has been studied on its own @despachedcomparison2010, as well as addressed in @sec-method-abm in this report. This section positions the two traditions before the following chapters narrow the discussion down to the DES one, which is the one this work implements.
 
-By allowing transmission at different rates $alpha_{j,i}$ across different edges, this continuous model can uncover the temporally heterogeneous interactions within a network using only the observed time-stamps of the cascades.@gomezrodriguez2011uncovering
+=== Agent-Based Modeling
 
+ABM is the _de facto_ paradigm of social simulation, and its roots predate the modern social web. Schelling's segregation model @schelling1971 and the Sugarscape artificial society @sugarscape1996 already showed, in the last decades of the past century, that non-trivial macro-level structure can arise from simple local rules without any central coordination, which is the core promise of the paradigm. From there, the approach transferred naturally to opinion dynamics, where every agent holds an opinion and updates it by interacting with a subset of its neighbours. Mastroeni, Vellucci and Naldi @mastroeni2019agentbased offer a bibliographic survey of this family, mapping how the updating rules, the interaction structure and the validation strategies have evolved over time. A recurring difficulty of the whole family is evaluation: an agent-based model is cheap to build and easy to tune until it tells a convincing story, and there is no single accepted protocol to decide when a simulated society is faithful to its empirical counterpart. This concern is what motivates paradigm-agnostic taxonomies such as the review and assessment of digital twin-oriented social network simulators @digitaltwinsimulators2023, which tries to compare simulators by their intended purpose instead of by the paradigm they subscribe to. What all of this work shares is the consolidation of ABM as the dominant classical paradigm for social simulation.
+
+=== Generative Agent-Based Modeling
+
+The most recent pivot inside ABM replaces the hand-written decision rule of the agent with a large language model. In this generative-agent setting the agent perceives the environment and produces behaviour in natural language, which allows for much richer and more human-like responses than a fixed rule ever could. The line opened by the Generative Agents architecture @park2023generative set this direction, and S³ @gao2023s3 is a representative system of it for social-network simulation. The first years of the field have already been consolidated into surveys, with "From Individual to Society" @fromindividualtosociety2026 and the survey of Gao et al. @gao2024llmabm on LLM-empowered agent-based modeling and simulation covering the taxonomies of what the agents are asked to do and how the resulting societies are evaluated, and a third one broadening the map with an evaluation-oriented taxonomy of agents for social simulation @llmagentssurvey2025. The catch is that a more expressive agent is also a harder one to trust: the very openness that makes the behaviour convincing makes the model impossible to validate by exact replication, and validation has been singled out as the central open challenge of this research agenda @validation2025. This is precisely the point where a rigorously calibrated, non-generative baseline ---such as the DES presented in this work--- keeps its relevance: it fixes the mechanism and the parameters, so the agreement (or disagreement) with the empirical cascades can be attributed to the model instead of to the prompt.
+
+=== Discrete-Event Simulation
+
+The DES paradigm, in contrast, asks a narrower question: given a population of actors and a set of possible timed actions, which event happens next and what does it change? The following works answer it at different levels of abstraction.
+ 
+Bouanan et al. @bouanan2019devs propose a formal framework, based on the Discrete Event System Specification (DEVS) formalism, for the modelling and simulation of propagation phenomena in social networks, and apply it to information spreading in a multi-layer network. This is the strongest conceptual anchor of the present work: it establishes that information diffusion can be expressed rigorously as a set of coupled atomic models whose interactions are triggered by events, instead of as differential equations or as a synchronous step-based process, and it does so while keeping the different layers of the network explicit. The proposal is not isolated, as the same group had already explored the DEVS formalism for multi-dimensional social networks @bouanan2015wip and the CELL-DEVS variant to model the impact of information on individuals @bouanan_celldevs, which together make the 2019 paper a consolidation of a line of work.
+
+At a lower level of abstraction, Gatti et al. @gatti2013smsim present SMSim, a simulation-based approach to analyse information diffusion in a microblogging online social network. SMSim executes a DES over a follower graph sampled from Twitter, where users publish, repost and reply following behavioural rules, and it compares the resulting cascades against the diffusion observed in the platform. Structurally it is the closest precedent to the setup of this work: a platform-specific, follower-graph-based DES whose validation target is the shape of the empirical cascades. It also illustrates the main limitation of its time, namely that both the topology and the behaviour had to be kept small enough to fit the compute of the moment, which is the gap that the next generation of engines tries to close.
+
+Hou et al. @hou2013supenet address exactly that gap with SUPE-Net, a parallel discrete-event simulation platform for large-scale social networks. The work distributes the execution of a DES across a high-performance cluster and hybridizes the event-driven core with agent-based components, so that the behavioural side of the model stays tractable once the population grows. This is where the scalability angle enters the narrative of this section: DES is not only a modelling choice but also an execution model that parallelizes naturally, and SUPE-Net is direct evidence that large-scale social simulations were already reachable years before the present work.
+
+A parallel lineage of DES comes from computational epidemiology, where the substrate is a contact network instead of an information network but the machinery is the same. EpiSimdemics @barrett2008episimdemics is the canonical example: it propagates a disease over a large realistic social network and reaches populations of over a hundred million individuals, an order of magnitude beyond what information-diffusion simulators of the time could attempt. Loimos @kitson2024loimos continues this line more than a decade later as a modern, open discrete-event epidemic framework, and works such as DESSABNeT @stapelberg2021dessabnet show the same design applied at a smaller and more agile scale. The relevance for this work is the proven scalability pedigree: DES over a realistic social graph has been demonstrated to sustain the population sizes that a microblogging simulation requires, even though the propagated entity is a disease instead of a post.
+
+The DES works above share one simplifying assumption that this work cannot make, as they all run over a static network. Real microblogging platforms do not have a fixed topology: users join, follow and unfollow, and the graph over which diffusion happens is itself a function of time. Serena et al. @serena2021temporal close this gap by simulating dissemination strategies over temporal networks, where the edges carry the times at which they are active and the dissemination process can only use an edge while it is available. This dynamic-topology view bridges directly into the model of this work, whose follower graph is built from a time-windowed sample of the ATProto firehose (see @sec-data-topology) and whose sessions make the interaction between a user and the platform explicit.
+
+Across all of these, the space that remains is well defined: a DES that is platform-specific like SMSim, formally grounded like the DEVS frameworks, scalable like the parallel engines, and evaluated against the empirical cascade distribution of a live microblogging network instead of against a synthetic contagion model. That is the position this work aims to occupy.
 
 == Description of Microblogging Social Media 
 <sec-sota-description>
@@ -309,7 +370,7 @@ By allowing transmission at different rates $alpha_{j,i}$ across different edges
 Despite social networks being a relatively new addition to modern life, they have fundamentally changed how information is consumed and spread in the modern age. To adequately understand the aims of this project, some definitions and context regarding social networks are provided.
 
 
-A *Microblogging Social Network* (e.g., Twitter/$bb(X)$ or Bluesky) is a specialized type of social network where users publish and exchange short-form content. This is enforced by a limit on the maximum number of characters per entry, known as microblogs or posts. A post, while traditionally text-based, can also include up to four multimedia elements.
+A *Microblogging Social Network* (e.g., Twitter/$bb(X)$ or Bluesky @bluesky-social-network) is a specialized type of social network where users publish and exchange short-form content. This is enforced by a limit on the maximum number of characters per entry, known as microblogs or posts. A post, while traditionally text-based, can also include up to four multimedia elements.
 
 Bluesky, as an open platform, allows for user-made feeds with diverse rules and categories dictating which posts are shown. These include feeds focused on highly specific topics (such as technology, local events, or art). The two primary feeds provided by default are the _Discover_ feed and the _Following_ feed.
 
@@ -340,7 +401,7 @@ Lastly, every user has a profile, which is customizable with a profile picture, 
 
 Bluesky @wiki-bluesky is a microblogging social network, built on the Authenticated Transfer Protocol, ATP for short @atproto-overview. 
 
-The ATP is a protocol and set of open standards for decentralized publishing and distribution of self-authenticating data within the social web. Adhering to the protocol separates the content produced by the user on a social media platform from the infrastructure of the social media platform, essentially defining a format for the characteristics of the data to be usable in any social media app that implements the ATP protocol. In other words: by establishing an existing format defining all the characteristics of how data should be structured and which data should be publicly available, the implementation of the application Bluesky (the program that runs on the browser or phone) is decoupled from where and how the data the user creates is stored. 
+The ATP is a protocol and set of open standards for decentralized publishing and distribution of self-authenticating data within the social web @abramov2025opensocial. Adhering to the protocol separates the content produced by the user on a social media platform from the infrastructure of the social media platform, essentially defining a format for the characteristics of the data to be usable in any social media app that implements the ATP protocol. In other words: by establishing an existing format defining all the characteristics of how data should be structured and which data should be publicly available, the implementation of the application Bluesky (the program that runs on the browser or phone) is decoupled from where and how the data the user creates is stored. 
 
 The relevant side effect of this design decision is that the server that stores the Bluesky data, the firehose @atproto-repo, is open and all the data that is sent and received can be accessed and stored. Data for this study (see @sec-data) was collected and provided for analysis by the CS^2 research group at University of Graz . 
 
@@ -348,31 +409,3 @@ Alternative microblogging platforms to X @x-platform (previously known as Twitte
 
 A significant challenge in contemporary social media research is the increasing privatization of user data by major platforms. Proprietary metrics with high commercial value, such as session length, content views, and granular engagement statistics, are rarely published or made accessible to independent researchers. This trend toward restricted data access limits academic inquiry and the broader understanding of social media ecosystems—systems that impact millions of users. Initiatives like the ATP are a very welcomed change of pace, which gains more relevance the more users adopt Bluesky as their primary social network.
 
-== Social Networks Simulations
-<sec-sota-simulations>
-
-To simulate a social network is to reproduce, inside a computer, how communication, opinions or information move across a networked population. Historically, it has been approached from two complementary lenses: Agent-Based Modeling (ABM) #todo[a good citation], a bottom-up paradigm in which every actor of the system is modelled as an autonomous agent that holds its own state and follows its own behavioural rules, so the global phenomenon is expected to emerge from the interactions of many of these agents. The second one is Discrete-Event Simulation (DES), a top-down paradigm in which the system is understood as a state machine that only changes at discrete, chronologically ordered events, and the simulation advances by jumping from one event to the next instead of by fixed time steps. The two are not mutually exclusive ---a DES can embed agent logic and an ABM can be executed over an event queue--- and the comparison of their output accuracy on the same model has been studied on its own @despachedcomparison2010. This distinction matters here because research on microblogging and information diffusion sits squarely at the intersection of both traditions: the phenomenon is collective and emergent, but the mechanism that actually moves the information ---a user deciding to repost at a precise instant--- is a discrete event. This section positions the two traditions before the following chapters narrow the discussion down to the DES one, which is the one this work implements.
-
-=== Agent-Based Modeling
-
-ABM is the classical paradigm of social simulation, and its roots predate the modern social web. Schelling's segregation model @schelling1971 and the Sugarscape artificial society @sugarscape1996 already showed, in the last decades of the past century, that non-trivial macro-level structure can arise from simple local rules without any central coordination, which is the core promise of the paradigm. From there, the approach transferred naturally to opinion dynamics, where every agent holds an opinion and updates it by interacting with a subset of its neighbours. Mastroeni, Vellucci and Naldi @mastroeni2019agentbased offer a bibliographic survey of this family, mapping how the updating rules, the interaction structure and the validation strategies have evolved over time. A recurring difficulty of the whole family is evaluation: an agent-based model is cheap to build and easy to tune until it tells a convincing story, and there is no single accepted protocol to decide when a simulated society is faithful to its empirical counterpart. This concern is what motivates paradigm-agnostic taxonomies such as the review and assessment of digital twin-oriented social network simulators @digitaltwinsimulators2023, which tries to compare simulators by their intended purpose instead of by the paradigm they subscribe to. What all of this work shares is the consolidation of ABM as the dominant classical paradigm for social simulation.
-
-=== Generative Agent-Based Modeling
-
-The most recent pivot inside ABM replaces the hand-written decision rule of the agent with a large language model. In this generative-agent setting the agent perceives the environment and produces behaviour in natural language, which allows for much richer and more human-like responses than a fixed rule ever could. The line opened by the Generative Agents architecture @park2023generative set this direction, and S³ @gao2023s3 is a representative system of it for social-network simulation. The first years of the field have already been consolidated into surveys, with "From Individual to Society" @fromindividualtosociety2026 and the survey of Gao et al. @gao2024llmabm on LLM-empowered agent-based modeling and simulation covering the taxonomies of what the agents are asked to do and how the resulting societies are evaluated, and a third one broadening the map with an evaluation-oriented taxonomy of agents for social simulation @llmagentssurvey2025. The catch is that a more expressive agent is also a harder one to trust: the very openness that makes the behaviour convincing makes the model impossible to validate by exact replication, and validation has been singled out as the central open challenge of this research agenda @validation2025. This is precisely the point where a rigorously calibrated, non-generative baseline ---such as the DES presented in this work--- keeps its relevance: it fixes the mechanism and the parameters, so the agreement (or disagreement) with the empirical cascades can be attributed to the model instead of to the prompt.
-
-=== Discrete-Event Simulation
-
-The DES paradigm, in contrast, asks a narrower question: given a population of actors and a set of possible timed actions, which event happens next and what does it change? The following works answer it at different levels of abstraction, from the formal to the applied and from the small to the massive.
-
-Bouanan et al. @bouanan2019devs propose a formal framework, based on the Discrete Event System Specification (DEVS) formalism, for the modelling and simulation of propagation phenomena in social networks, and apply it to information spreading in a multi-layer network. This is the strongest conceptual anchor of the present work: it establishes that information diffusion can be expressed rigorously as a set of coupled atomic models whose interactions are triggered by events, instead of as differential equations or as a synchronous step-based process, and it does so while keeping the different layers of the network explicit. The proposal is not isolated, as the same group had already explored the DEVS formalism for multi-dimensional social networks @bouanan2015wip and the CELL-DEVS variant to model the impact of information on individuals @bouanan_celldevs, which together make the 2019 paper a consolidation of a line of work.
-
-At a lower level of abstraction, Gatti et al. @gatti2013smsim present SMSim, a simulation-based approach to analyse information diffusion in a microblogging online social network. SMSim executes a DES over a follower graph sampled from Twitter, where users publish, repost and reply following behavioural rules, and it compares the resulting cascades against the diffusion observed in the platform. Structurally it is the closest precedent to the setup of this work: a platform-specific, follower-graph-based DES whose validation target is the shape of the empirical cascades. It also illustrates the main limitation of its time, namely that both the topology and the behaviour had to be kept small enough to fit the compute of the moment, which is the gap that the next generation of engines tries to close.
-
-Hou et al. @hou2013supenet address exactly that gap with SUPE-Net, a parallel discrete-event simulation platform for large-scale social networks. The work distributes the execution of a DES across a high-performance cluster and hybridizes the event-driven core with agent-based components, so that the behavioural side of the model stays tractable once the population grows. This is where the scalability angle enters the narrative of this section: DES is not only a modelling choice but also an execution model that parallelizes naturally, and SUPE-Net is direct evidence that large-scale social simulations were already reachable years before the present work.
-
-A parallel lineage of DES comes from computational epidemiology, where the substrate is a contact network instead of an information network but the machinery is the same. EpiSimdemics @barrett2008episimdemics is the canonical example: it propagates a disease over a large realistic social network and reaches populations of over a hundred million individuals, an order of magnitude beyond what information-diffusion simulators of the time could attempt. Loimos @kitson2024loimos continues this line more than a decade later as a modern, open discrete-event epidemic framework, and works such as DESSABNeT @stapelberg2021dessabnet show the same design applied at a smaller and more agile scale. The relevance for this work is the proven scalability pedigree: DES over a realistic social graph has been demonstrated to sustain the population sizes that a microblogging simulation requires, even though the propagated entity is a disease instead of a post.
-
-The DES works above share one simplifying assumption that this work cannot make, as they all run over a static network. Real microblogging platforms do not have a fixed topology: users join, follow and unfollow, and the graph over which diffusion happens is itself a function of time. Serena et al. @serena2021temporal close this gap by simulating dissemination strategies over temporal networks, where the edges carry the times at which they are active and the dissemination process can only use an edge while it is available. This dynamic-topology view bridges directly into the model of this work, whose follower graph is built from a time-windowed sample of the ATProto firehose (see @sec-data-topology) and whose sessions make the interaction between a user and the platform explicit.
-
-Across all of these, the space that remains is well defined: a DES that is platform-specific like SMSim, formally grounded like the DEVS frameworks, scalable like the parallel engines, and evaluated against the empirical cascade distribution of a live microblogging network instead of against a synthetic contagion model. That is the position this work aims to occupy.

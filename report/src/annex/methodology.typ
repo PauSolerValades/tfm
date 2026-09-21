@@ -44,6 +44,33 @@ While theoretically faster alternatives like the Alias Method @walker1977alias e
 However, to optimize the performance of the linear search, the following convention has been maintained when constructing the distributions: the categories must always be sorted by their probability in descending order. By placing the most probable outcomes at the beginning of the arrays, the cumulative sum grows rapidly, maximizing the chance that the linear search terminates in the very first iterations, thereby achieving near $O(1)$ empirical performance.
 
 
+
+=== Gamma
+
+The Gamma Distribution is a two-parameter family with shape $k$ and rate $beta$ (following the R convention), and has the following density and cumulative distribution functions:
+
+$ f(x | k, beta) = frac(beta^k x^(k-1) e^(-beta x), Gamma(k)), quad x > 0 $
+
+$ F(x | k, beta) = frac(gamma(k, beta x), Gamma(k)) $
+
+where $Gamma(k)$ is the gamma function and $gamma(k, beta x)$ the lower incomplete gamma function. The rate is the reciprocal of the scale, $beta = 1 slash theta$.
+
+Gamma is the only distribution in the library that is not sampled directly with a Ziggurat. It uses the Marsaglia & Tsang method @marsaglia2000gamma ---from the same authors of the Ziggurat---, which recycles the Normal distribution (itself generated with the Ziggurat, see @sec-method-rng-ziggurat): a Gamma variate is a Normal variate that survives a rejection test. For $k >= 1$, with
+
+$ d = k - 1/3, quad c = 1 / sqrt(9 d), $
+
+the algorithm repeatedly draws $X ~ cal(N)(0, 1)$ and $U ~ "Unif"(0, 1)$ and builds the candidate $V = (1 + c X)^3$:
+
+- If $V <= 0$ the candidate has no meaning and is discarded.
+- A cheap squeeze test accepts whenever $U < 1 - 0.0331 X^4$, which covers almost all samples without evaluating any transcendental function.
+- Otherwise an exact test $ln U < X^2 / 2 + d (1 - V + ln V)$ decides.
+
+On acceptance the sample is $frac(d V, beta)$. For $k < 1$ the algorithm samples shape $k + 1$ and thins the result with an independent $U^(1 slash k)$, which recovers the correct Gamma.
+
+Only the exact test pays for a logarithm, so the sampler stays close to the cost of a single Normal draw from the Ziggurat.
+
+
+
 === Weibull Distribution
 
 The Weibull Distribution is a two parameter distribution, with a shape and scale parameter with the following cumulative density:
@@ -90,31 +117,6 @@ $ X = cases(
 ) $
 
 where $Y$ is drawn with the Ziggurat algorithm.
-
-
-=== Gamma
-
-The Gamma Distribution is a two-parameter family with shape $k$ and rate $beta$ (following the R convention), and has the following density and cumulative distribution functions:
-
-$ f(x | k, beta) = frac(beta^k x^(k-1) e^(-beta x), Gamma(k)), quad x > 0 $
-
-$ F(x | k, beta) = frac(gamma(k, beta x), Gamma(k)) $
-
-where $Gamma(k)$ is the gamma function and $gamma(k, beta x)$ the lower incomplete gamma function. The rate is the reciprocal of the scale, $beta = 1 slash theta$.
-
-Gamma is the only distribution in the library that is not sampled directly with a Ziggurat. It uses the Marsaglia & Tsang method @marsaglia2000gamma ---from the same authors of the Ziggurat---, which recycles the Normal distribution (itself generated with the Ziggurat, see @sec-method-rng-ziggurat): a Gamma variate is a Normal variate that survives a rejection test. For $k >= 1$, with
-
-$ d = k - 1/3, quad c = 1 / sqrt(9 d), $
-
-the algorithm repeatedly draws $X ~ cal(N)(0, 1)$ and $U ~ "Unif"(0, 1)$ and builds the candidate $V = (1 + c X)^3$:
-
-- If $V <= 0$ the candidate has no meaning and is discarded.
-- A cheap squeeze test accepts whenever $U < 1 - 0.0331 X^4$, which covers almost all samples without evaluating any transcendental function.
-- Otherwise an exact test $ln U < X^2 / 2 + d (1 - V + ln V)$ decides.
-
-On acceptance the sample is $frac(d V, beta)$. For $k < 1$ the algorithm samples shape $k + 1$ and thins the result with an independent $U^(1 slash k)$, which recovers the correct Gamma.
-
-Only the exact test pays for a logarithm, so the sampler stays close to the cost of a single Normal draw from the Ziggurat.
 
 
 
@@ -395,7 +397,7 @@ The RAM per run reported in @tbl-res-ram is reconstructed in two steps. First, t
 
 Execution time is summarized directly from `execution_times.ssv`: mean, 95% confidence interval, median, minimum and maximum (@tbl-res-time).
 
-=== Known Problems
+=== Known Constrains
 
 Three limitations bound the RAM figures. First, 10 s sampling of instantaneous RSS misses the true peak between samples, so every value is a lower-bound approximation. Second, with more than one worker the runs overlap and share a single process, so a per-run slice still contains concurrent and accumulated memory; the worker-normalized value is an upper bound on a truly isolated run. Third, RSS accumulates across runs because state is reused rather than freed, so the per-run peak grows run-over-run.
 

@@ -519,6 +519,6 @@ To ensure the simulation results remain invariant to absolute wall-clock metrics
 
 $ tau = frac(t, Delta_p) $
 
-In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, baseline of the environment, and one of the fundamental parameters defining the continuous cascade independent model. Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic. Conveniently, it allows to express all magnitudes as seconds as it has been homogenized for all users in #todo[sec-model-continuousfixedrate] and simplified to exactly one second in #todo[sec-method-whatever]
+In this model, $Delta_p$ is defined as exactly one discrete simulation tick ($Delta_p = 1$). This magnitude was selected because it represents the most fundamental, baseline of the environment, and the delivery component of the incubation time in the model (@sec-model-incubation). Expressing results in terms of these intrinsic simulation ticks abstracts away specific hardware or network latencies, rendering the performance analysis strictly system-agnostic. Conveniently, it allows to express all magnitudes as seconds as it has been homogenized across all users (@sec-model-incubation) and set to exactly one second in the reported run (@tbl-res-config).
 
 

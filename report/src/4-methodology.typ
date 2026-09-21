@@ -3,8 +3,7 @@
 
 This chapter justifies and methodology elections: why the use of a discrete-event simulation methodology in @sec-method-des, why the DES framework has been chosen over the _de-facto_ standar of Complex and Social Science, Agent-Based Modelling in @sec-method-abm, and which method has been used to create the sessions in @sec-method-session.
 
-Due to lenght constraints of this report, some important sections have been moved to @apx-method, specifically every aspect concerning the Random Number Generation algorithms in @apx-method-rng ---which is an in depth description of the tailored made for this project `distribution` library @soler2025distributions ---, which methods have been used for the goodness-of-fit tests in every distribution in @apx-method-gof, and the decision process on picking DBSCAN as the session algorithm in @apx-method-session.
-
+Due to lenght constraints of this report, some rellevant sections have been moved to @apx-method, specifically every aspect concerning the Random Number Generation algorithms in @apx-method-rng ---which is an in depth description of the tailored-made `distributions` package for this project @soler2025distributions ---, which methods have been used for the goodness-of-fit tests in every distribution in @apx-method-gof, and the decision process on picking DBSCAN as the sessionization algorithm in @apx-method-session.
 
 == Event Scheduling Discrete-Event Simulation
 <sec-method-des>
@@ -13,21 +12,20 @@ Discrete-event simulation is a methodology consisting of a collection of techniq
 
 Discrete-event simulation usually share a set of key elements, which relate to certain behaviours. In general, there is always a future time event, which are already scheduled events by the system, which have to be retrieved according from the more recent to the furthest away in the future @ross2006simulation.
 
-Information diffusion (see @sec-sota-diffusionmodels) models information cascades, which are created by the repost of a post in a specific instant of time. This is, as already discussed when justifying the Continuous-Time Independent Cascade model (see @sec-method-ctic), a discrete-event dynamical system: the events are creation and propagation of a post, which can be reconstructed into the so called information cascades.
+Information diffusion (@def-informationdiffusion in @sec-sota-diffusionmodels) models information cascades, which are created by the repost of a post in a specific instant of time. This is, as already discussed when justifying the Ensamble of Collective CTICs model (see @sec-model-incubation), a discrete-event dynamical system: the events are creation and propagation of a post, which can be reconstructed into the so called information cascades.
 
 
 === Event Scheduling Algorithm
 <sec-method-des-es>
 
-This project will use the Event Scheduling algorithm, as the input parameters of the simulation (see Design @sec-design, Calibration @sec-calibration) can be easily expressed as a density of the simulation $f$ and its cumulative density $F$.
+This project will use the Event Scheduling algorithm @fishman2001eventscheduling, as the input parameters of the simulation (see Design @sec-design, Calibration @sec-calibration) can be easily expressed as a density of the simulation $f$ and its cumulative density $F$.
 
-#todo[find a good source maybe??? not that many tbh]
 
 The Event Scheduling algorithm main characteristic is the *event-list*, *future event set* or *queue $Q$*, a data structure that holds all the already scheduled events that come from an event source. An event source is characterized by sampling from a specific distribution $F$.
 
-The main idea of the algorithm is represented in @proc-event-scheduling, shown here on a M/M/1 queue: a producer and a consumer share the future event set, and each source reschedules itself every time one of its events is popped. $lambda$ is the generation rate and $mu$ the service rate, sampled from the rate-parameterized exponential used throughout this report.
+The main idea of the algorithm is represented in @proc-event-scheduling, shown here on a $M \/ M \/ 1$ queue: a producer and a consumer share the future event set, and each source reschedules itself every time one of its events is popped. $lambda$ is the generation rate and $mu$ the service rate, sampled from the rate-parameterized exponential used throughout this report.
 
-#procedure(caption: flex-caption([Event scheduling], [Event Scheduling algorithm on a M/M/1 queue: the future event set drives the clock, and each event source reschedules itself when popped.]))[
+#procedure(caption: flex-caption([Event scheduling], [Event Scheduling algorithm on a $M \/M \/ 1$ queue: the future event set drives the clock, and each event source reschedules itself when popped.]))[
   #pseudocode-list[
     + *procedure* $"EventScheduling"(lambda, mu)$
       + $Q arrow.l "FutureEventSet"()$
@@ -56,14 +54,14 @@ It can clearly be divided into three steps: the initialization of the events of 
 === Description
 <sec-method-des-mechanics>
 
-The propose of the simulation is the information diffusion, specifically the cascades generated when the content traverses the network. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has.
+The propose of the simulation is the information diffusion, specifically the cascades generated when the content traverses the network. When a post $i$ is propagated, gets appended to the timeline of all the followers the propagator of $i$ has (and will be formalized with @proc-propagate in @sec-design-sources-propagate).
 
 $ "procedure propagate"(u, i) quad : quad  "push"( cal(T)_(t+Delta) (v) ) quad forall v in cal(N)_"in" (u) $ <eq-proc-propagate>
 
-There are four distinct actions that a user can do in the simulation, which translate into four different types of entities that can be in the Future Event Setat the same time.
+There are four distinct actions that a user can do in the simulation, which translate into four different types of entities that can be in the Future Event Set at the same time.
 1. Create post: creates a new post $j$ and adds it to the simulation. This propagates the created post $j$
 2. Action: $"pop"(cal(T)_t (u))$ and makes one action according to the policy $pi_u$, which can take three possible values:
- - nothing: the user ignores the post, no action is taken.
+ - view: the user just reads or views the post, no action is taken.
  - like: the user marks the post as liked, and then it can't be liked anymore, but can be reposted.
  - repost: the user reposts the post $i$, which propagates it.
 3. Go online: puts the user back online. When online can do any of the actions mentioned above.
@@ -74,13 +72,13 @@ As every user acts as an independent entity, it is convenient to make them act i
 
 To comply with the Continuous-Time Independent Cascade, we have to allow reexposition to a content the user has already ignored but coming from another edge (another of it's followees). It is considered then an interaction as a like or a post, so a user can propagate or not propagate a post but interact with it. A user cannot interact nor see again their own posts.
 
-Therefore, we can give a more abstract expression of an event ---which is an element of the queue $Q$--- such as the tuple of $(u, e, t)$, where user $u$ at time $t$ has the event $e$, which can be either "create", "action", "go_online" or "go_offline".
+Therefore, we can give a more abstract expression of an event ---which is an element of the queue $Q$--- such as the tuple of $(u, e, t)$, where user $u$ at time $t$ has the event $e$, which can be either "create", "action", "connect" or "disconnect".
 
 
 === Assumptions
 <sec-method-des-assumptions>
 
-To simplify both implementation and evaluation of the simulation, we assume the following simplifications in respect of how a real online social networks behaves to adapt to the scope of the project.
+To simplify both implementation and evaluation of the simulation, we assume the following simplifications in respect of how a real online social networks behaves.
 
 1. *User Homogeneity Policy:* Every user $u in cal(U)$ is indistinguishable in behavior and shares the exact same decision policy $pi$ and creation rate $lambda$.
  $ forall u, v in cal(U) : pi^(u) = pi^(v) = pi quad "and" quad lambda^(u) = lambda^(v) = lambda $
@@ -90,20 +88,20 @@ $ pi(a | i) = pi(a | j) = pi(a) quad forall i, j in cal(I), forall a in cal(R)'_
 
 3. *Action Independence (Markovian Behavior):* A user's choice to interact with a post $i$ at time $t$ depends strictly on the static policy $pi$ and is independent of their historical impression history $cal(H)_t (u)$. 
 
-$ PP ( rho((u, i, a), t) = 1 mid cal(H)_t (u) ) = pi(a) $
+$ PP ( rho((u, i, a), t) = 1 quad cal(H)_t (u) ) = pi(a) $
 
-As it's been discussed until now, the proposed model is a dynamical system in which its solution cannot be found analytically due to it's complexity. In a DES implementation, the system's state only changes at discrete points in time when a specific event occurs, allowing the simulation engine to jump efficiently from one event to the next without calculating the time in between. 
+This simplifications must be added to stratify complexity and to provide an accurate management of time and scope for this project.
 
 === Parameters
 
-Taking into account the simplifying assumptions (see @sec-method-des-assumptions), the main parameters of the simulation are:
+Taking into account the simplifying assumptions (see @sec-method-des-assumptions), the main parameters ---quantities or distributions decided at the beginning of the simulation process that serve as input--- of the simulation are:
 1. How often does a user sees a post: this is modeled as the time between every post.
 2. Actions: the probability associated to every action the user can do when sees a post.
 3. Sessions: how often does a user connect (time between sessions) and the session duration of the user. Additionally, from the whole user population, we start with a fraction of the user offline, which is a controllable parameter.
 4. Propagation delay: time it takes for a post to be reposted or created and then be propagated.
 5. Interaction and Creation delay: when a user decides which decision takes, the delay on realizing the action is implemented into the simulation. Additionally, there is a bigger delay when the user decides to create a post, which simulates the actual writing of the post.
 
-@tbl-method-params list the bullet points main parameters with a small descritpion. Note: this is not the final configuration file of for the configuration (this is @tbl-res-config in @sec-results-execution) but to convey the main parameters that define the configuration.
+@tbl-method-params list the bullet points main parameters with a small descritpion. Note: this is not the final configuration file of for the configuration (the final config is @tbl-res-config in @sec-results-execution) but to convey the main parameters that define the configuration.
 
 #figure(
   table(
@@ -114,7 +112,7 @@ Taking into account the simplifying assumptions (see @sec-method-des-assumptions
     [*Parameter*], [*Description*],
     table.hline(stroke: 0.5pt),
     [Interaction time], [Time between two consecutive actions of the same user: how often they check their timeline.],
-    [Action policy], [Probability of each reaction to an inspected post: `ignore`, `like` or `repost`.],
+    [Action policy], [Probability of each reaction to an inspected post: `view`, `like` or `repost`.],
     [Session duration], [How long a user stays online in a session.],
     [Gaps between sessions], [How long a user stays offline between two consecutive sessions.],
     [Initial offline fraction], [Share of the population that starts the simulation offline.],
@@ -134,12 +132,38 @@ The value used for each of them in the reported execution is listed in @tbl-res-
 === Evaluation Metrics
 <sec-method-des-metrics>
 
-When designing a simulation, one must have a good distinction between *evaluation metrics* ---the magnitudes the simulation is built to observe--- and *characteristic magnitudes* ---the magnitudes the simulation must produce to verify its behaviour. Structural Virality is an evaluation metric: it is the cascade shape the simulation intends to replicate, and how it reacts to changes in the input is the object of study. The reposts power-law is instead a characteristic magnitude: it is imposed by the diffusion model (@sec-sota-topo-scalefree), so reproducing it is what certifies that the simulation behaves as the theory prescribes.
+When designing a simulation, one must distinguish between evaluation metrics and characteristic magnitudes:
+- *Evaluation metrics* are the metrics the simulation is built to observe, replicate or study.
+- *Characteristic magnitudes* are the magnitudes the simulation must produce to verify its behaviour: the system is expected to show them, but they are not the objective of the study.
 
-==== Reposts Power-law
+The following paragraphs list every magnitude the simulation observes, classified as evaluation metrics or characteristic magnitudes.
 
-According to the CTIC model, the number of reposts of a post should follow a power law, with $gamma in [2,3]$. That is, the log-log plot of the most to least sorted repost different post has should be drawn as a line. This is the same concept introduced in @sec-sota-topo-scalefree.
+==== Repost Count Distribution
 
+The first magnitude is the distribution of the number of reposts a post receives. Ordering all posts from most to least reposted, the counts should follow a heavy-tailed distribution whose log-log plot decays approximately as a straight line, the same scale-free behaviour introduced in @sec-sota-topo-scalefree. The tail is summarised by two fitted parameters: the exponent $alpha$, which sets how fast the tail decays ---a larger $alpha$ means fewer extremely popular posts--- and the lower cutoff $x_"min"$, the repost count above which the power law is fitted.  This is a characteristic magnitude of the simulation.
+
+==== Cascade Metrics
+
+A post together with its reposts forms an information cascade, naturally represented as a tree rooted at the post's author: every edge is a repost, directed from a reposter to the user they reposted from (@fig-sota-cascade). Let $T$ be such a cascade tree. Its size, depth and width are the characteristic magnitudes compared against the empirical data, and are defined as follows.
+
+#def(name: "Cascade Size")[
+  The number of distinct users that reposted the post, the author included:
+  $ S(T) = |T|. $
+]
+
+#def(name: "Cascade Depth")[
+  The number of generations of reposters, measured as the length in edges of the longest path from the root to any node of the tree:
+  $ D(T) = max_(v in T) "depth"(v). $
+  The root sits at depth $0$, its direct reposts at depth $1$, and so on, so a broadcast cascade has $D(T) = 1$ and any repost-of-a-repost forces $D(T) >= 2$.
+]
+
+#def(name: "Cascade Width")[
+  The largest number of direct reposts attributed to a single node, i.e. the maximum out-degree of the tree:
+  $ W(T) = max_(v in T) "out-degree"(v). $
+  For a broadcast cascade the widest node is the root, so the width is exactly the first hop, the number of users the post reached directly. This is the magnitude reported as the *max out-degree* of a cascade.
+]
+
+A post whose tree is a single node (no repost) is a trivial cascade; the *cascade rate* is the share of posts that receive at least one repost, and only these non-trivial cascades enter the statistics above. Following @goel2016structural, cascades are further split into *broadcast* ($D(T) = 1$, a star) and *viral* ($D(T) >= 2$), and the broadcast share is reported alongside the tree metrics.
 
 ==== Structural Virality
 
@@ -170,7 +194,7 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
 ]
 
 
-All evaluation metrics listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset to analyze and compute the desired metrics.
+All magnitudes listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset to analyze and compute the desired metrics.
 
 
 == Simulation Paradigm Choice

@@ -19,7 +19,7 @@
   #v(2.8cm)
 
   #text(fill: blue, size: 25pt, weight: "bold")[
-  A Continuous-Time Independent Cascade Model on Bluesky using Discrete-Event Simulation
+  Replicating Information Cascades with a Discrete-Event Simulation Calibrated on Empirical Bluesky Data
   ]
   
   // #text(fill: blue, size: 25pt, weight: "bold")[  
