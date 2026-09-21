@@ -2,6 +2,33 @@
 
 This appendix reports the full results of the random-timeline experiment (@sec-queue-attention) analogously to the LIFO baseline of @sec-results. The experiment keeps the topology, seed, calibrated parameters and the runs of @tbl-res-finalbatch fixed, and changes only how each user drains their own timeline: from a LIFO stack to a uniform random draw (`-Dtimelinerandom`), as motivated in @sec-missing-width and designed in @sec-queue-attention, so an old post has the same probability of being read as a fresh one. First, we check whether the repost power law still holds (@apx-rtl-powerlaw); second, we compute structural virality (@apx-rtl-sv); lastly, we compare every magnitude against the empirical Bluesky data of @sec-data (@apx-rtl-comparison).
 
+@tbl-queue-aggregate gives the aggregate picture of the experiment: the LIFO baseline against the random drain, on every cascade metric, pooled over the runs of each dataset.
+
+#figure(
+  table(
+    columns: 9,
+    align: (left, right, right, right, right, right, right, right, right),
+    stroke: none,
+    table.hline(stroke: 0.8pt),
+    [*Metric*], [*10K L*], [*10K R*], [*100K L*], [*100K R*], [*500K L*], [*500K R*], [*1M L*], [*1M R*],
+    table.hline(stroke: 0.5pt),
+    [Posts with $>= 1$ repost (%)], [7.33 ±0.02], [7.72 ±0.02], [7.76 ±0.006], [8.31 ±0.005], [7.25 ±0.003], [7.86 ±0.003], [6.58 ±0.1], [7.16 ±0.002],
+    [Size, mean], [2.54 ±0.002], [2.47 ±0.002], [2.70 ±0.001], [2.59 ±0.001], [2.92 ±0.001], [2.77 ±0.001], [2.97 ±0.007], [2.82 ±0.001],
+    [Size, max], [32], [35], [174], [200], [779], [892], [1,697], [2,040],
+    [Depth, max], [10], [9], [12], [11], [13], [11], [13], [13],
+    [Out-degree, mean], [1.256 ±0.001], [1.219 ±0.001], [1.382 ±0.001], [1.322 ±0.001], [1.586 ±0.001], [1.497 ±0.001], [1.645 ±0.004], [1.553 ±0.001],
+    [Out-degree, max], [28], [31], [161], [179], [726], [787], [1,599], [1,795],
+    [$nu(T)$, mean], [1.157 ±0.0005], [1.136 ±0.0004], [1.187 ±0.0002], [1.159 ±0.0001], [1.205 ±0.0001], [1.176 ±0.0001], [1.198 ±0.001], [1.173 ±0.00004],
+    [Viral $nu(T)$, mean], [1.585 ±0.001], [1.553 ±0.001], [1.641 ±0.0003], [1.600 ±0.0003], [1.704 ±0.0002], [1.659 ±0.0002], [1.716 ±0.001], [1.673 ±0.0001],
+    [Broadcast (%)], [80.1 ±0.07], [82.0 ±0.06], [79.4 ±0.02], [81.7 ±0.02], [80.3 ±0.008], [82.5 ±0.007], [81.6 ±0.1], [83.5 ±0.006],
+    table.hline(stroke: 0.8pt),
+  ),
+  caption: flex-caption(
+    [Comparison of aggregated cascade metrics: LIFO vs Random Timeline],
+    [Aggregate cascade metrics pooled over the runs of each dataset, comparing the LIFO baseline (L) with the random drain (R). Cascade-level statistics are restricted to cascades with at least one repost. Means and proportions are shown with their 95% confidence interval across runs ($±$), the run being the unit of observation.],
+  )
+) <tbl-queue-aggregate>
+
 == Reposts Power-law
 <apx-rtl-powerlaw>
 

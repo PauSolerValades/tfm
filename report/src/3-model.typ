@@ -211,7 +211,7 @@ $ T_(j,i) = Delta_"idle" + Delta_"scroll", $
 
 so the full incubation time of an edge that ends in a repost is the delivery plus this wait, $t_i - t_j = Delta_p + Delta_"idle" + Delta_"scroll"$. The rest of this section derives the expected value of that wait.
 
-#def(name: "Influx Rate")[The influx rate $mu_v$ is the expected number of posts arriving per unit of time in user $v$'s timeline. As a macroscopic quantity, it aggregates the out-degree of $v$ and the creation and repost activity of its followees, for which no closed form is attempted.]
+#def(name: "Influx Rate")[The influx rate $mu_v$ is the expected number of posts arriving per unit of time in user $v$'s timeline. As a macroscopic quantity, it aggregates the out-degree of $v$ and the creation and repost activity of its followees, for which no closed form is attempted.] <def-influxrate>
 
 During the idle window the backlog above the post grows at rate $mu_v$, so the expected number of newer posts obstructing it is
 

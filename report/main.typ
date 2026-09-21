@@ -151,6 +151,7 @@
 #include "src/8-results.typ"
 
 = Conclusions
+<sec-conclusions>
 
 #include "src/9-conclusions.typ"
 
