@@ -107,6 +107,8 @@ images/results/cascade_shape_ranksize_100K.svg	bskysim-data-analysis/trace-analy
 images/results/cascade_shape_ranksize_500K.svg	bskysim-data-analysis/trace-analysis/python/cascade_metrics.py	des-ctic-dev/steps/final/datasets/500K/cascades.parquet
 images/results/cascade_shape_ranksize_1M.svg	bskysim-data-analysis/trace-analysis/python/cascade_metrics.py	des-ctic-dev/steps/final/datasets/1M/cascades.parquet
 images/results/viral_nu_overlap.svg	bskysim-data-analysis/trace-analysis/python/viral_nu_overlap.py	empirical cascades_rows.csv + des-ctic-dev final parquets
+images/results/overlap_depth_empirical_sim.svg	bskysim-data-analysis/trace-analysis/python/overlap_metrics_empirical_sim.py	empirical cascades_rows.csv + des-ctic-dev final parquets
+images/results/overlap_width_empirical_sim.svg	bskysim-data-analysis/trace-analysis/python/overlap_metrics_empirical_sim.py	empirical cascades_rows.csv + des-ctic-dev final parquets
 images/results/offspring_distribution_100K.png	bskysim-data-analysis/simulation-evaluation/test1_r0.py	run: 100K
 images/results/powerlaw_alpha_comparison.png	[MISSING FILE] synthetic; recreate (alpha 2.05 vs 2.9, xmin=12)	no repo source
 images/results/ram_scalability.png	[MISSING FILE] bskysim-data-analysis/performance-analysis/fit_ram_complexity.py	None

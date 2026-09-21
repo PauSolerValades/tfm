@@ -369,6 +369,22 @@ With all the metrics analyzed in both fronts, the comparison of real vs simulate
 ) <fig-res-overlap>
 
 #figure(
+  image("../images/results/overlap_depth_empirical_sim.svg", width: 100%),
+  caption: flex-caption(
+    [Cascade depth tail: empirical vs. simulation.],
+    [Complementary cumulative distribution of cascade depth on log-log axes, comparing the Bluesky data against the four simulated datasets (pooled over runs), non-trivial cascades only. The simulation reproduces the bulk but dies by depth $13$, while the empirical tail reaches $131$.],
+  )
+) <fig-res-overlap-depth>
+
+#figure(
+  image("../images/results/overlap_width_empirical_sim.svg", width: 100%),
+  caption: flex-caption(
+    [Cascade width tail: empirical vs. simulation.],
+    [Complementary cumulative distribution of the maximum out-degree on log-log axes, comparing the Bluesky data against the four simulated datasets (pooled over runs), non-trivial cascades only. The simulation truncates the width tail at $1,599$ against the empirical $7,768$.],
+  )
+) <fig-res-overlap-width>
+
+#figure(
   image("../images/results/viral_nu_overlap.svg", width: 100%),
   caption: flex-caption(
     [Structural virality of viral cascades: empirical vs. simulation.],
