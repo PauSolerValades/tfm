@@ -15,7 +15,7 @@ As in @sec-results-powerlaw, the first metric is the repost power-law. @tbl-apx-
     table.hline(stroke: 0.8pt),
     [*Metric*], [*10K*], [*100K*], [*500K*], [*1M*],
     table.hline(stroke: 0.5pt),
-    [*Runs*], [100], [100], [100], [98],
+    [*Runs*], [100], [100], [100], [100],
     [*$alpha$ mean*], [2.606], [2.468], [2.863], [2.923],
     [*$alpha$ median*], [2.606], [2.468], [2.957], [2.926],
     [*$alpha$ CI95 ($±$)*], [0.002], [0.001], [0.043], [0.004],
@@ -26,7 +26,7 @@ As in @sec-results-powerlaw, the first metric is the repost power-law. @tbl-apx-
     [*$x_"min"$ CI95 ($±$)*], [0.000], [0.000], [0.144], [0.034],
     [*$x_"min"$ min*], [1], [1], [1], [3],
     [*$x_"min"$ max*], [1], [1], [3], [4],
-    [*Power-law runs*], [0/100], [0/100], [0/100], [0/98],
+    [*Power-law runs*], [0/100], [0/100], [0/100], [0/100],
     table.hline(stroke: 0.8pt),
   ),
   caption: flex-caption(
