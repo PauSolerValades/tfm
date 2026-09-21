@@ -354,6 +354,14 @@ The $4N$ upper bound on queue occupancy derived in @sec-design-datastructures-qu
 A discussion of alternative queue data structures — which would achieve $O(1)$ amortized access through bucketed time-slicing — is deferred to @sec-future.
 
 
+=== Stale Event Invalidation
+<apx-impl-stale>
+
+The design requires that events scheduled during a session that has ended be dropped when they are popped (see @sec-design-sources-sessions). The naive realization is eager deletion: every time a user goes offline, traverse $Q$ and remove the events belonging to the finished session. This is rejected for three reasons. It is $O(|Q|)$ on one of the most frequent transitions in the simulation ---every session end, for every user---; deleting an arbitrary element from the $d$-ary heap leaves a hole that must be refilled from the tail, forcing the sift operations and reallocations the layout of @apx-impl-queue is designed to avoid; and the periodic full scans of a multi-gigabyte queue (@sec-res-scalability) evict the working set from cache, turning a memory-bound engine into a latency-bound one.
+
+Invalidation is therefore deferred and lazy. The generation counter is a `u32` in the hot per-user fields of the Struct of Arrays (@apx-impl-users, @code-multiarrays) and is copied into every scheduled event, so the guard at pop time costs a single integer comparison. Nothing is removed from $Q$ ahead of time: the heap always pops its minimum and a stale entry is discarded in $O(1)$ when it surfaces, so occupancy never exceeds the $4N$ bound of @apx-impl-queue. The same guard is reused by the other sources ---action and create check it before acting (@proc-action-handle, @proc-create)--- and it is one of the stale-event failure modes the trace validator looks for (@apx-impl-validation).
+
+
 === Timelines: Dual Stack
 
 The user timeline $cal(T)_t (u)$, as a reverse chronological timeline, is the textbook definition of a Stack @cormen2022algorithms: a LIFO queue. One would think that a heap is more _correct_ as it compares time of post repost, but in reality all posts are appended exactly in the order they arrive, therefore the exact timestamp of the repost is not needed to sort this out. This makes both `push` and `pop` $O(1)$, in contrast with the heap explained in the last section, where `push` involves `siftUp` and `siftDown`, making them $O(log n)$

@@ -8,7 +8,7 @@ This chapter covers the design of the simulation: the entities and data model (s
 == Design Overview
 <sec-design-overview>
 
-This section aims to give a general description of why the simulation is built the way it is, and how it has been built this way.
+This section aims to give a general description of why the simulation is built the way it is, and how it has been built this way: first an experiential interpretation that maps the real-world phenomenon the simulation replicates onto its mechanics (see @sec-design-experiential), and then the set of rules that the mechanics must satisfy (see @sec-design-rules).
 
 === Experiential Interpretation of the Simulation 
 <sec-design-experiential>
@@ -17,14 +17,14 @@ The goal of this section is to map the real-world phenomena the simulation attem
 
 In essence, the experience that the simulation models is the behavior of several users checking a social network application to interact with the content on their timelines. Let's focus on the perspective of one single simulated user, as the subjective experience of scrolling a timeline remains identical in a single user basis.
 
-When a user is logged in, it will be actively looking at its timeline posts, one by one. For every post, the user will be able to ignore it, like it or repost it, which will propagate that post to its followers according to a policy $pi$. If the user sees posts he has already seen (went so back into the past that he has seen all the content that it's followers have produced since he logged in), he will refresh the timeline, and see the most recent published post, and start scrolling again. The user will log out if it rans out of new posts to see ---when the timeline refreshes no new posts appear--- or when he gets tired of scrolling. Mapping to the nomenclature of section @sec-model, the logged in time of the user is a session ($S in cal(O) (u)$). If the session finished naturally it is ended due to *fatigue*, and if its ended due to a refresh having no new content, it ends out of *boredom*.
+When a user is logged in, it will be actively looking at its timeline posts, one by one. For every post, the user will be able to ignore it, like it or repost it, which will propagate that post to its followers according to a policy $pi$. If the user sees posts he has already seen (went so back into the past that he has seen all the content that it's followers have produced since he logged in), he will refresh the timeline, and see the most recent published post, and start scrolling again. The user will log out if it rans out of new posts to see ---when the timeline refreshes no new posts appear--- or when he gets tired of scrolling. Mapping to the nomenclature of @sec-model-notation, the logged in time of the user is a session ($S in cal(O) (u)$). If the session finished naturally by the scheduled event, it will be denoted as a session ended by due to *fatigue*, and if its ended due to a refresh having no new content, it ends out of *boredom*.
 
 
 The order in which the users will see the posts is in reverse-chronological: newest post first, and they will scroll back into the previous posts. In addition to that, not all users are online at the same time: they will connect and disconnect at their own unique paces, making the amount of content in the user timelines fluctuate. 
 
 The simulation ensembles $N$ distinct users with the described behaviour checking their timelines simultaneously. Despite the experience being the same per every user, the amount of content they will see depends on how are the posts flowing: if user $u$ has a lot of followees and they repost a lot, and they connect with at the same times as he, $u$ will have a lot of content to see and will not finish the sessions out of boredom, but due to fatigue.
 
-The best way to interiorize the system workings is to think about it as every user running the microsimluation, but all acting at the same time changes how the content flow, which changes what they see, creating the characteristic feedback loop of complex systems @miller2007complex
+The best way to interiorize the system workings is to think about it as every user running a one-user simluation, but all acting at the same time changes how the content flow, which changes what they see, creating the characteristic feedback loop of complex systems @miller2007complex
 
 Lastly, a reminder that the policy $pi$ (probability of viewing, liking, or reposting a post) is the same per every user and does not depend on the post the user is seeing, as stated in @sec-method-des-assumptions
 
@@ -32,10 +32,10 @@ Lastly, a reminder that the policy $pi$ (probability of viewing, liking, or repo
 <sec-design-rules>
 
 While the previous section (@sec-design-experiential) gives an intuition of what is the simulation about, it is worth to narrow down the simulation to a series of rules, which define what's possible and characterize the system. These are the following:
-+ A user can be in two states: online or offline. When a user is offline, it can't perform any action.
-+ A user can either create a post, or see the timeline.
++ A user can be in two states: online or offline. When a user is offline, it can't perform any action. The user will come back online when the start session event is processed.
++ A user can either create a post, or sroll/browse the timeline.
 + When a post is reposted, it gets stored in the user timeline, enquequed to be seen later.
-+ The only interactions with a post are to like them or to repost them. Viewing a post is modeled (ignoring to act upon it), but does nothing. 
++ The only interactions with a post are to like them or to repost them. Viewing a post is modeled (not acting upon it), but does nothing. 
 + A user can't interact (like or repost) with a post already liked and reposted by itself.
 + A user can see a post he has already seen if it gets propagated from another user, but cannot see a post that has already been interacted by the user.
 + If an online user exhausts their visible window and a refresh yields no new posts, they go offline out of boredom. If it does not get bored, the session will naturally end as the user gets fatigued and disconnects.
@@ -44,7 +44,7 @@ While the previous section (@sec-design-experiential) gives an intuition of what
 == Data Model
 <sec-design-entities>
 
-This section describes the entities used by the simulation and the information they contain to properly characterize it, as well as relating it to the Time-Varying Heterogeneous Graph described in section @sec-model.
+This section describes the entities used by the simulation and the information they contain to properly characterize it. The entities split into the state entities, which realize the theoretical sets of the model (@sec-design-dm-state), and the mechanical entities, which the event-scheduling engine requires (@sec-design-dm-mechanical); both are related throughout to the Time-Varying Heterogeneous Graph defined in @def-tvhg in @sec-model-notation.
 
 === State Entities 
 <sec-design-dm-state>
@@ -55,13 +55,13 @@ User entity is the continuous state variables that physically manifest the sets 
 - *Behavioural*: every user has the distributions that dictate how long is the session duration, the gap between sessions and the frequency of post creation.
 
 
-The Post entity is the manifestation of the elements of the set $cal(I)$. It is a fairly simple entity as the post homogeneity makes every post equal, we must just track an identifier and creation time, the two elements needed to evaluate the presence function $psi(i, t)$.
+The Post entity is the manifestation of the elements of the set $cal(I)$. It is a fairly simple entity as the post homogeneity makes every post equal, we must just track an identifier and creation time, the two elements needed to evaluate the presence function $psi(i, t)$ of the Time-Varying Heterogeneous Graph (@def-tvhg).
 
 === Mechanical Entities
 <sec-design-dm-mechanical>
 
 Unlike Users and Posts, which represent the theoretical entities of the network, Events and TimelineEvents are strictly operational constructs required by the event-scheduling simulation engine to advance continuous time and propagate the information.  
-- *Event*: The fundamental mechanical unit of the simulation. An Event is a scheduled state transition always associated to the user the event relates with ---such as a user session starting or ending, interacting with the next post on the timeline, or to create a post. It serves as the operational trigger that updates the network's state without requiring the simulation to compute inactive time intervals.  
+- *Event*: The fundamental mechanical unit of the simulation. An Event is a scheduled state transition always associated to the user the event relates with, such as a user session starting or ending, interacting with the next post on the timeline, or to create a post. It serves as the operational trigger that updates the network's state without requiring the simulation to compute inactive time intervals.  
 - *TimelineEvent*: A simple tuple that links a post identifier to its specific arrival timestamp in a user's chronological feed $cal(T)_t (u)$. It acts as the mechanical payload that physically delivers propagated content to a follower's timeline once the required propagation delay has elapsed. @apx-impl-queue
 
 Lastly, the structure this events are contanied in are the main simulation queue $Q$ and every user timeline $cal(T)_t (u)$.
@@ -69,16 +69,16 @@ Lastly, the structure this events are contanied in are the main simulation queue
 == Event Sources 
 <sec-design-sources> 
 
-This section describes the implementation strategies of the different sources of the simulation provided in the Event subsection on @sec-design-dm-mechanical, and which logic follows the simulation when an event gets processed according to the rules of the simulation (@sec-design-rules).
+This section describes the implementation strategies of the different event sources of the simulation ---the mechanical units introduced in @sec-design-dm-mechanical ---and the logic the simulation follows when one of their events is processed according to the rules of @sec-design-rules. There are four sources: sessions, which take users online and offline (@sec-design-sources-sessions); propagate, which delivers a repost to the followers' timelines (@sec-design-sources-propagate); create, which publishes a new post (@sec-design-sources-create); and actions, which drain the timeline and draw the decision policy $pi$ (@sec-design-sources-action).
 
 === Sessions
 <sec-design-sources-sessions>
 
-The first event source of the simulation is not one event but three complementary ones. A `session` event can be either one of the following: `start`, `end` or `end_boredom`. The `start` forces a user back online, and the `end` makes it go back offline.
+The first event source of the simulation is not one event but three complementary ones. A `session` event can be either one of the following: `start`, `end` or `end_boredom`. The `start` forces a user back online, and both `end` and `end_boredom` makes it go back offline.
 
 ==== Going Online
 
-When the simulation processes the event `online` for an offline user $u$, it has to restart all the event sources for the next session. To do that, it needs to create an `action` event to start checking the timeline, a `create` event and to schedule when the session will end with a `session.end` ---all according to the users distribution--- in order for the characteristic loop of DES can start with both of the real sources.
+When the simulation processes the event `online` for an offline user $u$, it has to restart all the event sources for the next session. To do that, it needs to create an `action` event to start checking the timeline, a `create` event and to schedule when the session will end with a `session.end` ---all according to the users distribution--- in order for the characteristic loop of DES can start with both of the real sources. They are done sequentially, as seen in @proc-go-online.
 
 #procedure(caption: flex-caption([HandleGoOnline], [Session start: puts a user back online and primes the event loop]))[
   #pseudocode-list[
@@ -97,7 +97,7 @@ When the simulation processes the event `online` for an offline user $u$, it has
 
 ==== Going Offline
 
-A user goes offline in two scenarios, both handled by the same mechanism:
+A user goes offline in two scenarios, both handled by the same procedure seen in @proc-go-offline.
 
 - *Fatigue* ($"end"$): the session's scheduled duration expires. The user is marked offline and the next session start is queued.
 - *Boredom* ($"end_boredom"$): the user drains their visible window, refreshes to expand it, but still finds no new posts in $cal(T)_(t_c) (u)$. The user logs off and the next session start is scheduled.
@@ -111,7 +111,7 @@ A user goes offline in two scenarios, both handled by the same mechanism:
   ]
 ] <proc-go-offline>
 
-Both of this options are nested under a check when the event type is a `session`, shown in the @proc-session-handle:
+Both of this options are nested under a check when the event type is a `session`, shown in @proc-session-handle:
 
 
 #procedure(caption: flex-caption([HandleSession], [Session handle: dispatches start, end (fatigue), and end_boredom]))[
@@ -126,20 +126,13 @@ Both of this options are nested under a check when the event type is a `session`
   ]
 ] <proc-session-handle>
 
-==== Event Management when User is Online
+==== Offline Event Management
 
+In an Activity-Driven Discrete-Event Simulation, interrupting the stochastic process of an event source introduces a potential problem. Because the system relies on scheduling future events (the next user action or post creation) within a continuous renewal process, a user transitioning to an offline state leaves the events already scheduled for that session orphaned in the Future Event Set $Q$. These events must be invalidated: an offline user cannot act on their timeline nor create a post, so the renewal process of a finished session must not survive into the next one.
 
-#todo[
-  Rewrite on that this can happen, and the solution is an session counter. Add an implementation section arguing why a more naive approach is retarded, but here just menction the existance of this problem and the mechanism used to be solved
-]
+The design answer is a per-user session generation counter. Every time a user starts a new online session their `session_gen` increments, and every event scheduled during that session carries the generation that produced it as part of its payload. When the main simulation loop pops an event, it compares the stored generation against the user's current `session_gen`: a mismatch identifies a *stale* event, which is discarded without being processed. A step-by-step example motivating the guard is given in @anx-ex-session-gen, and its concrete realization is discussed in @apx-impl-stale.
 
-In an Activity-Driven Discrete-Event Simulation, interrupting the stochastic process of an event source introduces a potential problem. Because the system relies on scheduling future events (such as the next user action or post creation) within a continuous renewal process, a user transitioning to an offline state might leave previously scheduled events orphaned in the Future Event Set ($Q$). Therefore, a mechanism to remove them from the queue must be introduced to mantain the Queue integrity.
-
-The naive solution would be traversing over the future event set $Q$ every time a user went offline and deleting all these orphaned events. This would require O(N) traversals and continuous memory reallocations, effectively destroying the engine's cache locality and computational performance (as well as requiring reestructure of the data structure, see @apx-impl-memory and @apx-impl-queue). The landed solution is a `session_gen` counter, in which every time a user initiates a new online session, their internal generation counter increments. Any event scheduled during that session carries this specific generation integer as part of its payload. When the main simulation loop pops an event, it compares the event's stored generation ID against the user's current `session_gen`. If the values do not match, the event is immediately discarded as it is "stale".
-
-// This guarantees O(1) event invalidation and ensures that offline users cannot illegally execute actions, preserving the integrity of the inter-action distributions. A step by step example showcasing the need for this is provided in @anx-ex-session-gen.
-
-Knowing the necessity of this mechanism, the @proc-session-event-handle shows the whole process, while calling the previous showcased procedures. $e_"gen"$ is the `session_gen` of the current event, which we already know it's a session
+Knowing the necessity of this mechanism, @proc-session-event-handle shows the session event dispatch, which applies the stale guard before calling the procedures above. $e_"gen"$ is the `session_gen` carried by the popped event.
 
 #procedure(caption: flex-caption([HandleSessionEvent], [Session event dispatch with stale-event guard]))[
   #pseudocode-list[
@@ -201,7 +194,7 @@ When a propagate event reaches the head of $Q$, the main event loop dispatches i
 The propagation delay $Delta_p$ can be configured with the variable `propagation_delay`. 
 
 === Create
-
+<sec-design-sources-create>
 The `create` event behaves as a stardard event source, as it does not have relationships with other event sources or events. When a `create` event is assigned, the simulation searches the last `post_id`, augments it and makes the current user $u$ its author. The @proc-create showcases the event.
 
 #procedure(caption: flex-caption([HandleCreate], [Create event dispatch with stale-event and max-posts guard]))[

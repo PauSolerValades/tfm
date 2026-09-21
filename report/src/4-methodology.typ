@@ -172,7 +172,7 @@ Virality is a concept that is more nuanced than it first appears. While content 
 Intuitively, the shape of the cascade matters: a "broadcast" cascade reaches many users but remains extremely shallow (all adoptions occur within one hop from the source), whereas a genuinely "viral" cascade propagates through multiple generations, with each individual responsible for only a fraction of the total adoptions. However, simple metrics like cascade depth are fragile ---a single long chain in an otherwise flat broadcast can inflate the depth without indicating true viral spread @goel2016structural. The @fig-broadcast-vs-viral-2 showcases this differences.
 
 #figure(
-  image("../images/sota/broadcast-vs-viral.jpg", width: 80%),
+  image("../images/sota/broadcast-vs-viral.jpg", width: 70%),
   caption: flex-caption(
     [Broadcast vs viral cascade structures.],
     [Broadcast vs viral cascade structures. A broadcast cascade (right) radiates directly from a single source to many followers. A viral cascade (left) propagates through multiple generations of reposts, forming a deeper tree structure. Image from Goel et. al @goel2016structural]
@@ -193,14 +193,13 @@ where $d_(i j)$ is the length of the shortest path between nodes $i$ and $j$. Eq
   A continuous measure of how "viral" a cascade is, defined as the average distance between all pairs of nodes in the cascade tree. Higher values indicate that adopters are, on average, farther apart, suggesting a multi-generational diffusion process rather than a single broadcast event. @goel2016structural
 ]
 
-
 All magnitudes listed in this section will be computed from the traces collected during simulation execution. The trace schema (see @sec-design-traces) captures every state transition as structured records, and the buffered I/O mechanism (see @apx-impl-trace-io) writes them to disk without stalling the simulation loop. These traces are then parsed once all replications are done into a dataset to analyze and compute the desired metrics.
 
 
 == Simulation Paradigm Choice
 <sec-method-abm>
 
-The topic of this project is clearly in the Complex Social Science field @miller2007complex, a field that, when needs to simulate human behaviour, defaults to Agent Based Modeling. This paradigm feels as the opposite methodological procedure than DES. Operational Research (OR) usually relies on Discrete-Event Simulation (DES) @maidstone2012discrete, while Complex Social Science defaults to Agent-Based Modeling (ABM) to study collective behavior and contagion @bonabeau2002agent. While simulating information cascades on a social network conceptually aligns with more with ABM, this section aims to give an insight why DES is the most appropriate mathematical and structural fit for this specific work.
+The topic of this project is clearly in the Complex Social Science field @miller2007complex, a field that, when needs to simulate human behaviour, defaults to Agent Based Modeling. This paradigm feels as the opposite methodological procedure than DES. Operational Research (OR) usually relies on Discrete-Event Simulation (DES) @maidstone2012discrete, while Complex Social Science defaults to Agent-Based Modeling (ABM) to study collective behavior and contagion @bonabeau2002agent. While simulating information cascades on a social network conceptually aligns with more with ABM, this section aims to give an insight why DES is the most appropriate mathematical and structural fit for this specific work, not only due to the model election (see @sec-model-ctic).
 
 Let's first define what both paradigms should be used for: ABM is a bottom-up paradigm where autonomous agents follow behavioural rules and interact with their environment @bonabeau2002agent, while in DES entities are typically passive tokens moving trough a system's process logic @siebers2010discrete. However, Siebers et al. argue that "true ABS models in OR do not exist" in his article, making the previously defined theoretical distinction usless in practice, as none can adhere fully in one paradigm. Following Siebers descritpion, practicioners build combined models where a DES backbone is _augmented_ with entity-specific states. This is a very accurate description of what the _User_ entity has become in the simulation this work offers, as will be explained in @sec-design - Design, as every user carries personalized and empirical calibrated parameters.
 
@@ -214,7 +213,7 @@ Ultimately, DES was selected because the designed model suited an Event Scheduli
 == Sessions Creation
 <sec-method-session>
 
-In order to find both `session_lenght` and `inter_session_duration` variables, data from the Bluesky Firehose will be processed to obtain when the user is online or offline, replicating the $cal(O) (u)$ structure defined in @sec-model.
+In order to find both `session_lenght` and `inter_session_duration` variables, data from the Bluesky Firehose will be processed, analyzed to obtain when the user is online or offline, replicating the $cal(O) (u)$ structure defined in @sec-method-activity.
 
 As Barbási states in @barabási2005bursts, this won't be approximable by a Poission distribution. In fact, this problem is known as the Burst Detection problem or State Detection Over an Event Stream in Data Mining @kleinberg2003bursty   or, in a more simple form, a sessionization problem @kooti2016twitter.
 
@@ -227,7 +226,7 @@ Regaring the alternative methods, Kleinberg @kleinberg2003bursty identifies the 
 
 ==== DBSCAN
 
-DBSCAN (Density-Based Spatial Clustering of Applications with Noise ) is a density-based clustering paradigm that provides a non-hierarchical labeling of data objects based on a global density threshold @mcinnes2017hdbscan. 
+DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a density-based clustering paradigm that provides a non-hierarchical labeling of data objects based on a global density threshold @mcinnes2017hdbscan. 
 
 The algorithm operates on a few key concepts, which are often formalized as DBSCAN\* to remain consistent with statistical models of continuous density level sets @ester1996dbscan :
 - *Core Object*: An object is considered a core object with respect to a radius $epsilon$ and a smoothing parameter $m_"pts"$ if its $epsilon$-neighborhood contains at least $m_"pts"$ objects @mcinnes2017hdbscan. Objects that fail to meet this density criterion are labeled as noise @mcinnes2017hdbscan.
@@ -235,5 +234,5 @@ The algorithm operates on a few key concepts, which are often formalized as DBSC
 - *Density-Connected*: Two core objects are density-connected if they are either directly or transitively $epsilon$-reachable @ester1996dbscan.
 - *Cluster*: A cluster is defined as a non-empty, maximal subset of objects where every pair is density-connected @ester1996dbscan.
 
-While highly effective, DBSCAN's primary limitation lies in its reliance on a single, global density threshold ($epsilon$) @mcinnes2017hdbscan. This makes it difficult to properly characterize datasets containing nested clusters or clusters of widely varying densities @mcinnes2017hdbscan. This is the case with the sessionization problem this work tackles, as even within the same user events, the density of the clusters can vary according to certain external factors: user might be less engaged at night therefore there is less signal but the session is equally large, the short "checking a notification session" might have a very different density than more lengthy sessions. DBSCAN, despite using a different threshold per user $epsilon$ would not be able to detect distinct types of sessions inside the same user.
+While highly effective, DBSCAN's primary limitation lies in its reliance on a single, global density threshold ($epsilon$) @mcinnes2017hdbscan that does not adapt user-base. This makes it difficult to properly characterize datasets containing nested clusters or clusters of widely varying densities @mcinnes2017hdbscan. This is the case with the sessionization problem this work tackles, as even within the same user events, the density of the clusters can vary according to certain external factors: user might be less engaged at night therefore there is less signal but the session is equally large, the short "checking a notification session" might have a very different density than more lengthy sessions. DBSCAN, despite using a different threshold per user $epsilon$ would not be able to detect distinct types of sessions inside the same user.
 
